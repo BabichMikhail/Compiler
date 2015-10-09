@@ -25,29 +25,26 @@ ExprVar::ExprVar(Token Var) : ExprConst(Var){}
 
 void ExprUnarOp::Print(int Spaces){
 	this->Exp->Print(Spaces + 1);
-	std::string S;
 	for (int i = 0; i < Spaces; ++i){
-		S += indent;
+		std::cout << indent;
 	}
-	std::cout << S.c_str() << this->Op.Source.c_str() << std::endl;
+	std::cout << this->Op.Source.c_str() << std::endl;
 }
 
 void ExprBinOp::Print(int Spaces){
 	this->Right->Print(Spaces + 1);
-	std::string S;
 	for (int i = 0; i < Spaces; ++i){
-		S += indent;
+		std::cout << indent;
 	}
-	std::cout << S.c_str() <<  this->Op.Source.c_str() << std::endl;
+	std::cout << this->Op.Source.c_str() << std::endl;
 	this->Left->Print(Spaces + 1);
 }
 
 void ExprConst::Print(int Spaces){
-	std::string S;
 	for (int i = 0; i < Spaces; ++i){
-		S += indent;
+		std::cout << indent;
 	}
-	std::cout << S.c_str() << this->Val.Source.c_str() << std::endl;
+	std::cout << this->Val.Source.c_str() << std::endl;
 }
 
 void Parser::Print(){
