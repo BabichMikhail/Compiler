@@ -1,8 +1,15 @@
 #include "parser.h"
 #include <iostream>
 #include "errors.h"
+#include <vector>
 
 #define indent "   "
+
+auto start_expr_tk = { TK_INTEGER_VALUE, TK_REAL_VALUE, TK_OPEN_BRACKET, TK_IDENTIFIER, TK_PLUS, TK_MINUS, TK_TRUE, TK_FALSE, TK_NOT };
+auto rel_op = { TK_GREAT, TK_GREAT_EQUAL, TK_LESS, TK_LESS_EQUAL, TK_EQUAL, TK_NOT_EQUAL };
+auto add_op = { TK_PLUS, TK_MINUS, TK_OR, TK_XOR };
+auto mul_op = { TK_MUL, TK_DIV, TK_DIV_INT, TK_MOD, TK_AND, TK_SHL, TK_SHR };
+std::vector<TokenType> vec_start_expr_tk(start_expr_tk), vec_rel_op(rel_op), vec_add_op(add_op), vec_mul_op(mul_op);
 
 Expr::Expr(){}
 
@@ -15,7 +22,6 @@ ExprBoolConst::ExprBoolConst(Token Val) : ExprConst(Val){}
 ExprIntConst::ExprIntConst(Token Val) : ExprConst(Val){}
 ExprRealConst::ExprRealConst(Token Val) : ExprConst(Val){}
 ExprVar::ExprVar(Token Var) : ExprConst(Var){}
-
 
 void ExprUnarOp::Print(int Spaces){
 	this->Exp->Print(Spaces + 1);
@@ -56,11 +62,9 @@ Parser::Parser(const char* filename) : Lex(filename), State(St_Good){
 	try {
 		while (Lex.isToken()){
 			Lex.Next();
-			if (Lex.Get().Type == TK_INTEGER_VALUE || Lex.Get().Type == TK_REAL_VALUE || Lex.Get().Type == TK_OPEN_BRACKET || 
-				Lex.Get().Type == TK_IDENTIFIER || Lex.Get().Type == TK_PLUS || Lex.Get().Type == TK_MINUS || Lex.Get().Type == TK_TRUE || 
-				Lex.Get().Type == TK_FALSE || Lex.Get().Type == TK_NOT){
+			if (std::find(vec_start_expr_tk.begin(), vec_start_expr_tk.end(), Lex.Get().Type) != vec_start_expr_tk.end()){
 				Exp = ParseExpr();
-				return;
+				continue;
 			}
 			/*if (Lex.Get().Type == TK_IF){}
 			if (Lex.Get().Type == TK_BEGIN){}
@@ -83,9 +87,7 @@ Parser::Parser(const char* filename) : Lex(filename), State(St_Good){
 
 Expr* Parser::ParseExpr(){
 	auto Left = ParseSimpleExpr();
-	while (Lex.Get().Type == TK_GREAT || Lex.Get().Type == TK_GREAT_EQUAL || Lex.Get().Type == TK_LESS || Lex.Get().Type == TK_LESS_EQUAL
-		|| Lex.Get().Type == TK_EQUAL || Lex.Get().Type == TK_NOT_EQUAL){
-
+	while (std::find(vec_rel_op.begin(), vec_rel_op.end(), Lex.Get().Type) != vec_rel_op.end()){
 		Token Op = Lex.Get();
 		Lex.Next();
 		auto Right = ParseSimpleExpr();
@@ -96,7 +98,7 @@ Expr* Parser::ParseExpr(){
 
 Expr* Parser::ParseSimpleExpr(){
 	auto Left = ParseTerm();
-	while (Lex.Get().Type == TK_PLUS || Lex.Get().Type == TK_MINUS || Lex.Get().Type == TK_OR || Lex.Get().Type == TK_XOR){
+	while (std::find(vec_add_op.begin(), vec_add_op.end(), Lex.Get().Type) != vec_add_op.end()){
 		Token Op = Lex.Get();
 		Lex.Next();
 		auto Right = ParseTerm();
@@ -107,9 +109,7 @@ Expr* Parser::ParseSimpleExpr(){
 
 Expr* Parser::ParseTerm(){
 	auto Left = ParseFactor();
-	while (Lex.Get().Type == TK_MUL || Lex.Get().Type == TK_DIV || Lex.Get().Type == TK_DIV_INT || Lex.Get().Type == TK_MOD || Lex.Get().Type == TK_AND 
-		|| Lex.Get().Type == TK_SHL || Lex.Get().Type == TK_SHR){
-
+	while (std::find(vec_mul_op.begin(), vec_mul_op.end(), Lex.Get().Type) != vec_mul_op.end()){
 		Token Op = Lex.Get();
 		Lex.Next();
 		auto Right = ParseFactor();
