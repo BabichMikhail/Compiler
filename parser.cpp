@@ -88,25 +88,8 @@ Expr* Parser::ParseExpr(){
 
 		Token Op = Lex.Get();
 		Lex.Next();
-		if (Lex.Get().Type == TK_OPEN_BRACKET){
-			Lex.Next();
-			auto Right = ParseExpr();
-			if (Lex.Get().Type != TK_CLOSE_BRACKET){
-				throw AbsentBrackect("Fatal: Syntax error, ')' excepted but \"" + Lex.Get().Source + "\" found");
-			}
-			Lex.Next();
-			if (Lex.Get().Type == TK_PLUS || Lex.Get().Type == TK_MINUS || Lex.Get().Type == TK_OR || Lex.Get().Type == TK_XOR){
-				auto Op_2 = Lex.Get();
-				Lex.Next();
-				Left = (Expr*)new ExprBinOp(Op, Left, (Expr*)new ExprBinOp(Op_2, Right, ParseSimpleExpr()));
-			}
-			else 
-				Left = (Expr*)new ExprBinOp(Op, Left, Right);
-		}
-		else {
-			auto Right = ParseSimpleExpr();
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
-		}
+		auto Right = ParseSimpleExpr();
+		Left = (Expr*)new ExprBinOp(Op, Left, Right);
 	}
 	return Left;
 }
@@ -116,27 +99,8 @@ Expr* Parser::ParseSimpleExpr(){
 	while (Lex.Get().Type == TK_PLUS || Lex.Get().Type == TK_MINUS || Lex.Get().Type == TK_OR || Lex.Get().Type == TK_XOR){
 		Token Op = Lex.Get();
 		Lex.Next();
-		if (Lex.Get().Type == TK_OPEN_BRACKET){
-			Lex.Next();
-			auto Right = ParseExpr();
-			if (Lex.Get().Type != TK_CLOSE_BRACKET){
-				throw AbsentBrackect("Fatal: Syntax error, ')' excepted but \"" + Lex.Get().Source + "\" found");
-			}
-			Lex.Next();
-			if (Lex.Get().Type == TK_MUL || Lex.Get().Type == TK_DIV || Lex.Get().Type == TK_DIV_INT || Lex.Get().Type == TK_MOD || Lex.Get().Type == TK_AND
-				|| Lex.Get().Type == TK_SHL || Lex.Get().Type == TK_SHR){
-
-				auto Op_2 = Lex.Get();
-				Lex.Next();
-				Left = (Expr*)new ExprBinOp(Op, Left, (Expr*)new ExprBinOp(Op_2, Right, ParseTerm()));
-			}
-			else
-				Left = (Expr*)new ExprBinOp(Op, Left, Right);
-		}
-		else {
-			auto Right = ParseTerm();
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
-		}
+		auto Right = ParseTerm();
+		Left = (Expr*)new ExprBinOp(Op, Left, Right);
 	}
 	return Left;
 }
@@ -148,19 +112,8 @@ Expr* Parser::ParseTerm(){
 
 		Token Op = Lex.Get();
 		Lex.Next();
-		if (Lex.Get().Type == TK_OPEN_BRACKET){
-			Lex.Next();
-			auto Right = ParseExpr();
-			if (Lex.Get().Type != TK_CLOSE_BRACKET){
-				throw AbsentBrackect("Fatal: Syntax error, ')' excepted but \"" + Lex.Get().Source + "\" found");
-			}
-			Lex.Next();
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
-		}
-		else {
-			auto Right = ParseFactor();
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
-		}
+		auto Right = ParseFactor();
+		Left = (Expr*)new ExprBinOp(Op, Left, Right);
 	}
 	return Left;
 }
