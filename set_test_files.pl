@@ -5,7 +5,7 @@ use IO::Dir;
 
 my @Python_path = ("Tests\\\\Parser\\\\", "Tests\\\\Lexer\\\\");
 my @path = ("Tests\\Parser\\", "Tests\\Lexer\\");
-my @test_keys = ('-tp', '-tl');
+my @test_keys = ('-p', '-l');
 my @lens;
 my @dirs; 
 foreach my $i (0.. $#path){

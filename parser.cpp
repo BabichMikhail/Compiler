@@ -48,21 +48,20 @@ void ExprConst::Print(int Spaces){
 }
 
 void Parser::Print(){
-	if (State == St_Bad){
+	/*if (State == St_Bad){
 		BadEOF("Syntax error: expected expression but \"end of file\" found");
 		return;
-	}
+	}*/
 	Exp->Print(0);
 }
 
 Parser::Parser(const char* filename) : Lex(filename), State(St_Good){
-	try {
-		while (Lex.isToken()){
-			Lex.Next();
-			if (std::find(vec_start_expr_tk.begin(), vec_start_expr_tk.end(), Lex.Get().Type) != vec_start_expr_tk.end()){
-				Exp = ParseExpr();
-				continue;
-			}
+	while (Lex.isToken()){
+		Lex.Next();
+		if (std::find(vec_start_expr_tk.begin(), vec_start_expr_tk.end(), Lex.Get().Type) != vec_start_expr_tk.end()){
+			Exp = ParseExpr();
+			continue;
+		}
 			/*if (Lex.Get().Type == TK_IF){}
 			if (Lex.Get().Type == TK_BEGIN){}
 			if (Lex.Get().Type == TK_PROGRAM){}
@@ -76,10 +75,7 @@ Parser::Parser(const char* filename) : Lex(filename), State(St_Good){
 			if (Lex.Get().Type == TK_RECORD){}
 			if (Lex.Get().Type == TK_REPEAT){}*/
 			//throw IllegalExpr("Error: Illegal Expression");
-		}
 	}
-	catch (AbsentBrackect){ State = St_Bad; }
-	catch (IllegalExpr){ State = St_Bad; }
 }
 
 Expr* Parser::ParseExpr(){
@@ -125,7 +121,7 @@ Expr* Parser::ParseFactor(){
 	if (TK.Type == TK_OPEN_BRACKET){
 		auto ExpNow = ParseExpr();
 		if (Lex.Get().Type != TK_CLOSE_BRACKET){
-			throw AbsentBrackect("Fatal: Syntax error, ')' excepted but \"" + Lex.Get().Source + "\" found");
+			throw AbsentBrackect(Lex.Get().Source);
 		}
 		Lex.Next();
 		return ExpNow;
@@ -146,5 +142,5 @@ Expr* Parser::ParseFactor(){
 		auto ExpNow = ParseFactor();
 		return (Expr*)new ExprUnarOp(TK, ExpNow);
 	}
-	throw IllegalExpr("Error: Illegal Expression");
+	throw IllegalExpr();
 }

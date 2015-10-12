@@ -41,9 +41,9 @@ enum TokenType{
 
 #define NUM_RESERVED (TK_EOF - TK_ABSOLUTE + 1)
 
-typedef struct _Position_{
-	_Position_(const int L = 0, const int C = 0) : Line(L), Column(C){};
-	_Position_(const _Position_& Pos) : Line(Pos.Line), Column(Pos.Column){};
+typedef struct Position{
+	Position(const int L = 0, const int C = 0) : Line(L), Column(C){};
+	Position(const Position& Pos) : Line(Pos.Line), Column(Pos.Column){};
 	int Line, Column;
 } Position;
 

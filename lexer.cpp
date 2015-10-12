@@ -3,10 +3,10 @@
 #include "lexer.h"
 #include "errors.h"
 
-#define to_str(val) std::to_string(val)
+using namespace std;
 
 static const char *const Tokens_str[] = {
-	"absolute", "and", "array", "as", "begin", 
+	"absolute", "and", "array", "asm", "begin", 
 	"boolean", "bytebool", "byte", "cardinal", "case", 
 	"char", "constructor", "const", "comp", "currency", 
 	"destructor", "dispose", "div", "downto", "double", 
@@ -42,7 +42,7 @@ TokenType Reserved_Words[] = {
 	TK_FUNCTION, TK_GOTO, TK_IF, TK_IMPLEMENTATION, TK_INHERITED, TK_INLINE, TK_INT64, TK_INTERFACE, TK_INTEGER, TK_IN, TK_LABEL, TK_LONGBOOL, TK_LONGINT,
 	TK_LONGWORD, TK_MOD, TK_NEW, TK_NIL, TK_NOT, TK_OBJECT, TK_OF, TK_OPERATOR, TK_OR, TK_PACKED, TK_PROCEDURE, TK_PROGRAM, TK_RECORD, TK_REINTRODUCE,
 	TK_REAL, TK_REPEAT, TK_SELF, TK_SET, TK_SHL, TK_SHORTINT, TK_SHR, TK_SMALLINT, TK_SINGLE, TK_STRING, TK_TEXT, TK_THEN, TK_TO, TK_TRUE, TK_TYPE,
-	TK_QWORD, TK_UNIT, TK_UNTIL, TK_USES, TK_VAR, TK_WORDBOOL, TK_WORD, TK_WHILE, TK_WITH, TK_XOR,
+	TK_QWORD, TK_UNIT, TK_UNTIL, TK_USES, TK_VAR, TK_WORDBOOL, TK_WORD, TK_WHILE, TK_WITH, TK_XOR
 };
 
 TokenType Operators[] = {
@@ -78,25 +78,25 @@ void Lexer::SetNumberNotHex(const int Line, const int Column){
 		if (*It_Count == '.'){ /* A.B */
 			++It_Count;
 			if (*It_Count < '0' || *It_Count > '9'){
-				throw NoFract(std::string("Incorrect Float Number in Line " + to_str(Line + 1) + " Column + " + to_str(Column + 1) + ". There is no number after point"));
+				throw NoFract(Line + 1, Column + 1);
 			}
 		}
 		else { /* Ae+/-B*/
 			++It_Count;
 			if (*It_Count != '+' && *It_Count != '-'){
-				throw BadExp(std::string("Incorrect Float Number in Line " + to_str(Line + 1) + ", Column " + to_str(Column + 1) + ". There is no +/- after e"));
+				throw BadExp(Line + 1, Column + 1);
 			}
 			++It_Count;
 		}
 		do	++It_Count; while (*It_Count >= '0' && *It_Count <= '9');
 		if (!CanNumberLexem(It_Count)){
-			throw BadChar(std::string("Unknown Symbol in Line " + to_str(Line + 1) + ", Column " + to_str(Column + 1)));
+			throw BadChar(Line + 1, Column + 1);
 		}
 		SetToken(Line, Column, String.substr(It - String.cbegin(), It_Count - It), It_Count - It, TK_REAL_VALUE);
 	} /* Integer */
 	else{
 		if (!CanNumberLexem(It_Count)){
-			throw BadChar(std::string("Unknown Symbol in Line " + to_str(Line + 1) + ", Column " + to_str(Column + 1)));
+			throw BadChar(Line + 1 ,Column + 1);
 		}
 		SetToken(Line, Column, String.substr(It - String.cbegin(), It_Count - It), It_Count - It, TK_INTEGER_VALUE);
 	}
@@ -108,7 +108,7 @@ void Lexer::SetNumberHex(const int Line, const int Column){
 		++It_Count;
 	}
 	if (It_Count - It == 1 || !CanNumberLexem(It_Count)){
-		throw BadChar(std::string("Unknown Symbol in Line " + to_str(Line + 1) + ", Column " + to_str(Column + 1)));
+		throw BadChar(Line + 1, Column + 1);
 	}
 	SetToken(Line, Column, String.substr(It - String.cbegin() + 1, It_Count - It - 1), It_Count - It, TK_HEX_VALUE);
 }
@@ -118,7 +118,7 @@ void Lexer::SetComment(const int Line, const int Column){
 	int Open_Brace_Count = 1;
 	while (Open_Brace_Count > 0){
 		if (*It_Count == EOF){
-			throw BadEOF("Unexpected end of file in Line " + to_str(Line + 1));
+			throw BadEOF(Line + 1);
 		}
 		if (*It_Count == '}'){
 			--Open_Brace_Count;
@@ -145,8 +145,8 @@ void Lexer::SetString(const int Line, const int Column){
 	case '\'':
 		SetToken(Line, Column, String.substr(It - String.cbegin() + 1, It_Count - It - 1), It_Count - It + 1, TK_STRING_VALUE);
 		break;
-	case '\n': throw BadNL(std::string("Incorrect Symbol in Line " + to_str(Line + 1) + " Column " + to_str(Column + 1)));
-	case EOF: throw BadEOF("Unexpected end of file in Line " + to_str(Line + 1)); 
+	case '\n': throw BadNL(Line + 1, Column + 1);
+	case EOF: throw BadEOF(Line + 1); 
 	}
 }
 
@@ -156,88 +156,78 @@ void Lexer::SetToken(const int Line, const int Column, const std::string Source,
 }
 
 void Lexer::Next(){
-	try {
-		if (!IsTokens)
-			return;
-		Pos.Column = It - String.cbegin() + Column_Offset; 
-		if ((*It < 0 || *It > 127) && *It != EOF){
-			throw BadCC(std::string("Incorrect Symbol in Line " + to_str(Pos.Line + 1) + " Column " + to_str(Pos.Column + 1)));
-		}
-
-		while (*It == ' ' || *It == '\t'){  /* Find Next Possible Token */
-			if (*It == ' '){
-				++Pos.Column;
-			}
-			else if (*It == '\t'){
-				Pos.Column += 4;
-				Column_Offset += 3;
-			}
-			++It;
-		}
-
-		if (*It >= '0' && *It <= '9'){
-			SetNumberNotHex(Pos.Line, Pos.Column); /* set float or integer value */
-			return;
-		}
-		else if (*It == '$'){
-			SetNumberHex(Pos.Line, Pos.Column); /* set hex value */
-			return;
-		}
-		else if (*It == '{'){
-			SetComment(Pos.Line, Pos.Column); /* cut comment */
-			return;
-		}
-		else if (String.cend() - It > 2 && *It == '/' && *(It + 1) == '/'){
-			SetToken(Pos.Line, Pos.Column, "", 0, NOT_TOKEN); /* cut comment */
-			this->NewString();
-			return;
-		}
-		else if (*It == '\''){
-			SetString(Pos.Line, Pos.Column); /* set string value */
-			return;
-		}
-		else if (*It == '\n'){
-			SetToken(Pos.Line, Pos.Column, "", 0, NOT_TOKEN); /* end string */
-			this->NewString();
-			return;
-		}
-		else if (*It == EOF){
-			SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), 1), 1, NOT_TOKEN); /* end file */
-			IsTokens = false;
-			return;
-		}
-		for (int i = 0; i < sizeof(Reserved_Words) / sizeof(TokenType); ++i){ /* Other Tokens from array 'Special_Symbols' */
-			int len = strlen(Tokens_str[Reserved_Words[i]]);
-			if (_strnicmp(String.substr(It - String.cbegin(), len).c_str(), Tokens_str[Reserved_Words[i]], len) == 0){
-				SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), len), len, Reserved_Words[i]);
-				return;
-			}
-		}
-
-		for (int i = 0; i < sizeof(Operators) / sizeof(TokenType); ++i){ /* Other Tokens from array 'Operators' */
-			int len = strlen(Tokens_str[Operators[i]]);
-			if (String.compare(It - String.cbegin(), len, Tokens_str[Operators[i]]) == 0){
-				SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), len), len, Operators[i]);
-				return;
-			}
-		}
-
-		std::string::iterator It_Count = It + 1; /* set identifier or error */
-		if (!(*It >= 'a' && *It <= 'z' || *It >= 'A' && *It <= 'Z' || *It >= '0' && *It <= '9' || *It == '_')){
-			throw BadNL(std::string("Incorrect Symbol in Line " + to_str(Pos.Line + 1) + " Column " + to_str(Pos.Line + 1)));
-		}
-		while (*It_Count >= 'a' && *It_Count <= 'z' || *It_Count >= 'A' && *It_Count <= 'Z' || *It_Count >= '0' && *It_Count <= '9' || *It_Count == '_'){
-			++It_Count;
-		}
-		SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), It_Count - It), It_Count - It, TK_IDENTIFIER);
+	if (!IsTokens)
+		return;
+	Pos.Column = It - String.cbegin() + Column_Offset; 
+	if ((*It < 0 || *It > 127) && *It != EOF){
+		throw BadCC(Pos.Line + 1, Pos.Column + 1);
 	}
-	catch (BadNL){ TK.Type = NOT_TOKEN; IsTokens = false; }
-	catch (BadCC){ TK.Type = NOT_TOKEN; IsTokens = false; }
-	catch (BadEOF){ TK.Type = NOT_TOKEN; IsTokens = false; }
-	catch (BadChar){ TK.Type = NOT_TOKEN; IsTokens = false; }
-	catch (BadExp){ TK.Type = NOT_TOKEN; IsTokens = false; }
-	catch (NoFract){ TK.Type = NOT_TOKEN; IsTokens = false; }
+			while (*It == ' ' || *It == '\t'){  /* Find Next Possible Token */
+		if (*It == ' '){
+			++Pos.Column;
+		}
+		else if (*It == '\t'){
+			Pos.Column += 4;
+			Column_Offset += 3;
+		}
+		++It;
+	}
 
+	if (*It >= '0' && *It <= '9'){
+		SetNumberNotHex(Pos.Line, Pos.Column); /* set float or integer value */
+		return;
+	}
+	else if (*It == '$'){
+		SetNumberHex(Pos.Line, Pos.Column); /* set hex value */
+		return;
+	}
+	else if (*It == '{'){
+		SetComment(Pos.Line, Pos.Column); /* cut comment */
+		return;
+	}
+	else if (String.cend() - It > 2 && *It == '/' && *(It + 1) == '/'){
+		SetToken(Pos.Line, Pos.Column, "", 0, NOT_TOKEN); /* cut comment */
+		this->NewString();
+		return;
+	}
+	else if (*It == '\''){
+		SetString(Pos.Line, Pos.Column); /* set string value */
+		return;
+	}
+	else if (*It == '\n'){
+		SetToken(Pos.Line, Pos.Column, "", 0, NOT_TOKEN); /* end string */
+		this->NewString();
+		return;
+	}
+	else if (*It == EOF){
+		SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), 1), 1, NOT_TOKEN); /* end file */
+		IsTokens = false;
+		return;
+	}
+	for (int i = 0; i < sizeof(Reserved_Words) / sizeof(TokenType); ++i){ /* Other Tokens from array 'Special_Symbols' */
+		int len = strlen(Tokens_str[Reserved_Words[i]]);
+		if (_strnicmp(String.substr(It - String.cbegin(), len).c_str(), Tokens_str[Reserved_Words[i]], len) == 0){
+			SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), len), len, Reserved_Words[i]);
+			return;
+		}
+	}
+
+	for (int i = 0; i < sizeof(Operators) / sizeof(TokenType); ++i){ /* Other Tokens from array 'Operators' */
+		int len = strlen(Tokens_str[Operators[i]]);
+		if (String.compare(It - String.cbegin(), len, Tokens_str[Operators[i]]) == 0){
+			SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), len), len, Operators[i]);
+			return;
+		}
+	}
+
+	std::string::iterator It_Count = It + 1; /* set identifier or error */
+	if (!(*It >= 'a' && *It <= 'z' || *It >= 'A' && *It <= 'Z' || *It >= '0' && *It <= '9' || *It == '_')){
+		throw BadNL(Pos.Line + 1, Pos.Column + 1);
+	}
+	while (*It_Count >= 'a' && *It_Count <= 'z' || *It_Count >= 'A' && *It_Count <= 'Z' || *It_Count >= '0' && *It_Count <= '9' || *It_Count == '_'){
+		++It_Count;
+	}
+	SetToken(Pos.Line, Pos.Column, String.substr(It - String.cbegin(), It_Count - It), It_Count - It, TK_IDENTIFIER);
 }
 
 void Lexer::Print(){
@@ -260,10 +250,10 @@ void Lexer::NewString(){
 	Column_Offset = 0;
 }
 
-Lexer::Lexer(const char* filename) : TK(), f_in(fopen(filename, "r")), IsTokens(true), Pos(-1, 0){
+Lexer::Lexer(const char* filename) : TK(), f_in(fopen(filename, "r")), IsTokens(true), Pos(-1, -1){
 	NewString();
 }
 
-Lexer::Lexer(FILE *f) : TK(), f_in(f), IsTokens(true), Pos(-1, 0){
+Lexer::Lexer(FILE *f) : TK(),  f_in(f), IsTokens(true), Pos(-1, -1){
 	NewString();
 }
