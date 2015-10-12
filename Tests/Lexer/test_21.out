@@ -1,0 +1,6 @@
+1	1	function	function
+1	23	identifier	asd
+2	1	goto	goto
+3	1	mod	mod
+4	1	of	of
+4	26	integer_value	123

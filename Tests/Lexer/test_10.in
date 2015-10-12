@@ -1,0 +1,10 @@
+program Test;
+var 
+	integer a;
+	string b;
+	Integer a;
+begin
+	integer a = 5;
+	b = 'Hello world\n';
+	c = 10;
+end	
