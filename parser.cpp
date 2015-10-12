@@ -1,7 +1,9 @@
 #include "parser.h"
 #include <iostream>
 #include "errors.h"
-#include <vector>
+#include <set>
+
+using namespace std;
 
 #define indent "   "
 
@@ -9,7 +11,7 @@ auto start_expr_tk = { TK_INTEGER_VALUE, TK_REAL_VALUE, TK_OPEN_BRACKET, TK_IDEN
 auto rel_op = { TK_GREAT, TK_GREAT_EQUAL, TK_LESS, TK_LESS_EQUAL, TK_EQUAL, TK_NOT_EQUAL };
 auto add_op = { TK_PLUS, TK_MINUS, TK_OR, TK_XOR };
 auto mul_op = { TK_MUL, TK_DIV, TK_DIV_INT, TK_MOD, TK_AND, TK_SHL, TK_SHR };
-std::vector<TokenType> vec_start_expr_tk(start_expr_tk), vec_rel_op(rel_op), vec_add_op(add_op), vec_mul_op(mul_op);
+set<TokenType> vec_start_expr_tk(start_expr_tk), vec_rel_op(rel_op), vec_add_op(add_op), vec_mul_op(mul_op);
 
 Expr::Expr(){}
 
@@ -48,18 +50,14 @@ void ExprConst::Print(int Spaces){
 }
 
 void Parser::Print(){
-	/*if (State == St_Bad){
-		BadEOF("Syntax error: expected expression but \"end of file\" found");
-		return;
-	}*/
 	Exp->Print(0);
 }
 
-Parser::Parser(const char* filename) : Lex(filename), State(St_Good){
+Parser::Parser(const char* filename) : Lex(filename){
 	while (Lex.isToken()){
 		Lex.Next();
-		if (std::find(vec_start_expr_tk.begin(), vec_start_expr_tk.end(), Lex.Get().Type) != vec_start_expr_tk.end()){
-			Exp = ParseExpr();
+		if (vec_start_expr_tk.find(Lex.Get().Type) != vec_start_expr_tk.end()){
+			Exp = ParseByParam(St_Parse_Expr);
 			continue;
 		}
 			/*if (Lex.Get().Type == TK_IF){}
@@ -78,69 +76,68 @@ Parser::Parser(const char* filename) : Lex(filename), State(St_Good){
 	}
 }
 
-Expr* Parser::ParseExpr(){
-	auto Left = ParseSimpleExpr();
-	while (std::find(vec_rel_op.begin(), vec_rel_op.end(), Lex.Get().Type) != vec_rel_op.end()){
-		Token Op = Lex.Get();
-		Lex.Next();
-		auto Right = ParseSimpleExpr();
-		Left = (Expr*)new ExprBinOp(Op, Left, Right);
-	}
-	return Left;
-}
-
-Expr* Parser::ParseSimpleExpr(){
-	auto Left = ParseTerm();
-	while (std::find(vec_add_op.begin(), vec_add_op.end(), Lex.Get().Type) != vec_add_op.end()){
-		Token Op = Lex.Get();
-		Lex.Next();
-		auto Right = ParseTerm();
-		Left = (Expr*)new ExprBinOp(Op, Left, Right);
-	}
-	return Left;
-}
-
-Expr* Parser::ParseTerm(){
-	auto Left = ParseFactor();
-	while (std::find(vec_mul_op.begin(), vec_mul_op.end(), Lex.Get().Type) != vec_mul_op.end()){
-		Token Op = Lex.Get();
-		Lex.Next();
-		auto Right = ParseFactor();
-		Left = (Expr*)new ExprBinOp(Op, Left, Right);
-	}
-	return Left;
-}
-
-Expr* Parser::ParseFactor(){
-	auto TK = Lex.Get();
-	Lex.Next();
-	if (TK.Type == TK_MINUS || TK.Type == TK_PLUS){
-		auto ExpNow = ParseExpr();
-		return (Expr*)new ExprUnarOp(TK, ExpNow);
-	}
-	if (TK.Type == TK_OPEN_BRACKET){
-		auto ExpNow = ParseExpr();
-		if (Lex.Get().Type != TK_CLOSE_BRACKET){
-			throw AbsentBrackect(Lex.Get().Source);
+Expr* Parser::ParseByParam(PState State){
+	if (State == St_Parse_Expr){
+		auto Left = ParseByParam(St_Parse_Simple_Expr);
+		while (vec_rel_op.find(Lex.Get().Type) != vec_rel_op.end()){
+			Token Op = Lex.Get();
+			Lex.Next();
+			auto Right = ParseByParam(St_Parse_Simple_Expr);
+			Left = (Expr*)new ExprBinOp(Op, Left, Right);
 		}
+		return Left;
+	}
+	if (State == St_Parse_Simple_Expr){
+		auto Left = ParseByParam(St_Parse_Term);
+		while (vec_add_op.find(Lex.Get().Type) != vec_add_op.end()){
+			Token Op = Lex.Get();
+			Lex.Next();
+			auto Right = ParseByParam(St_Parse_Term);
+			Left = (Expr*)new ExprBinOp(Op, Left, Right);
+		}
+		return Left;
+	}
+	if (State == St_Parse_Term){
+		auto Left = ParseByParam(St_Parse_Factor);
+		while (vec_mul_op.find(Lex.Get().Type) != vec_mul_op.end()){
+			Token Op = Lex.Get();
+			Lex.Next();
+			auto Right = ParseByParam(St_Parse_Factor);
+			Left = (Expr*)new ExprBinOp(Op, Left, Right);
+		}
+		return Left;
+	}
+	if (State == St_Parse_Factor){
+		auto TK = Lex.Get();
 		Lex.Next();
-		return ExpNow;
+		if (TK.Type == TK_MINUS || TK.Type == TK_PLUS){
+			auto ExpNow = ParseByParam(St_Parse_Expr);
+			return (Expr*)new ExprUnarOp(TK, ExpNow);
+		}
+		if (TK.Type == TK_OPEN_BRACKET){
+			auto ExpNow = ParseByParam(St_Parse_Expr);
+			if (Lex.Get().Type != TK_CLOSE_BRACKET){
+				throw AbsentBrackect(Lex.Get().Source);
+			}
+			Lex.Next();
+			return ExpNow;
+		}
+		if (TK.Type == TK_INTEGER_VALUE){
+			return (Expr*)new ExprIntConst(TK);
+		}
+		if (TK.Type == TK_REAL_VALUE){
+			return (Expr*)new ExprRealConst(TK);
+		}
+		if (TK.Type == TK_TRUE || TK.Type == TK_FALSE){
+			return (Expr*)new ExprBoolConst(TK);
+		}
+		if (TK.Type == TK_IDENTIFIER){
+			return (Expr*)new ExprVar(TK);
+		}
+		if (TK.Type == TK_NOT){
+			auto ExpNow = ParseByParam(St_Parse_Factor);
+			return (Expr*)new ExprUnarOp(TK, ExpNow);
+		}
+		throw IllegalExpr();
 	}
-	if (TK.Type == TK_INTEGER_VALUE){
-		return (Expr*)new ExprIntConst(TK);
-	}
-	if (TK.Type == TK_REAL_VALUE){
-		return (Expr*)new ExprRealConst(TK);
-	}
-	if (TK.Type == TK_TRUE || TK.Type == TK_FALSE){
-		return (Expr*)new ExprBoolConst(TK);
-	}
-	if (TK.Type == TK_IDENTIFIER){
-		return (Expr*)new ExprVar(TK);
-	}
-	if (TK.Type == TK_NOT){
-		auto ExpNow = ParseFactor();
-		return (Expr*)new ExprUnarOp(TK, ExpNow);
-	}
-	throw IllegalExpr();
 }

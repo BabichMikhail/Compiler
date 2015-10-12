@@ -3,8 +3,8 @@
 
 #include "lexer.h"
 
-enum Parser_State{
-	St_Bad, St_Good
+enum PState{
+	St_Parse_Expr, St_Parse_Simple_Expr, St_Parse_Term, St_Parse_Factor
 };
 
 class Expr{	
@@ -64,14 +64,10 @@ class Parser{
 private:
 	Lexer Lex;
 	Expr* Exp;
-	Parser_State State;
+	PState State;
 public:
-	const bool is_OK_State(){ return State == St_Good; }
 	Parser(const char* filename);
-	Expr* ParseExpr();
-	Expr* ParseSimpleExpr();
-	Expr* ParseTerm();
-	Expr* ParseFactor();
+	Expr* ParseByParam(PState State);
 	void Print();
 };
 
