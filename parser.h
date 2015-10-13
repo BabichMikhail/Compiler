@@ -2,14 +2,19 @@
 #define PARSER_H
 
 #include "lexer.h"
+#include <vector>
+
+using namespace std;
 
 enum PState{
-	St_Parse_Expr, St_Parse_Simple_Expr, St_Parse_Term, St_Parse_Factor
+	St_Parse_Expr, St_Parse_Simple_Expr, St_Parse_Term, St_Parse_Factor, St_Assign, St_Record, St_ArrayIndex, St_Function
 };
 
-class Expr{	
+/* Expr */ 
+class Expr{
 public:
-	Expr();
+	int IndType;
+	Expr(int IT);
 	virtual void Print(int Spaces){};
 };
 
@@ -19,7 +24,7 @@ private:
 	Token Op;
 	Expr* Right;
 public:
-	ExprBinOp(Token Op, Expr* L, Expr* R);
+	ExprBinOp(Expr* Left, Token Op, Expr* Right);
 	void Print(int Spaces);
 };
 
@@ -34,30 +39,73 @@ public:
 
 class ExprConst : Expr{
 private:
-	Token Val;
+	Token Value;
 public:
-	ExprConst(Token Val);
+	ExprConst(Token Value);
 	virtual void Print(int Spaces);
 };
 
 class ExprBoolConst : ExprConst{
 public:
-	ExprBoolConst(Token Val);
+	ExprBoolConst(Token Value);
 };
 
 class ExprIntConst : ExprConst{
 public:
-	ExprIntConst(Token Val);
+	ExprIntConst(Token Value);
 };
 
 class ExprRealConst : ExprConst{
 public:
-	ExprRealConst(Token Val);
+	ExprRealConst(Token Value);
 };
 
-class ExprVar : ExprConst{
+class ExprVar : Expr{
+private:
+	Token Var;
 public:
 	ExprVar(Token Var);
+	void Print(int Spaces);
+};
+
+/* Assign */
+class Assign : Expr{
+private:
+	ExprVar* Left;
+	Expr* Right;
+public:
+	Assign(ExprVar* Left, Expr* Right);
+	void Print(int Spaces);
+};
+
+/* Array Index */
+class ArrayIndex : Expr{
+private:
+	ExprVar* Left;
+	Expr* Right;
+public:
+	ArrayIndex(ExprVar* Left, Expr* Right);
+	void Print(int Spaces);
+};
+
+/* Function */
+class Function : Expr{
+private:
+	ExprVar* Left;
+	vector<Expr*> Rights;
+public:
+	Function(ExprVar* Left, vector<Expr*> Rights);
+	void Print(int Spaces);
+};
+
+/* Record */
+class Record : Expr{
+private:
+	Expr* Left;
+	ExprVar* Right;
+public:
+	Record(Expr* Left, ExprVar* Right);
+	void Print(int Spaces);
 };
 
 class Parser{
@@ -67,7 +115,8 @@ private:
 	PState State;
 public:
 	Parser(const char* filename);
-	Expr* ParseByParam(PState State);
+	Expr* ParseExprByParam(PState State);
+	Expr* ParseIdentifier();
 	void Print();
 };
 

@@ -38,12 +38,12 @@ public:
 
 class BadEOF: public Error{
 public: 
-	BadEOF(int Line) : Error("Unexpected end of file in Line " + to_string(Line)){};
+	BadEOF(int Line) : Error("Unexpected EOF in Line " + to_string(Line)){};
 };
 
-class AbsentBrackect: public Error{
+class UnexpectedSymbol: public Error{
 public: 
-	AbsentBrackect(std::string S) : Error("Fatal: Syntax error, ')' excepted but \"" + S + "\" found"){}
+	UnexpectedSymbol(std::string c, std::string S) : Error("Fatal: Syntax error, '" + c + "' excepted but \"" + S + "\" found"){}
 };
 
 class IllegalExpr: public Error{

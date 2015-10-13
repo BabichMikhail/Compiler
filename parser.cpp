@@ -6,31 +6,41 @@
 using namespace std;
 
 #define indent "   "
+#define CheckAssign(Right, c) if (Right->IndType == AssignExp) throw UnexpectedSymbol(c, ":=")
+
+enum TypeExpr { BinExp, UnarExp, ConstExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
 
 auto start_expr_tk = { TK_INTEGER_VALUE, TK_REAL_VALUE, TK_OPEN_BRACKET, TK_IDENTIFIER, TK_PLUS, TK_MINUS, TK_TRUE, TK_FALSE, TK_NOT };
 auto rel_op = { TK_GREAT, TK_GREAT_EQUAL, TK_LESS, TK_LESS_EQUAL, TK_EQUAL, TK_NOT_EQUAL };
 auto add_op = { TK_PLUS, TK_MINUS, TK_OR, TK_XOR };
 auto mul_op = { TK_MUL, TK_DIV, TK_DIV_INT, TK_MOD, TK_AND, TK_SHL, TK_SHR };
+auto simp_stat = { TK_ASSIGNED, TK_OPEN_SQUARE_BRACKET, TK_OPEN_BRACKET, TK_POINT };
 set<TokenType> vec_start_expr_tk(start_expr_tk), vec_rel_op(rel_op), vec_add_op(add_op), vec_mul_op(mul_op);
 
-Expr::Expr(){}
+Expr::Expr(int IT): IndType(IT){}
 
-ExprBinOp::ExprBinOp(Token Op, Expr* L, Expr* R) : Op(Op), Left(L), Right(R){}
+ExprBinOp::ExprBinOp(Expr* Left, Token Op, Expr* Right) : Left(Left), Op(Op), Right(Right), Expr(BinExp){}
 
-ExprUnarOp::ExprUnarOp(Token Op, Expr* Exp) : Op(Op), Exp(Exp){}
+ExprUnarOp::ExprUnarOp(Token Op, Expr* Exp) : Op(Op), Exp(Exp), Expr(UnarExp){}
 
-ExprConst::ExprConst(Token Val) : Val(Val){}
-ExprBoolConst::ExprBoolConst(Token Val) : ExprConst(Val){}
-ExprIntConst::ExprIntConst(Token Val) : ExprConst(Val){}
-ExprRealConst::ExprRealConst(Token Val) : ExprConst(Val){}
-ExprVar::ExprVar(Token Var) : ExprConst(Var){}
+ExprConst::ExprConst(Token Value) : Value(Value), Expr(ConstExp){}
+ExprBoolConst::ExprBoolConst(Token Value) : ExprConst(Value){}
+ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value){}
+ExprRealConst::ExprRealConst(Token Value) : ExprConst(Value){}
+
+ExprVar::ExprVar(Token Var) : Var(Var), Expr(VarExp){}
+
+ArrayIndex::ArrayIndex(ExprVar* Left, Expr* Right) : Left(Left), Right(Right), Expr(ArrayExp){};
+Assign::Assign(ExprVar* Left, Expr* Right) : Left(Left), Right(Right), Expr(AssignExp){}
+Function::Function(ExprVar* Left, vector<Expr*> Rights) : Left(Left), Rights(Rights), Expr(FunctionExp){}
+Record::Record(Expr* Left, ExprVar* Right) : Left(Left), Right(Right), Expr(RecordExp){}
 
 void ExprUnarOp::Print(int Spaces){
 	this->Exp->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
 		std::cout << indent;
 	}
-	std::cout << this->Op.Source.c_str() << std::endl;
+	cout << this->Op.Source.c_str() << endl;
 }
 
 void ExprBinOp::Print(int Spaces){
@@ -38,7 +48,7 @@ void ExprBinOp::Print(int Spaces){
 	for (int i = 0; i < Spaces; ++i){
 		std::cout << indent;
 	}
-	std::cout << this->Op.Source.c_str() << std::endl;
+	cout << this->Op.Source.c_str() << endl;
 	this->Left->Print(Spaces + 1);
 }
 
@@ -46,78 +56,120 @@ void ExprConst::Print(int Spaces){
 	for (int i = 0; i < Spaces; ++i){
 		std::cout << indent;
 	}
-	std::cout << this->Val.Source.c_str() << std::endl;
+	cout << this->Value.Source.c_str() << endl;
+}
+
+void ExprVar::Print(int Spaces){
+	for (int i = 0; i < Spaces; ++i){
+		std::cout << indent;
+	}
+	cout << this->Var.Source.c_str() << endl;
+}
+
+void Assign::Print(int Spaces){
+	this->Right->Print(Spaces + 1);
+	for (int i = 0; i < Spaces; ++i){
+		std::cout << indent;
+	}
+	cout << ":="<< endl;
+	this->Left->Print(Spaces + 1);
+}
+
+void Function::Print(int Spaces){
+	for (int i = 0; i < Rights.size(); ++i){
+		this->Rights[i]->Print(Spaces + 1);
+	}
+	for (int i = 0; i < Spaces; ++i){
+		std::cout << indent;
+	}
+	cout << "()" << endl;
+	this->Left->Print(Spaces + 1);
+}
+
+void Record::Print(int Spaces){
+	this->Right->Print(Spaces + 1);
+	for (int i = 0; i < Spaces; ++i){
+		std::cout << indent;
+	}
+	cout << "." << endl;
+	this->Left->Print(Spaces + 1);
+}
+
+void ArrayIndex::Print(int Spaces){
+	this->Right->Print(Spaces + 1);
+	for (int i = 0; i < Spaces; ++i){
+		std::cout << indent;
+	}
+	cout << "[]" << endl;
+	this->Left->Print(Spaces + 1);
 }
 
 void Parser::Print(){
-	Exp->Print(0);
+	this->Exp->Print(0);
 }
 
 Parser::Parser(const char* filename) : Lex(filename){
 	while (Lex.isToken()){
 		Lex.Next();
 		if (vec_start_expr_tk.find(Lex.Get().Type) != vec_start_expr_tk.end()){
-			Exp = ParseByParam(St_Parse_Expr);
+			Exp = ParseExprByParam(St_Parse_Expr);
 			continue;
 		}
-			/*if (Lex.Get().Type == TK_IF){}
-			if (Lex.Get().Type == TK_BEGIN){}
-			if (Lex.Get().Type == TK_PROGRAM){}
-			if (Lex.Get().Type == TK_PROCEDURE){}
-			if (Lex.Get().Type == TK_FUNCTION){}
-			if (Lex.Get().Type == TK_VAR){}
-			if (Lex.Get().Type == TK_CONST){}
-			if (Lex.Get().Type == TK_FOR){}
-			if (Lex.Get().Type == TK_WHILE){}
-			if (Lex.Get().Type == TK_GOTO){}
-			if (Lex.Get().Type == TK_RECORD){}
-			if (Lex.Get().Type == TK_REPEAT){}*/
-			//throw IllegalExpr("Error: Illegal Expression");
 	}
 }
 
-Expr* Parser::ParseByParam(PState State){
+Expr* Parser::ParseExprByParam(PState State){
 	if (State == St_Parse_Expr){
-		auto Left = ParseByParam(St_Parse_Simple_Expr);
+		auto Left = ParseExprByParam(St_Parse_Simple_Expr);
 		while (vec_rel_op.find(Lex.Get().Type) != vec_rel_op.end()){
 			Token Op = Lex.Get();
 			Lex.Next();
-			auto Right = ParseByParam(St_Parse_Simple_Expr);
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
+			auto Right = ParseExprByParam(St_Parse_Simple_Expr);
+			CheckAssign(Right, ";");
+			Left = (Expr*)new ExprBinOp(Left, Op, Right);
 		}
 		return Left;
 	}
+
 	if (State == St_Parse_Simple_Expr){
-		auto Left = ParseByParam(St_Parse_Term);
+		auto Left = ParseExprByParam(St_Parse_Term);
 		while (vec_add_op.find(Lex.Get().Type) != vec_add_op.end()){
 			Token Op = Lex.Get();
 			Lex.Next();
-			auto Right = ParseByParam(St_Parse_Term);
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
+			auto Right = ParseExprByParam(St_Parse_Term);
+			CheckAssign(Right, ";");
+			Left = (Expr*)new ExprBinOp(Left, Op, Right);
 		}
 		return Left;
 	}
+
 	if (State == St_Parse_Term){
-		auto Left = ParseByParam(St_Parse_Factor);
+		auto Left = ParseExprByParam(St_Parse_Factor);
 		while (vec_mul_op.find(Lex.Get().Type) != vec_mul_op.end()){
 			Token Op = Lex.Get();
 			Lex.Next();
-			auto Right = ParseByParam(St_Parse_Factor);
-			Left = (Expr*)new ExprBinOp(Op, Left, Right);
+			auto Right = ParseExprByParam(St_Parse_Factor);
+			CheckAssign(Right, ";");
+			Left = (Expr*)new ExprBinOp(Left, Op, Right);
 		}
 		return Left;
 	}
+
 	if (State == St_Parse_Factor){
 		auto TK = Lex.Get();
+		if (TK.Type == TK_IDENTIFIER){
+			auto ExpNow = ParseIdentifier();
+			return ExpNow;
+		}
 		Lex.Next();
 		if (TK.Type == TK_MINUS || TK.Type == TK_PLUS){
-			auto ExpNow = ParseByParam(St_Parse_Expr);
+			auto ExpNow = ParseExprByParam(St_Parse_Expr);
 			return (Expr*)new ExprUnarOp(TK, ExpNow);
 		}
 		if (TK.Type == TK_OPEN_BRACKET){
-			auto ExpNow = ParseByParam(St_Parse_Expr);
+			auto ExpNow = ParseExprByParam(St_Parse_Expr);
 			if (Lex.Get().Type != TK_CLOSE_BRACKET){
-				throw AbsentBrackect(Lex.Get().Source);
+				throw UnexpectedSymbol(")", Lex.Get().Source);
 			}
 			Lex.Next();
 			return ExpNow;
@@ -131,13 +183,67 @@ Expr* Parser::ParseByParam(PState State){
 		if (TK.Type == TK_TRUE || TK.Type == TK_FALSE){
 			return (Expr*)new ExprBoolConst(TK);
 		}
-		if (TK.Type == TK_IDENTIFIER){
-			return (Expr*)new ExprVar(TK);
-		}
 		if (TK.Type == TK_NOT){
-			auto ExpNow = ParseByParam(St_Parse_Factor);
+			auto ExpNow = ParseExprByParam(St_Parse_Factor);
 			return (Expr*)new ExprUnarOp(TK, ExpNow);
 		}
 		throw IllegalExpr();
 	}
+
+	if (State == St_Record){
+		Lex.Next();
+		if (Lex.Get().Type != TK_IDENTIFIER){
+			throw UnexpectedSymbol("identifier", Lex.Get().Source);
+		}
+		auto Right = (Expr*)new ExprVar(Lex.Get());
+		Lex.Next();
+		return Right;
+	}
+}
+
+Expr* Parser::ParseIdentifier(){
+	auto TK = Lex.Get();
+	Lex.Next();
+	auto ExpNow = (Expr*)new ExprVar(TK);
+	while (Lex.Get().Type == TK_ASSIGNED || Lex.Get().Type == TK_OPEN_SQUARE_BRACKET || Lex.Get().Type == TK_OPEN_BRACKET || Lex.Get().Type == TK_POINT){
+		if (Lex.Get().Type == TK_ASSIGNED){
+			Lex.Next();
+			auto Right = ParseExprByParam(St_Parse_Expr);
+			CheckAssign(Right, ";");
+			ExpNow = (Expr*)new Assign((ExprVar*)ExpNow, Right);
+		}
+		else if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
+			Lex.Next();
+			auto Right = ParseExprByParam(St_Parse_Expr);
+			CheckAssign(Right, "]");
+			ExpNow = (Expr*)new ArrayIndex((ExprVar*)ExpNow, Right);
+			while (Lex.Get().Type == TK_COMMA){
+				Lex.Next();
+				Right = ParseExprByParam(St_Parse_Expr);
+				CheckAssign(Right, "]");
+				ExpNow = (Expr*)new ArrayIndex((ExprVar*)ExpNow, Right);
+			}
+			if (Lex.Get().Type != TK_CLOSE_SQUARE_BRACKET){
+				throw UnexpectedSymbol("]", Lex.Get().Source);
+			}
+			Lex.Next();
+		}
+		else if (Lex.Get().Type == TK_OPEN_BRACKET){
+			vector<Expr*> Rights;
+			Lex.Next();
+			Rights.push_back(ParseExprByParam(St_Parse_Expr));
+			CheckAssign(Rights[0], ")");
+			while (Lex.Get().Type == TK_COMMA){
+				Lex.Next();
+				Rights.push_back(ParseExprByParam(St_Parse_Expr));
+				CheckAssign(Rights[Rights.size() - 1], ")");
+			}
+			ExpNow = (Expr*)new Function((ExprVar*)ExpNow, Rights);
+		}
+		else if (Lex.Get().Type == TK_POINT){
+			auto Right = ParseExprByParam(St_Record);
+			ExpNow = (Expr*)new Record(ExpNow, (ExprVar*)Right);
+		}
+	}
+	return ExpNow;
 }

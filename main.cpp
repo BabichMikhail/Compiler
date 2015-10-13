@@ -34,7 +34,7 @@ int main(int argc, char **argv){
 	}
 
 	if (argc > 4){
-		cout << "Too many argument" << endl;
+		cout << "Too many arguments" << endl;
 	}
 	ofstream output;
 	output.open(argv[3]);
