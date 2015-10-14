@@ -7,7 +7,7 @@
 using namespace std;
 
 enum PState{
-	St_Parse_Expr, St_Parse_Simple_Expr, St_Parse_Term, St_Parse_Factor, St_Assign, St_Record, St_ArrayIndex, St_Function
+	St_Parse_Expr, St_Parse_Simple_Expr, St_Parse_Term, St_Parse_Factor
 };
 
 /* Expr */ 

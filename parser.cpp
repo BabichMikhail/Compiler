@@ -189,16 +189,6 @@ Expr* Parser::ParseExprByParam(PState State){
 		}
 		throw IllegalExpr();
 	}
-
-	if (State == St_Record){
-		Lex.Next();
-		if (Lex.Get().Type != TK_IDENTIFIER){
-			throw UnexpectedSymbol("identifier", Lex.Get().Source);
-		}
-		auto Right = (Expr*)new ExprVar(Lex.Get());
-		Lex.Next();
-		return Right;
-	}
 }
 
 Expr* Parser::ParseIdentifier(){
@@ -241,7 +231,12 @@ Expr* Parser::ParseIdentifier(){
 			ExpNow = (Expr*)new Function((ExprVar*)ExpNow, Rights);
 		}
 		else if (Lex.Get().Type == TK_POINT){
-			auto Right = ParseExprByParam(St_Record);
+			Lex.Next();
+			if (Lex.Get().Type != TK_IDENTIFIER){
+				throw UnexpectedSymbol("identifier", Lex.Get().Source);
+			}
+			auto Right = (Expr*)new ExprVar(Lex.Get());
+			Lex.Next();
 			ExpNow = (Expr*)new Record(ExpNow, (ExprVar*)Right);
 		}
 	}
