@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include "errors.h"
 
 #define First 0
 
@@ -41,16 +42,10 @@ enum TokenType{
 
 #define NUM_RESERVED (TK_EOF - TK_ABSOLUTE + 1)
 
-typedef struct Position{
-	Position(const int L = 0, const int C = 0) : Line(L), Column(C){};
-	Position(const Position& Pos) : Line(Pos.Line), Column(Pos.Column){};
-	int Line, Column;
-} Position;
-
 class Token{
 private:
 	Position Pos;
-	void Set(const int Line, const int Column, const std::string Source, const TokenType Type);
+	void Set(const Position Pos, const std::string Source, const TokenType Type);
 public:
 	friend class Lexer;
 	TokenType Type;
@@ -58,28 +53,28 @@ public:
 
 	Token() : Pos(0, 0), Source(), Type(NOT_TOKEN){};
 	Token(const Token &TK) : Pos(TK.Pos), Source(TK.Source), Type(TK.Type){};
-	Token(const int L, const int C, const std::string S, const TokenType T) : Pos(L, C), Source(S), Type(T){};
+	Token(const Position Pos, const string S, const TokenType T) : Pos(Pos), Source(S), Type(T){};
 };
 
 class Lexer{
 private:
 	Token TK;
 	FILE *f_in;
-	std::string String;
-	std::string::iterator It;
+	string String;
+	string::iterator It;
 	Position Pos;
 	int Column_Offset; 
 	bool IsTokens;
 
-	bool CanNumberLexem(const std::string::iterator It);
-	bool CanReservedWords(const std::string::iterator It);
+	bool CanNumberLexem(const string::iterator It);
+	bool CanReservedWords(const string::iterator It);
 
-	void SetToken(const int Line, const int Column, const std::string Source, const int Length, const TokenType Type);
+	void SetToken(const Position Pos, const string Source, const int Length, const TokenType Type);
 
-	void SetNumberNotHex(const int Line, const int Column);
-	void SetNumberHex(const int Line, const int Column);
-	void SetComment(const int Line, const int Column);
-	void SetString(const int Line, const int Column);
+	void SetNumberNotHex(const Position Pos);
+	void SetNumberHex(const Position Pos);
+	void SetComment(const Position Pos);
+	void SetString(const Position Pos);
 
 	void NewString();
 public:

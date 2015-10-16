@@ -1,49 +1,55 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
+typedef struct Position{
+	Position(const int L = 0, const int C = 0) : Line(L), Column(C){};
+	Position(const Position& Pos) : Line(Pos.Line), Column(Pos.Column){};
+	int Line, Column;
+} Position;
+
 #include <string>
 
 using namespace std;
 
 class Error{
 public:
-	std::string err_msg;
-	Error(std::string err_msg): err_msg(err_msg){}
+	string err_msg;
+	Error(string err_msg): err_msg(err_msg){}
 };
 
 class BadChar: public Error{
 public: 
-	BadChar(int Line, int Column) : Error("Unknown Symbol in Line " + to_string(Line) + ", Column " + to_string(Column)){}
+	BadChar(const Position Pos) : Error("Unknown Symbol in Line " + to_string(Pos.Line + 1) + ", Column " + to_string(Pos.Column + 1)){}
 };
 
 class BadExp: public Error{
 public: 
-	BadExp(int Line, int Column) : Error("Incorrect Float Number in Line " + to_string(Line) + ", Column " + to_string(Column) + ". There is no +/- after e"){}
+	BadExp(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + ", Column " + to_string(Pos.Column + 1) + ". There is no +/- after e"){}
 };
 
 class NoFract: public Error{
 public: 
-	NoFract(int Line, int Column) : Error("Incorrect Float Number in Line " + to_string(Line) + " Column + " + to_string(Column) + ". There is no number after point"){}
+	NoFract(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + " Column + " + to_string(Pos.Column + 1) + ". There is no number after point"){}
 };
 
 class BadCC: public Error{
 public: 
-	BadCC(int Line, int Column) : Error("Incorrect Symbol in Line " + to_string(Line) + " Column " + to_string(Column)){}
+	BadCC(const Position Pos) : Error("Incorrect Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
 };
 
 class BadNL: public Error{
 public: 
-	BadNL(int Line, int Column) : Error("Incorrect Symbol in Line " + to_string(Line) + " Column " + to_string(Column)){}
+	BadNL(const Position Pos) : Error("Incorrect Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
 };
 
 class BadEOF: public Error{
 public: 
-	BadEOF(int Line) : Error("Unexpected EOF in Line " + to_string(Line)){};
+	BadEOF(int Line) : Error("Unexpected EOF in Line " + to_string(Line + 1)){};
 };
 
 class UnexpectedSymbol: public Error{
 public: 
-	UnexpectedSymbol(std::string c, std::string S) : Error("Fatal: Syntax error, '" + c + "' excepted but \"" + S + "\" found"){}
+	UnexpectedSymbol(string Symbol, string Str_Found) : Error("Fatal: Syntax error, '" + Symbol + "' excepted but \"" + Str_Found + "\" found"){}
 };
 
 class IllegalExpr: public Error{

@@ -112,7 +112,6 @@ class Parser{
 private:
 	Lexer Lex;
 	Expr* Exp;
-	PState State;
 public:
 	Parser(const char* filename);
 	Expr* ParseExprByParam(PState State);

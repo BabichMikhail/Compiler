@@ -6,7 +6,7 @@
 using namespace std;
 
 #define indent "   "
-#define CheckAssign(Right, c) if (Right->IndType == AssignExp) throw UnexpectedSymbol(c, ":=")
+#define CheckAssign(Right, Sym) if (Right->IndType == AssignExp) throw UnexpectedSymbol(Sym, ":=")
 
 enum TypeExpr { BinExp, UnarExp, ConstExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
 
@@ -38,7 +38,7 @@ Record::Record(Expr* Left, ExprVar* Right) : Left(Left), Right(Right), Expr(Reco
 void ExprUnarOp::Print(int Spaces){
 	this->Exp->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << this->Op.Source.c_str() << endl;
 }
@@ -46,7 +46,7 @@ void ExprUnarOp::Print(int Spaces){
 void ExprBinOp::Print(int Spaces){
 	this->Right->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << this->Op.Source.c_str() << endl;
 	this->Left->Print(Spaces + 1);
@@ -54,14 +54,14 @@ void ExprBinOp::Print(int Spaces){
 
 void ExprConst::Print(int Spaces){
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << this->Value.Source.c_str() << endl;
 }
 
 void ExprVar::Print(int Spaces){
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << this->Var.Source.c_str() << endl;
 }
@@ -69,7 +69,7 @@ void ExprVar::Print(int Spaces){
 void Assign::Print(int Spaces){
 	this->Right->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << ":="<< endl;
 	this->Left->Print(Spaces + 1);
@@ -80,7 +80,7 @@ void Function::Print(int Spaces){
 		this->Rights[i]->Print(Spaces + 1);
 	}
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << "()" << endl;
 	this->Left->Print(Spaces + 1);
@@ -89,7 +89,7 @@ void Function::Print(int Spaces){
 void Record::Print(int Spaces){
 	this->Right->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << "." << endl;
 	this->Left->Print(Spaces + 1);
@@ -98,7 +98,7 @@ void Record::Print(int Spaces){
 void ArrayIndex::Print(int Spaces){
 	this->Right->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
-		std::cout << indent;
+		cout << indent;
 	}
 	cout << "[]" << endl;
 	this->Left->Print(Spaces + 1);
@@ -158,8 +158,7 @@ Expr* Parser::ParseExprByParam(PState State){
 	if (State == St_Parse_Factor){
 		auto TK = Lex.Get();
 		if (TK.Type == TK_IDENTIFIER){
-			auto ExpNow = ParseIdentifier();
-			return ExpNow;
+			return ParseIdentifier();
 		}
 		Lex.Next();
 		if (TK.Type == TK_MINUS || TK.Type == TK_PLUS){
