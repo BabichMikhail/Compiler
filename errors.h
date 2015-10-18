@@ -49,12 +49,17 @@ public:
 
 class UnexpectedSymbol: public Error{
 public: 
-	UnexpectedSymbol(string Symbol, string Str_Found) : Error("Fatal: Syntax error, '" + Symbol + "' excepted but \"" + Str_Found + "\" found"){}
+	UnexpectedSymbol(string Symbol, string Str_Found) : Error("Fatal: Syntax error, \"" + Symbol + "\" expected but \"" + Str_Found + "\" found"){}
 };
 
 class IllegalExpr: public Error{
 public:	
 	IllegalExpr() : Error("Error: Illegal Expression"){}
+};
+
+class ExpectedVariable : public Error{
+public:
+	ExpectedVariable() : Error("Error: Variable identifier expected"){}
 };
 
 #endif 

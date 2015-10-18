@@ -3,109 +3,108 @@
 
 #include "lexer.h"
 #include <vector>
+#include <set>
 
 using namespace std;
 
-enum PState{
-	St_Parse_Expr, St_Parse_Simple_Expr, St_Parse_Term, St_Parse_Factor
-};
+enum TypeExpr { BinExp, UnarExp, ConstExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
 
 /* Expr */ 
 class Expr{
 public:
-	int IndType;
-	Expr(int IT);
-	virtual void Print(int Spaces){};
+	TypeExpr TypeExp;
+	Expr(TypeExpr TypeExp);
+	virtual void Print(const int Spaces){};
 };
 
-class ExprBinOp : Expr{
+class ExprBinOp : public Expr{
 private:
 	Expr* Left;
 	Token Op;
 	Expr* Right;
 public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
-	void Print(int Spaces);
+	void Print(const int Spaces);
 };
 
-class ExprUnarOp : Expr{
+class ExprUnarOp : public Expr{
 private:
 	Token Op;
 	Expr* Exp;
 public:
 	ExprUnarOp(Token Op, Expr* Exp);
-	void Print(int Spaces);
+	void Print(const int Spaces);
 };
 
-class ExprConst : Expr{
+class ExprConst : public Expr{
 private:
 	Token Value;
 public:
 	ExprConst(Token Value);
-	virtual void Print(int Spaces);
+	virtual void Print(const int Spaces);
 };
 
-class ExprBoolConst : ExprConst{
+class ExprBoolConst : public ExprConst{
 public:
 	ExprBoolConst(Token Value);
 };
 
-class ExprIntConst : ExprConst{
+class ExprIntConst : public ExprConst{
 public:
 	ExprIntConst(Token Value);
 };
 
-class ExprRealConst : ExprConst{
+class ExprRealConst : public ExprConst{
 public:
 	ExprRealConst(Token Value);
 };
 
-class ExprVar : Expr{
+class ExprVar : public Expr{
 private:
 	Token Var;
 public:
 	ExprVar(Token Var);
-	void Print(int Spaces);
+	void Print(const int Spaces);
 };
 
 /* Assign */
-class Assign : Expr{
+class Assign : public Expr{
 private:
-	ExprVar* Left;
+	Expr* Left;
 	Expr* Right;
 public:
-	Assign(ExprVar* Left, Expr* Right);
-	void Print(int Spaces);
+	Assign(Expr* Left, Expr* Right);
+	void Print(const int Spaces);
 };
 
 /* Array Index */
-class ArrayIndex : Expr{
+class ArrayIndex : public Expr{
 private:
-	ExprVar* Left;
+	Expr* Left;
 	Expr* Right;
 public:
-	ArrayIndex(ExprVar* Left, Expr* Right);
-	void Print(int Spaces);
+	ArrayIndex(Expr* Left, Expr* Right);
+	void Print(const int Spaces);
 };
 
 /* Function */
-class Function : Expr{
+class Function : public Expr{
 private:
-	ExprVar* Left;
+	Expr* Left;
 	vector<Expr*> Rights;
 public:
-	Function(ExprVar* Left, vector<Expr*> Rights);
-	void Print(int Spaces);
+	Function(Expr* Left, vector<Expr*> Rights);
+	void Print(const int Spaces);
 };
 
 /* Record */
-class Record : Expr{
+class Record : public Expr{
 private:
 	Expr* Left;
-	ExprVar* Right;
+	Expr* Right;
 public:
-	Record(Expr* Left, ExprVar* Right);
-	void Print(int Spaces);
+	Record(Expr* Left, Expr* Right);
+	void Print(const int Spaces);
 };
 
 class Parser{
@@ -114,8 +113,10 @@ private:
 	Expr* Exp;
 public:
 	Parser(const char* filename);
-	Expr* ParseExprByParam(PState State);
-	Expr* ParseIdentifier();
+	Expr* ParseLevel(const int level);
+	Expr* ParseFactor();
+	Expr* ParseExpr();
+	Expr* ParseDesignator();
 	void Print();
 };
 
