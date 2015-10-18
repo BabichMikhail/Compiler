@@ -1,1 +1,7 @@
-Fatal: Syntax error, 'identifier' excepted but "5" found
+      a
+   ()
+      f
+:=
+      b
+   .
+      a

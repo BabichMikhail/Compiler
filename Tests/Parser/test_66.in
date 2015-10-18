@@ -1,1 +1,1 @@
-a + b := d
+c := Sum(a.v, b.v)

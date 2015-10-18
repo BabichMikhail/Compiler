@@ -1,1 +1,5 @@
-Fatal: Syntax error, ';' excepted but ":=" found
+   10
+:=
+      0
+   []
+      a
