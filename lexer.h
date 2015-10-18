@@ -6,10 +6,8 @@
 #include <iostream>
 #include "errors.h"
 
-#define First 0
-
 enum TokenType{
-	TK_ABSOLUTE = First, TK_AND, TK_ARRAY, TK_ASM, TK_BEGIN, 
+	TK_ABSOLUTE, TK_AND, TK_ARRAY, TK_ASM, TK_BEGIN, 
 	TK_BOOLEAN, TK_BYTEBOOL, TK_BYTE, TK_CARDINAL, TK_CASE, 
 	TK_CHAR, TK_CONSTRUCTOR, TK_CONST, TK_COMP, TK_CURRENCY, 
 	TK_DESTRUCTOR, TK_DISPOSE, TK_DIV_INT, TK_DOWNTO, TK_DOUBLE, 
@@ -38,9 +36,7 @@ enum TokenType{
 
 	TK_IDENTIFIER, TK_REAL_VALUE, TK_INTEGER_VALUE, TK_STRING_VALUE, TK_HEX_VALUE,
 	NOT_TOKEN
-};
-
-#define NUM_RESERVED (TK_EOF - TK_ABSOLUTE + 1)
+}; 
 
 class Token{
 private:
@@ -76,6 +72,7 @@ private:
 	void SetComment(const Position Pos);
 	void SetString(const Position Pos);
 
+	void FindNext();
 	void NewString();
 public:
 	Lexer(const char* filename);

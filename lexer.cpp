@@ -74,7 +74,6 @@ void Lexer::SetNumberNotHex(const Position Pos){
 	while (*It_Count >= '0' && *It_Count <= '9')
 		++It_Count;
 	if ((*It_Count == '.' || *It_Count == 'e') && *(It_Count + 1) != '.'){ /* Float */
-		
 		if (*It_Count == '.'){ /* A.B */
 			++It_Count;
 			if (*It_Count < '0' || *It_Count > '9'){
@@ -156,13 +155,15 @@ void Lexer::SetToken(const Position Pos, const string Source, const int Length, 
 }
 
 void Lexer::Next(){
-	if (!IsTokens)
-		return;
-	Pos.Column = It - String.cbegin() + Column_Offset; 
+	do FindNext(); while (IsTokens && TK.Type == NOT_TOKEN);
+}
+
+void Lexer::FindNext(){
+	Pos.Column = It - String.cbegin() + Column_Offset;
 	if ((*It < 0 || *It > 127) && *It != EOF){
 		throw BadCC(Pos);
 	}
-			while (*It == ' ' || *It == '\t'){  /* Find Next Possible Token */
+	while (*It == ' ' || *It == '\t'){  /* Find Next Possible Token */
 		if (*It == ' '){
 			++Pos.Column;
 		}
@@ -204,6 +205,7 @@ void Lexer::Next(){
 		IsTokens = false;
 		return;
 	}
+
 	for (int i = 0; i < sizeof(Reserved_Words) / sizeof(TokenType); ++i){ /* Other Tokens from array 'Special_Symbols' */
 		int len = strlen(Tokens_str[Reserved_Words[i]]);
 		if (_strnicmp(String.substr(It - String.cbegin(), len).c_str(), Tokens_str[Reserved_Words[i]], len) == 0){
@@ -240,7 +242,6 @@ void Lexer::NewString(){
 		IsTokens = false;
 		return;
 	}
-
 	string NewStr;
 	do 	NewStr += getc(f_in); while (*NewStr.crbegin() != EOF && *NewStr.crbegin() != '\n');
 	String.assign(NewStr);
