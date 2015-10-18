@@ -24,12 +24,12 @@ public:
 
 class BadExp: public Error{
 public: 
-	BadExp(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + ", Column " + to_string(Pos.Column + 1) + ". There is no +/- after e"){}
+	BadExp(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1) + ". There is no +/- after e"){}
 };
 
 class NoFract: public Error{
 public: 
-	NoFract(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + " Column + " + to_string(Pos.Column + 1) + ". There is no number after point"){}
+	NoFract(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1) + ". There is no number after point"){}
 };
 
 class BadCC: public Error{

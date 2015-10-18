@@ -146,6 +146,9 @@ Expr* Parser::ParseLevel(const int level){
 
 Expr* Parser::ParseFactor(){
 	auto TK = Lex.Get();
+	if (TK.Type == NOT_TOKEN){
+		throw IllegalExpr();
+	}
 	if (TK.Type == TK_IDENTIFIER){
 		return ParseDesignator();
 	}
@@ -192,15 +195,20 @@ Expr* Parser::ParseDesignator(){
 			Lex.Next();
 		}
 		if (Lex.Get().Type == TK_OPEN_BRACKET){
-			vector<Expr*> Rights;
-			do {
-				Lex.Next();
-				Rights.push_back(ParseLevel(0));
-			} while (Lex.Get().Type == TK_COMMA);
+			vector<Expr*> Arguments;
+			Lex.Next();
+			if (Lex.Get().Type != TK_CLOSE_BRACKET){ /* ")" == no argument */
+				Arguments.push_back(ParseLevel(0));
+				while (Lex.Get().Type == TK_COMMA){
+					Lex.Next();
+					Arguments.push_back(ParseLevel(0));
+				} 
+			}
 			if (Lex.Get().Type != TK_CLOSE_BRACKET){
 				throw UnexpectedSymbol(")", Lex.Get().Source);
 			}
-			ExpNow = new Function(ExpNow, Rights);
+			Lex.Next();
+			ExpNow = new Function(ExpNow, Arguments);
 		}
 		if (Lex.Get().Type == TK_POINT){
 			Lex.Next();
