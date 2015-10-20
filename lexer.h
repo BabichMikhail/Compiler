@@ -77,11 +77,16 @@ private:
 public:
 	Lexer(const char* filename);
 	Lexer(FILE *f);
-	void Print();
-	const bool isToken(){ return IsTokens; };
 	
-	const Token Get(){ return Token(TK); };
+	const bool isToken();
+	const Token Get();
 	void Next();
+
+	void AssertAndNext(const TokenType TT);
+	void Assert(const TokenType TT);
+	void NextAndAssert(const TokenType TT);
+	
+	void Print();
 };
 
 #endif

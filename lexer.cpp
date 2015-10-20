@@ -59,6 +59,30 @@ void Token::Set(const Position Pos, const string Source, const TokenType Type){
 	this->Type = Type;
 }
 
+const bool Lexer::isToken(){
+	return IsTokens;
+}
+
+const Token Lexer::Get(){
+	return Token(TK);
+}
+
+void Lexer::Assert(const TokenType TT){
+	if (TK.Type != TT){
+		throw UnexpectedSymbol(Tokens_str[TT], TK.Source);
+	}
+}
+
+void Lexer::AssertAndNext(const TokenType TT){
+	Assert(TT);
+	Next();
+}
+
+void Lexer::NextAndAssert(const TokenType TT){
+	Next();
+	Assert(TT);
+}
+
 bool Lexer::CanNumberLexem(const string::iterator It){
 	char c = *It;
 	return !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
