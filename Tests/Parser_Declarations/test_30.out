@@ -1,0 +1,18 @@
+Const	a	
+0
+1
+2
+
+Const	b	
+a
+
+Const	c	
+2
+
+Var	e	integer
+
+Const	d	
+0
+1
+c
+

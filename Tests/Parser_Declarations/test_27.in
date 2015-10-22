@@ -1,0 +1,4 @@
+const a = 10;
+var
+	b : integer = 15;
+	arr : array[A..B] of integer;

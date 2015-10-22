@@ -3,9 +3,9 @@ use strict;
 
 use IO::Dir;
 
-my @Python_path = ("Tests\\\\Lexer\\\\", "Tests\\\\Parser\\\\");
-my @path = ("Tests\\Lexer\\", "Tests\\Parser\\");
-my @test_keys = ('-l', '-p');
+my @Python_path = ("Tests\\\\Lexer\\\\", "Tests\\\\Parser\\\\", "Tests\\\\Parser_Declarations\\\\");
+my @path = ("Tests\\Lexer\\", "Tests\\Parser\\", "Tests\\Parser_Declarations\\");
+my @test_keys = ('-l', '-p', '-d');
 my @lens;
 my @dirs; 
 foreach my $i (0.. $#path){

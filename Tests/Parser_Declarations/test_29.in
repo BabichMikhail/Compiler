@@ -1,0 +1,5 @@
+const a = 10;
+const b = 15;
+const c = b - a;
+var
+	arr : array[c..a + b] of integer;

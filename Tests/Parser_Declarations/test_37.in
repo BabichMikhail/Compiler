@@ -1,0 +1,4 @@
+type 
+	MyArr = array of integer;
+var 
+	arr : MyArr;

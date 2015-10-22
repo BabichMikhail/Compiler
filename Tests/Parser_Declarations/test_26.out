@@ -1,0 +1,11 @@
+Const	a	
+10
+
+Const	b	integer
+15
+
+Array	str
+a
+b
+integer
+

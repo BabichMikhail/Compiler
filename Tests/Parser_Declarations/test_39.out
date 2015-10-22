@@ -1,0 +1,25 @@
+Type	MyType_1
+integer
+
+Type	MyType_2
+MyType_1
+
+Type	MyType_3
+DynArray	
+MyType_2
+
+Type	MyType_4
+DynArray	
+string
+50
+
+Var	Arr	MyType_3
+
+Var	Arr_2	MyType_4
+qwe
+rty
+asd
+fgh
+zxc
+vbn
+

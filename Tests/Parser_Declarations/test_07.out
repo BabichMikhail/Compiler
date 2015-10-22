@@ -1,0 +1,6 @@
+Type	my_type_1
+integer
+
+Type	my_type_2
+my_type_1
+

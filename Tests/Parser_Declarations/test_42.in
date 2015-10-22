@@ -1,0 +1,4 @@
+const 
+	a = 'abc';
+	b = 'cba';
+	const_arr : array [1..2] of string = (a, b);

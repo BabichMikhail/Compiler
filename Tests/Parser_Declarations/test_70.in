@@ -1,0 +1,3 @@
+var 
+	a : integer = 100;
+	b : array[10..a] of integer;

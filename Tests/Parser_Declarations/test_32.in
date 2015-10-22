@@ -1,0 +1,10 @@
+const
+	a = (0, 1, 2);
+	b = a;
+	c = 2;
+var 
+	e: integer;
+const 
+	d = (0, 1, c);
+var 
+	arr : array [100..100*c] of array [1..2] of array [ 10..20] of array[ -10..10] of char = a;

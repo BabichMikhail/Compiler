@@ -1,0 +1,2 @@
+var
+	str : array[0..1] of integer = (1, 2);

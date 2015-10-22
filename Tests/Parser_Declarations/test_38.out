@@ -1,0 +1,12 @@
+Type	MyType_1
+integer
+
+Type	MyType_2
+MyType_1
+
+Type	MyType_3
+DynArray	
+MyType_2
+
+Var	Arr	MyType_3
+

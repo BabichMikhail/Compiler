@@ -1,0 +1,2 @@
+var
+	flag : boolean = true;

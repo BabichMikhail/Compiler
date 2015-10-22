@@ -1,0 +1,6 @@
+Type	MyArr
+DynArray	
+integer
+
+Var	arr	MyArr
+

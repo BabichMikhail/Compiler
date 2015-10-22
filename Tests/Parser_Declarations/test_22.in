@@ -1,0 +1,2 @@
+var
+	str : array of array of integer;

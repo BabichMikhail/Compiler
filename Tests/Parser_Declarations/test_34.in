@@ -1,0 +1,2 @@
+type 
+	MyArr = array of integer;

@@ -1,0 +1,4 @@
+const 
+c : integer = 10;
+a : real = 0;
+b = 250;

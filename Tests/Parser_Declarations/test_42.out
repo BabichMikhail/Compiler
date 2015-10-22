@@ -1,0 +1,13 @@
+Const	a	
+abc
+
+Const	b	
+cba
+
+Array	const_arr
+1
+2
+string
+a
+b
+

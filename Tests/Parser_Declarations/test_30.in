@@ -1,0 +1,8 @@
+const
+	a = (0, 1, 2);
+	b = a;
+	c = 2;
+var 
+	e: integer;
+const 
+	d = (0, 1, c);
