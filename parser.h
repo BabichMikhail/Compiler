@@ -9,7 +9,7 @@
 
 using namespace std;
 
-enum PState { Test_Exp, Test_Def };
+enum PState { Test_Exp, Test_Decl };
 
 class Parser{
 private:

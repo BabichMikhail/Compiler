@@ -11,30 +11,32 @@
 
 using namespace std;
 
+#define print_format \
+	cout << "Usage: Compiler [-h] [-help] [-p] [-l] [-d]" << endl << endl; \
+	cout << "The most commontly used input and output filenames" << endl << endl
+
+
 int main(int argc, char **argv){
 	if (argc == 1){
-		cout << "Missing Arguments" << endl;
-		cout << "Unknown argument. Write [-h] or [-help] for get help" << endl;
+		print_format;
 		return 0;
 	}
 
 	if (argc == 2){
 		if (strcmp(argv[1], "-help") == 0 || (strcmp(argv[1], "-h") == 0)){
-			cout << "Format arguments:" << endl;
-			cout << "  1. Key: -l (lexer), -p (parser)" << endl;
-			cout << "  2. Input" << endl;
-			cout << "  3. Output" << endl;
+			print_format;
 		}
 		return 0;
 	}
 
 	if (argc == 3){
-		cout << "Missing Output File" << endl;
+		print_format;
 		return 0;
 	}
 
 	if (argc > 4){
-		cout << "Too many arguments" << endl;
+		cout << "Too many arguments" << endl << endl;
+		print_format;
 	}
 	ofstream output;
 	output.open(argv[3]);
@@ -56,7 +58,7 @@ int main(int argc, char **argv){
 				P.Print();
 			}
 			if (strcmp(argv[1], "-d") == 0){
-				Parser P(argv[2], Test_Def);
+				Parser P(argv[2], Test_Decl);
 				P.Print();
 			}
 		}

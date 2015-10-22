@@ -34,7 +34,7 @@ Parser::Parser(const char* filename, PState State) : Lex(filename){
 			}
 		}
 		break;
-	case Test_Def:
+	case Test_Decl:
 		Lex.Next();
 		while (Lex.isToken()){
 			switch (Lex.Get().Type){
