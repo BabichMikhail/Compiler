@@ -11,6 +11,15 @@ typedef struct Position{
 
 using namespace std;
 
+static string CheckSymbol(string Str){
+	if (Str.length() == 1){
+		if (Str[0] < 0 || Str[0] > 127){
+			return "EOF";
+		}
+	}
+	return Str;
+}
+
 class Error{
 public:
 	string err_msg;
@@ -19,7 +28,7 @@ public:
 
 class BadChar: public Error{
 public: 
-	BadChar(const Position Pos) : Error("Unknown Symbol in Line " + to_string(Pos.Line + 1) + ", Column " + to_string(Pos.Column + 1)){}
+	BadChar(const Position Pos) : Error("Unknown Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
 };
 
 class BadExp: public Error{
@@ -49,7 +58,7 @@ public:
 
 class UnexpectedSymbol: public Error{
 public: 
-	UnexpectedSymbol(string Symbol, string Str_Found) : Error("Fatal: Syntax error, \"" + Symbol + "\" expected but \"" + Str_Found + "\" found"){}
+	UnexpectedSymbol(string Symbol, string Str_Found) : Error("Fatal: Syntax error, \"" + Symbol + "\" expected but \"" + CheckSymbol(Str_Found) + "\" found"){}
 };
 
 class IllegalExpr: public Error{
@@ -60,6 +69,16 @@ public:
 class ExpectedVariable : public Error{
 public:
 	ExpectedVariable() : Error("Error: Variable identifier expected"){}
+};
+
+class ExpectedConstExp : public Error{
+public:
+	ExpectedConstExp() : Error("Error: Const Expression expected"){}
+};
+
+class UnknownType : public Error{
+public:
+	UnknownType(string TypeName) : Error("Error: Unknown TypeName \"" + CheckSymbol(TypeName) + "\""){};
 };
 
 #endif 
