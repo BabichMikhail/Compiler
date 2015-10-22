@@ -232,7 +232,7 @@ void Lexer::FindNext(){
 
 	for (int i = 0; i < sizeof(Reserved_Words) / sizeof(TokenType); ++i){ /* Other Tokens from array 'Special_Symbols' */
 		int len = strlen(Tokens_str[Reserved_Words[i]]);
-		if (_strnicmp(String.substr(It - String.cbegin(), len).c_str(), Tokens_str[Reserved_Words[i]], len) == 0){
+		if (_strnicmp(String.substr(It - String.cbegin(), len).c_str(), Tokens_str[Reserved_Words[i]], len) == 0 && CanReservedWords(It + len)){
 			SetToken(Pos, String.substr(It - String.cbegin(), len), len, Reserved_Words[i]);
 			return;
 		}

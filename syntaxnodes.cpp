@@ -14,6 +14,7 @@ ExprConst::ExprConst(Token Value) : Value(Value), Expr(ConstExp){}
 ExprBoolConst::ExprBoolConst(Token Value) : ExprConst(Value){}
 ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value){}
 ExprRealConst::ExprRealConst(Token Value) : ExprConst(Value){}
+ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value){}
 
 ExprVar::ExprVar(Token Var) : Var(Var), Expr(VarExp){}
 
@@ -89,4 +90,38 @@ void ArrayIndex::Print(int Spaces){
 	}
 	cout << "[]" << endl;
 	Left->Print(Spaces + 1);
+}
+
+void Expr::GetIdentStr(ExpArgList* List){}
+	
+void ExprBinOp::GetIdentStr(ExpArgList* List){
+	Right->GetIdentStr(List);
+	Left->GetIdentStr(List);
+}
+
+void ExprUnarOp::GetIdentStr(ExpArgList* List){
+	Exp->GetIdentStr(List);
+}
+
+void ExprConst::GetIdentStr(ExpArgList* List){}
+
+void ExprVar::GetIdentStr(ExpArgList* List){
+	List->Vec.push_back(Var.Source);
+}
+
+void Assign::GetIdentStr(ExpArgList* List){
+	List->Flag = false;
+}
+
+void ArrayIndex::GetIdentStr(ExpArgList* List){
+	Left->GetIdentStr(List);
+	Right->GetIdentStr(List);
+}
+
+void Function::GetIdentStr(ExpArgList* List){
+	List->Flag = false;
+}
+
+void Record::GetIdentStr(ExpArgList* List){
+	List->Flag = false;
 }

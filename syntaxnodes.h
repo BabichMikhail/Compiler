@@ -5,6 +5,7 @@
 #include "errors.h"
 #include <vector>
 #include <set>
+#include "utils.h"
 
 enum TypeExpr { BinExp, UnarExp, ConstExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
 
@@ -12,6 +13,7 @@ class Expr{
 public:
 	TypeExpr TypeExp;
 	Expr(TypeExpr TypeExp);
+	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces){};
 };
 
@@ -22,6 +24,7 @@ private:
 	Expr* Right;
 public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
@@ -31,6 +34,7 @@ private:
 	Expr* Exp;
 public:
 	ExprUnarOp(Token Op, Expr* Exp);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
@@ -39,6 +43,7 @@ private:
 	Token Value;
 public:
 	ExprConst(Token Value);
+	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces);
 };
 
@@ -57,11 +62,17 @@ public:
 	ExprRealConst(Token Value);
 };
 
+class ExprStringConst : public ExprConst{
+public:
+	ExprStringConst(Token Value);
+};
+
 class ExprVar : public Expr{
 private:
 	Token Var;
 public:
 	ExprVar(Token Var);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
@@ -71,6 +82,7 @@ private:
 	Expr* Right;
 public:
 	Assign(Expr* Left, Expr* Right);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
@@ -80,6 +92,7 @@ private:
 	Expr* Right;
 public:
 	ArrayIndex(Expr* Left, Expr* Right);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
@@ -89,6 +102,7 @@ private:
 	vector<Expr*> Rights;
 public:
 	Function(Expr* Left, vector<Expr*> Rights);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
@@ -98,6 +112,7 @@ private:
 	Expr* Right;
 public:
 	Record(Expr* Left, Expr* Right);
+	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
