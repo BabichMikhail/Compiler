@@ -38,6 +38,7 @@ public:
 
 	vector<Expr*> ParseEqual();
 	void AssertConstExpr(Expr* Exp);
+	Symbol* Switch_TokenType(SymState State, string Name = "");
 
 	void Print();
 };

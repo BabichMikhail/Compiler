@@ -86,30 +86,7 @@ void Parser::ParseConst(){
 			if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source) == -1){
 				throw UnknownType(Lex.Get().Source);
 			}
-			Symbol* Sym;
-			switch (Lex.Get().Type){
-			case TK_INTEGER:
-				Table.Add(ParseSimpleType<SymIntType>(State_Const, Name));
-				break;
-			case TK_REAL:
-				Table.Add(ParseSimpleType<SymRealType>(State_Const, Name));
-				break;
-			case TK_CHAR:
-				Table.Add(ParseSimpleType<SymCharType>(State_Const, Name));
-				break;
-			case TK_BOOLEAN:
-				Table.Add(ParseSimpleType<SymBoolType>(State_Const, Name));
-				break;
-			case TK_STRING:
-				Table.Add(ParseString(State_Const, Name));
-				break;
-			case TK_ARRAY:
-				Table.Add(ParseArray(State_Const, Name));
-				break;
-			case TK_IDENTIFIER:
-				Table.Add(ParseIdentifier(State_Const, Name, Lex.Get().Source));
-				break;
-			}
+			Table.Add(Switch_TokenType(State_Const, Name));
 			Lex.AssertAndNext(TK_SEMICOLON);
 			continue;
 		}
@@ -131,29 +108,7 @@ void Parser::ParseVar(){
 		if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source, State_Type) == -1){
 			throw UnknownType(Lex.Get().Source);
 		}
-		switch (Lex.Get().Type){
-		case TK_INTEGER: 
-			Table.Add(ParseSimpleType<SymIntType>(State_Var, Name));
-			break;
-		case TK_REAL: 
-			Table.Add(ParseSimpleType<SymRealType>(State_Var, Name));
-			break;
-		case TK_CHAR: 
-			Table.Add(ParseSimpleType<SymCharType>(State_Var, Name));
-			break;
-		case TK_BOOLEAN:
-			Table.Add(ParseSimpleType<SymBoolType>(State_Var, Name));
-			break;
-		case TK_STRING:
-			Table.Add(ParseString(State_Var, Name));
-			break;
-		case TK_ARRAY:
-			Table.Add(ParseArray(State_Var, Name));
-			break;
-		case TK_IDENTIFIER: 
-			Table.Add(ParseIdentifier(State_Var, Name, Lex.Get().Source));
-			break;
-		}
+		Table.Add(Switch_TokenType(State_Var, Name));
 		Lex.AssertAndNext(TK_SEMICOLON);
 	}
 }
@@ -167,30 +122,7 @@ void Parser::ParseType(){
 		if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source) == -1){
 			throw UnknownType(Lex.Get().Source);
 		}
-		Symbol* Sym = nullptr;
-		switch (Lex.Get().Type){
-		case TK_INTEGER: 
-			Sym = ParseSimpleType<SymIntType>(State_Type); 
-			break;
-		case TK_REAL: 
-			Sym = ParseSimpleType<SymRealType>(State_Type); 
-			break;
-		case TK_CHAR: 
-			Sym = ParseSimpleType<SymCharType>(State_Type); 
-			break;
-		case TK_BOOLEAN: 
-			Sym = ParseSimpleType<SymBoolType>(State_Type); 
-			break;
-		case TK_STRING: 
-			Sym = ParseString(State_Type); 
-			break;
-		case TK_ARRAY: 
-			Sym = ParseArray(State_Type);
-			break;
-		case TK_IDENTIFIER: 
-			Sym = ParseIdentifier(State_Type, "", Lex.Get().Source); 
-			break;
-		}
+		auto Sym = Switch_TokenType(State_Type, "");
 		Lex.AssertAndNext(TK_SEMICOLON);
 		Table.Add(new SymType(State_Type, NameNew, Sym));
 	}
@@ -226,22 +158,7 @@ template <class ArrayType> Symbol* Parser::ParseArrayOF(SymState State, string N
 	if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source) == -1){
 		throw UnknownType(Lex.Get().Source);
 	}
-	switch (Lex.Get().Type){
-	case TK_INTEGER:
-		return new ArrayType(State, Name, ParseSimpleType<SymIntType>(), Exp_Left, Exp_Right);
-	case TK_REAL:
-		return new ArrayType(State, Name, ParseSimpleType<SymRealType>(), Exp_Left, Exp_Right);
-	case TK_CHAR:
-		return new ArrayType(State, Name, ParseSimpleType<SymCharType>(), Exp_Left, Exp_Right);
-	case TK_BOOLEAN:
-		return new ArrayType(State, Name, ParseSimpleType<SymBoolType>(), Exp_Left, Exp_Right);
-	case TK_STRING:
-		return new ArrayType(State, Name, ParseString(), Exp_Left, Exp_Right);
-	case TK_ARRAY:
-		return new ArrayType(State, Name, ParseArray(), Exp_Left, Exp_Right);
-	case TK_IDENTIFIER:
-		return new ArrayType(State, Name, ParseIdentifier(State_NULL, "", Lex.Get().Source), Exp_Left, Exp_Right);
-	}
+	return new ArrayType(State, Name, Switch_TokenType(State_NULL), Exp_Left, Exp_Right);
 }
 
 Symbol* Parser::ParseString(SymState State, string Name){
@@ -309,6 +226,25 @@ vector<Expr*> Parser::ParseEqual(){
 	AssertConstExpr(Exp);
 	Vec.push_back(Exp);
 	return Vec;
+}
+
+Symbol* Parser::Switch_TokenType(SymState State, string Name){
+	switch (Lex.Get().Type){
+	case TK_INTEGER:
+		return ParseSimpleType<SymIntType>(State, Name);
+	case TK_REAL:
+		return ParseSimpleType<SymRealType>(State, Name);
+	case TK_CHAR:
+		return ParseSimpleType<SymCharType>(State, Name);
+	case TK_BOOLEAN:
+		return ParseSimpleType<SymBoolType>(State, Name);
+	case TK_STRING:
+		return ParseString(State, Name);
+	case TK_ARRAY:
+		return ParseArray(State, Name);
+	case TK_IDENTIFIER:
+		return ParseIdentifier(State, Name, Lex.Get().Source);
+	}
 }
 
 /* Parse Expr */
