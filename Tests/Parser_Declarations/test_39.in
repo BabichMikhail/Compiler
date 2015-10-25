@@ -1,8 +1,9 @@
+const 
+	A = 10;
+	B = 20;
+
 TYPE 
 	MyType_1 = integer;
 	MyType_2 = MyType_1;
 	MyType_3 = array of MyType_2;
-	MyType_4 = array of string[50];
-var
-	Arr : MyType_3;
-	Arr_2 : MyType_4 = ('qwe', 'rty', 'asd', 'fgh', 'zxc', 'vbn');
+	MyType_4 = array of array[A..B] of MyType_3;

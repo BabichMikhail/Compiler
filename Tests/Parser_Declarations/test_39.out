@@ -1,3 +1,9 @@
+Const	A
+10
+
+Const	B
+20
+
 Type	MyType_1
 Type	integer
 
@@ -13,25 +19,12 @@ Type	integer
 
 Type	MyType_4
 DynArray	
-string
-50
-
-Var	Arr
+Array	
+A
+B
 Type	MyType_3
 DynArray	
 Type	MyType_2
 Type	MyType_1
 Type	integer
-
-Var	Arr_2
-Type	MyType_4
-DynArray	
-string
-50
-qwe
-rty
-asd
-fgh
-zxc
-vbn
 

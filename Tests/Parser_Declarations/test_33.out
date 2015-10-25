@@ -1,9 +1,4 @@
-Var	a
-Array	
-1
-2
+Type	MyArr
 DynArray	
-string
-Hello
-World
+Type	integer
 

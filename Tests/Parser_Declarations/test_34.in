@@ -1,2 +1,2 @@
 type 
-	MyArr = array of integer;
+	MyArr = array[1..100] of integer;

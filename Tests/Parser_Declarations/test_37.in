@@ -1,4 +1,6 @@
-type 
-	MyArr = array of integer;
-var 
-	arr : MyArr;
+TYPE 
+	MyType_1 = integer;
+	MyType_2 = MyType_1;
+	MyType_3 = array of MyType_2;
+var
+	Arr : MyType_3;

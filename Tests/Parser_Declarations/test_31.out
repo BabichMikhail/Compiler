@@ -1,1 +1,38 @@
-Error: Const Expression expected
+Const	a
+0
+1
+2
+
+Const	b
+a
+
+Const	c
+2
+
+Var	e
+Type	integer
+
+Const	d
+0
+1
+c
+
+Var	arr
+Array	
+100
+   c
+*
+   100
+Array	
+1
+2
+Array	
+10
+20
+Array	
+   10
+-
+10
+Type	char
+a
+

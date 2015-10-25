@@ -1,4 +1,6 @@
 Type	MyArr
-DynArray	
+Array	
+1
+100
 Type	integer
 

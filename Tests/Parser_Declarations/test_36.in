@@ -1,2 +1,4 @@
 type 
-	MyArr = array[1..100] of string;
+	MyArr = array of integer;
+var 
+	arr : MyArr;

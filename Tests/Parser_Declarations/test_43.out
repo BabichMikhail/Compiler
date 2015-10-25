@@ -1,30 +1,5 @@
-Const	A
-10
+Const	a
+100
 
-Const	B
-20
-
-Type	MyType_1
-Type	integer
-
-Type	MyType_2
-Type	MyType_1
-Type	integer
-
-Type	MyType_3
-DynArray	
-Type	MyType_2
-Type	MyType_1
-Type	integer
-
-Type	MyType_4
-DynArray	
-Array	
-A
-B
-Type	MyType_3
-DynArray	
-Type	MyType_2
-Type	MyType_1
-Type	integer
+Label	a
 

@@ -1,14 +1,30 @@
-Const	a
-abc
+Const	A
+10
 
-Const	b
-cba
+Const	B
+20
 
-Const	const_arr
+Type	MyType_1
+Type	integer
+
+Type	MyType_2
+Type	MyType_1
+Type	integer
+
+Type	MyType_3
+DynArray	
+Type	MyType_2
+Type	MyType_1
+Type	integer
+
+Type	MyType_4
+DynArray	
 Array	
-1
-2
-string
-a
-b
+A
+B
+Type	MyType_3
+DynArray	
+Type	MyType_2
+Type	MyType_1
+Type	integer
 

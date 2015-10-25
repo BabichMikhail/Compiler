@@ -1,2 +1,4 @@
 const 
-	A : string = '123';
+	a = 'abc';
+	b = 'cba';
+	const_arr : array [1..2] of string = (a, b);
