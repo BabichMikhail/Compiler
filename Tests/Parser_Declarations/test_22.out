@@ -1,4 +1,5 @@
-DynArray	str
+Var	str
 DynArray	
-integer
+DynArray	
+Type	integer
 

@@ -1,6 +1,9 @@
 Type	MyArr
 DynArray	
-integer
+Type	integer
 
-Var	arr	MyArr
+Var	arr
+Type	MyArr
+DynArray	
+Type	integer
 

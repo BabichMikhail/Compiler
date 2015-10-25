@@ -1,17 +1,18 @@
-Const	a	
+Const	a
 0
 1
 2
 
-Const	b	
+Const	b
 a
 
-Const	c	
+Const	c
 2
 
-Var	e	integer
+Var	e
+Type	integer
 
-Const	d	
+Const	d
 0
 1
 c

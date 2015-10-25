@@ -1,23 +1,30 @@
-Const	A	
+Const	A
 10
 
-Const	B	
+Const	B
 20
 
 Type	MyType_1
-integer
+Type	integer
 
 Type	MyType_2
-MyType_1
+Type	MyType_1
+Type	integer
 
 Type	MyType_3
 DynArray	
-MyType_2
+Type	MyType_2
+Type	MyType_1
+Type	integer
 
 Type	MyType_4
 DynArray	
 Array	
 A
 B
-MyType_3
+Type	MyType_3
+DynArray	
+Type	MyType_2
+Type	MyType_1
+Type	integer
 

@@ -1,6 +1,7 @@
 Type	my_type_1
-integer
+Type	integer
 
 Type	my_type_2
-my_type_1
+Type	my_type_1
+Type	integer
 

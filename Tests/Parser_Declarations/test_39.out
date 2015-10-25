@@ -1,21 +1,33 @@
 Type	MyType_1
-integer
+Type	integer
 
 Type	MyType_2
-MyType_1
+Type	MyType_1
+Type	integer
 
 Type	MyType_3
 DynArray	
-MyType_2
+Type	MyType_2
+Type	MyType_1
+Type	integer
 
 Type	MyType_4
 DynArray	
 string
 50
 
-Var	Arr	MyType_3
+Var	Arr
+Type	MyType_3
+DynArray	
+Type	MyType_2
+Type	MyType_1
+Type	integer
 
-Var	Arr_2	MyType_4
+Var	Arr_2
+Type	MyType_4
+DynArray	
+string
+50
 qwe
 rty
 asd

@@ -1,9 +1,11 @@
-Const	c	integer
+Const	c
+Type	integer
 10
 
-Const	a	real
+Const	a
+Type	real
 0
 
-Const	b	
+Const	b
 250
 

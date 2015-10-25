@@ -1,3 +1,4 @@
-Const	c	integer
+Const	c
+Type	integer
 10
 

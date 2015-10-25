@@ -1,2 +1,3 @@
-Var	flag	real
+Var	flag
+Type	boolean
 

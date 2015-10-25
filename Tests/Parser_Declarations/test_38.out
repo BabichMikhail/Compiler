@@ -1,12 +1,20 @@
 Type	MyType_1
-integer
+Type	integer
 
 Type	MyType_2
-MyType_1
+Type	MyType_1
+Type	integer
 
 Type	MyType_3
 DynArray	
-MyType_2
+Type	MyType_2
+Type	MyType_1
+Type	integer
 
-Var	Arr	MyType_3
+Var	Arr
+Type	MyType_3
+DynArray	
+Type	MyType_2
+Type	MyType_1
+Type	integer
 

@@ -1,3 +1,4 @@
-DynArray	arr
-integer
+Var	arr
+DynArray	
+Type	integer
 

@@ -1,7 +1,8 @@
-Array	str
+Var	str
+Array	
 0
 1
-integer
+Type	integer
 1
 2
 

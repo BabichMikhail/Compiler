@@ -1,10 +1,11 @@
-Const	a	
+Const	a
 abc
 
-Const	b	
+Const	b
 cba
 
-Array	const_arr
+Const	const_arr
+Array	
 1
 2
 string
