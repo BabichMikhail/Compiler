@@ -101,11 +101,19 @@ void Parser::ParseConstDecl(){
 void Parser::ParseVarDecl(){
 	Lex.NextAndAssert(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
-		auto Name = Lex.Get().Source;
+		vector<string> Names;
+		Names.push_back(Lex.Get().Source);
 		Lex.Next();
+		while (Lex.Get().Type == TK_COMMA) {
+			Lex.NextAndAssert(TK_IDENTIFIER);
+			Names.push_back(Lex.Get().Source);
+			Lex.Next();
+		}
 		Lex.AssertAndNext(TK_COLON);
 		auto Type = ParseType();
-		Table.Add(new SymVar(Name, Lex.Get().Type == TK_EQUAL ? ParseEqual() : vector<Expr*>(), Type));
+		for (int i = 0; i < Names.size(); ++i) {
+			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : vector<Expr*>(), Type));
+		}
 		Lex.AssertAndNext(TK_SEMICOLON);
 	}
 }
@@ -141,9 +149,8 @@ Symbol* Parser::ParseArray(){
 			Lex.AssertAndNext(TK_DOUBLE_POINT);
 			Exp_Right = ParseExpr();
 			AssertConstExpr(Exp_Right);
-			(*Sym_where_type_nullptr)->Type = new SymArray(nullptr, Exp_Left, Exp_Right);
+			(*Sym_where_type_nullptr)->Type = new SymArray(nullptr, Exp_Left, Exp_Right); 
 			Sym_where_type_nullptr = (SymArray**)(&(*Sym_where_type_nullptr)->Type);
-
 		}
 		Lex.AssertAndNext(TK_CLOSE_SQUARE_BRACKET);
 		Lex.AssertAndNext(TK_OF);
