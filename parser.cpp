@@ -5,8 +5,6 @@ using namespace std;
 
 #define parse_factor_level 3
 
-set<TokenType> sym_types = { TK_INTEGER, TK_REAL, TK_CHAR, TK_BOOLEAN, TK_STRING, TK_ARRAY };
-
 set<TokenType> start_expr_tk = { TK_INTEGER_VALUE, TK_REAL_VALUE, TK_OPEN_BRACKET, TK_IDENTIFIER, TK_PLUS, TK_MINUS, TK_TRUE, TK_FALSE, TK_NOT, TK_STRING_VALUE };
 
 set<TokenType> rel_op = { TK_GREAT, TK_GREAT_EQUAL, TK_LESS, TK_LESS_EQUAL, TK_EQUAL, TK_NOT_EQUAL };
@@ -18,12 +16,18 @@ vector<set<TokenType>> level_list = { rel_op, add_op, mul_op };
 set<TypeExpr> Left_Op_Assign = { VarExp, RecordExp, ArrayExp };
 
 void Parser::Print(){
-	if (Exp != nullptr)
-		Exp->Print(0);
-	Table.Print();
+	switch (State){
+	case Test_Exp:
+		if (Exp != nullptr)
+			Exp->Print(0);
+		break;
+	case Test_Decl:
+		Table.Print();
+		break;
+	}
 }
 
-Parser::Parser(const char* filename, PState State) : Lex(filename){
+Parser::Parser(const char* filename, PState State) : Lex(filename), State(State){
 	switch (State){
 	case Test_Exp:
 		while (Lex.isToken()){
@@ -39,13 +43,13 @@ Parser::Parser(const char* filename, PState State) : Lex(filename){
 		while (Lex.isToken()){
 			switch (Lex.Get().Type){
 			case TK_LABEL: 
-				ParseLabel();
+				ParseLabelDecl();
 				break;
 			case TK_CONST:
-				ParseConst();
+				ParseConstDecl();
 				break;
 			case TK_TYPE:
-				ParseType();
+				ParseTypeDecl();
 				break;
 			//case TK_FUNCTION:
 			//	ParseFunction();
@@ -54,7 +58,7 @@ Parser::Parser(const char* filename, PState State) : Lex(filename){
 			//	ParseProcedure();
 			//	break;
 			case TK_VAR:
-				ParseVar();
+				ParseVarDecl();
 				break; 
 			default:
 				throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
@@ -66,32 +70,27 @@ Parser::Parser(const char* filename, PState State) : Lex(filename){
 
 /* Parse Declarations */
 
-void Parser::ParseLabel(){
+void Parser::ParseLabelDecl(){
 	Lex.NextAndAssert(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
-		auto Sym = new SymLabel(State_Label, Lex.Get().Source);
+		Table.Add(new SymLabel(Lex.Get().Source));
 		Lex.Next();
 		Lex.AssertAndNext(TK_SEMICOLON);
-		Table.Add(Sym);
 	}
 }
 
-void Parser::ParseConst(){
+void Parser::ParseConstDecl(){
 	Lex.NextAndAssert(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		auto Name = Lex.Get().Source;
 		Lex.Next(); 
-		if (Lex.Get().Type == TK_COLON){
+		Symbol* Type = nullptr;
+		if (Lex.Get().Type == TK_COLON) {
 			Lex.Next();
-			if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source) == -1){
-				throw UnknownType(Lex.Get().Source);
-			}
-			Table.Add(Switch_TokenType(State_Const, Name));
-			Lex.AssertAndNext(TK_SEMICOLON);
-			continue;
+			Type = ParseType();
 		}
 		Lex.Assert(TK_EQUAL);
-		Table.Add(new SymTypeID(State_Const, Name, ParseEqual(), ""));
+		Table.Add(new SymConst(Name, ParseEqual(), Type));
 		Lex.AssertAndNext(TK_SEMICOLON);
 	}
 }
@@ -99,36 +98,30 @@ void Parser::ParseConst(){
 //void Parser::ParseFunction(){}
 //void Parser::ParseProcedure(){}
 
-void Parser::ParseVar(){
+void Parser::ParseVarDecl(){
 	Lex.NextAndAssert(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		auto Name = Lex.Get().Source;
-		Lex.NextAndAssert(TK_COLON);
 		Lex.Next();
-		if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source, State_Type) == -1){
-			throw UnknownType(Lex.Get().Source);
-		}
-		Table.Add(Switch_TokenType(State_Var, Name));
+		Lex.AssertAndNext(TK_COLON);
+		auto Type = ParseType();
+		Table.Add(new SymVar(Name, Lex.Get().Type == TK_EQUAL ? ParseEqual() : vector<Expr*>(), Type));
 		Lex.AssertAndNext(TK_SEMICOLON);
 	}
 }
 
-void Parser::ParseType(){
+void Parser::ParseTypeDecl(){
 	Lex.NextAndAssert(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		string NameNew = Lex.Get().Source;
 		Lex.NextAndAssert(TK_EQUAL);
 		Lex.Next();
-		if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source) == -1){
-			throw UnknownType(Lex.Get().Source);
-		}
-		auto Sym = Switch_TokenType(State_Type, "");
+		Table.Add(new SymType(NameNew, ParseType()));
 		Lex.AssertAndNext(TK_SEMICOLON);
-		Table.Add(new SymType(State_Type, NameNew, Sym));
 	}
 }
 
-Symbol* Parser::ParseArray(SymState State, string Name){
+Symbol* Parser::ParseArray(){
 	Lex.Next();
 	Symbol* Sym;
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
@@ -140,28 +133,13 @@ Symbol* Parser::ParseArray(SymState State, string Name){
 		AssertConstExpr(Exp_Right);
 		Lex.AssertAndNext(TK_CLOSE_SQUARE_BRACKET);
 		Lex.AssertAndNext(TK_OF);
-		auto Sym = ParseArrayOF<SymArray>(State, Name, Exp_Left, Exp_Right);
-		if (Lex.Get().Type == TK_EQUAL && Name != ""){
-			auto VecExp = ParseEqual();
-			Sym->InitIdent(VecExp);
-		}
-		return Sym;
-	}
-	if (State == State_Const){
-		throw ExpectedConstExp();
+		return new SymArray(ParseType(), Exp_Left, Exp_Right);
 	}
 	Lex.AssertAndNext(TK_OF);
-	return ParseArrayOF<SymDynArray>(State, Name);
+	return new SymDynArray(ParseType());
 }
 
-template <class ArrayType> Symbol* Parser::ParseArrayOF(SymState State, string Name, Expr* Exp_Left, Expr* Exp_Right){
-	if (sym_types.find(Lex.Get().Type) == sym_types.cend() && Table.Find(Lex.Get().Source) == -1){
-		throw UnknownType(Lex.Get().Source);
-	}
-	return new ArrayType(State, Name, Switch_TokenType(State_NULL), Exp_Left, Exp_Right);
-}
-
-Symbol* Parser::ParseString(SymState State, string Name){
+Symbol* Parser::ParseString(){
 	Lex.Next();
 	Expr* Exp_Length = nullptr;
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
@@ -171,30 +149,12 @@ Symbol* Parser::ParseString(SymState State, string Name){
 		Lex.Assert(TK_CLOSE_SQUARE_BRACKET);
 		Lex.Next();
 	}
-	if (Lex.Get().Type == TK_EQUAL && Name != ""){
-		auto VecExp = ParseEqual();
-		return new SymStringType(State, Name, VecExp, Exp_Length);
-	}
-	return new SymStringType(State, Name, vector<Expr*>(), Exp_Length);
-}
-
-template <class Sym_X_Type> Symbol* Parser::ParseSimpleType(SymState State, string Name){
-	Lex.Next();
-	Expr* Exp = nullptr;
-	if (Lex.Get().Type == TK_EQUAL && Name != ""){
-		Lex.Next();
-		Exp = ParseExpr();
-	}
-	if (Exp == nullptr && State == State_Const){
-		throw UnexpectedSymbol("=", Lex.Get().Source);
-	}
-	return new Sym_X_Type(State, Name, Exp);
+	return new SymStringType(Exp_Length);
 }
 
 vector<Expr*> Parser::ParseEqual(){
 	Lex.Next();
 	vector<Expr*> Vec;
-	Expr* Exp;
 	int count = 0;
 	if (Lex.Get().Type == TK_OPEN_BRACKET){
 		do {
@@ -228,22 +188,35 @@ vector<Expr*> Parser::ParseEqual(){
 	return Vec;
 }
 
-Symbol* Parser::Switch_TokenType(SymState State, string Name){
+Symbol* Parser::ParseType(){
+	if (Table.Find(Lex.Get().Source) == -1){
+		throw UnknownType(Lex.Get().Source);
+	}
 	switch (Lex.Get().Type){
-	case TK_INTEGER:
-		return ParseSimpleType<SymIntType>(State, Name);
-	case TK_REAL:
-		return ParseSimpleType<SymRealType>(State, Name);
-	case TK_CHAR:
-		return ParseSimpleType<SymCharType>(State, Name);
-	case TK_BOOLEAN:
-		return ParseSimpleType<SymBoolType>(State, Name);
 	case TK_STRING:
-		return ParseString(State, Name);
+		return ParseString();
 	case TK_ARRAY:
-		return ParseArray(State, Name);
-	case TK_IDENTIFIER:
-		return ParseIdentifier(State, Name, Lex.Get().Source);
+		return ParseArray();
+	default:
+		return ParseIdentifier(Lex.Get().Source);
+	}
+}
+
+Symbol* Parser::ParseIdentifier(string TypeName){
+	Lex.Next();
+	return Table.GetSymbol(TypeName);
+}
+
+void Parser::AssertConstExpr(Expr* Exp) {
+	auto List = new ExpArgList();
+	Exp->GetIdentStr(List);
+	if (List->Flag == false) {
+		throw ExpectedConstExp();
+	}
+	for (int i = 0; i < List->Vec.size(); ++i) {
+		if (Table.Find(List->Vec[i]) != -1 && Table.GetSymbol(List->Vec[i])->GetSection() != DeclConst) {
+			throw ExpectedConstExp();
+		}
 	}
 }
 
@@ -261,28 +234,6 @@ Expr* Parser::ParseExpr(){
 		return new Assign(Left, Right);
 	}
 	return Left;
-}
-
-Symbol* Parser::ParseIdentifier(SymState State, string Name, string TypeName){
-	Lex.Next();
-	vector<Expr*> VecExp = vector<Expr*>();
-	if (Lex.Get().Type == TK_EQUAL && Name != ""){
-		VecExp = ParseEqual();
-	}
-	return new SymTypeID(State, Name, VecExp, TypeName);
-}
-
-void Parser::AssertConstExpr(Expr* Exp){
-	auto List = new ExpArgList();
-	Exp->GetIdentStr(List);
-	if (List->Flag == false){
-		throw ExpectedConstExp();
-	}
-	for (int i = 0; i < List->Vec.size(); ++i){
-		if (Table.Find(List->Vec[i], State_Const) == -1){
-			throw ExpectedConstExp();
-		}
-	}
 }
 
 Expr* Parser::ParseLevel(const int level){

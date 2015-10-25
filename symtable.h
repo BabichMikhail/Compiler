@@ -14,9 +14,12 @@ typedef struct {
 
 class SymTable{
 private:
+	int DeclTypeCount;
 	vector<Symbol*> Table;
 public:
-	int Find(string Value, SymState State = State_NULL);
+	SymTable();
+	int Find(string Value);
+	Symbol* GetSymbol(string TypeName);
 	void Print();
 	void Add(Symbol* NewElem);
 };

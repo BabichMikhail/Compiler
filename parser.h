@@ -16,6 +16,7 @@ private:
 	Lexer Lex;
 	SymTable Table;
 	Expr* Exp;
+	PState State;
 public:
 	Parser(const char* filename, PState State);
 	Expr* ParseLevel(const int level);
@@ -23,22 +24,21 @@ public:
 	Expr* ParseExpr();
 	Expr* ParseDesignator();
 
-	void ParseLabel();
-	void ParseConst();
-	void ParseVar();
-	void ParseType();
+	void ParseLabelDecl();
+	void ParseConstDecl();
+	void ParseVarDecl();
+	void ParseTypeDecl();
 	//void ParseFunction();
 	//void ParseProcedure();
 
-	Symbol* ParseArray(SymState State = State_NULL, string Name = "");
-	template <class ArrayType> Symbol* ParseArrayOF(SymState State = State_NULL, string Name = "", Expr* Exp_Left = nullptr, Expr* Exp_Right = nullptr);
-	Symbol* ParseString(SymState State = State_NULL, string Name = "");
-	template <class Sym_X_Type> Symbol* ParseSimpleType(SymState State  = State_NULL, string Name = "");
-	Symbol* ParseIdentifier(SymState State = State_NULL, string Name = "", string TypeName = "");
+	Symbol* ParseArray();
+	//template <class ArrayType> Symbol* ParseArrayOF(Expr* Exp_Left = nullptr, Expr* Exp_Right = nullptr);
+	Symbol* ParseString();
+	Symbol* ParseIdentifier(string TypeName = "");
 
 	vector<Expr*> ParseEqual();
 	void AssertConstExpr(Expr* Exp);
-	Symbol* Switch_TokenType(SymState State, string Name = "");
+	Symbol* ParseType();
 
 	void Print();
 };

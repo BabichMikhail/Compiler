@@ -1,25 +1,25 @@
 #include "symbol.h"
 #include "syntaxnodes.h"
 
-Symbol::Symbol(SymState State, string Name) : State(State), Name(Name){}
+Symbol::Symbol(DeclSection Section, string Name) : Name(Name), Section(Section){}
 
-SymLabel::SymLabel(SymState State, string Name) : Symbol(State, Name){}
+SymLabel::SymLabel(string Name) : Symbol(DeclLabel, Name){}
+SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type){}
+SymVar::SymVar(string Name, vector<Expr*> VecExp, Symbol* Type) : Symbol(DeclVar, Name), VecExp(VecExp), Type(Type){}
+SymConst::SymConst(string Name, vector<Expr*> VecExp, Symbol* Type) : Symbol(DeclConst, Name), VecExp(VecExp), Type(Type){}
 
-SymType::SymType(SymState State, string NameNewType, Symbol* OldType) : Symbol(State, NameNewType), Type(OldType){}
+SymDynArray::SymDynArray(Symbol* Type) : Type(Type){}
+SymArray::SymArray(Symbol* Type, Expr* Left, Expr* Right) : SymDynArray(Type), Left(Left), Right(Right){}
+SymStringType::SymStringType(Expr* Exp_Length) : Exp_Length(Exp_Length){}
 
-SymDynArray::SymDynArray(SymState State, string Name, Symbol* ArrType, Expr* Exp_1, Expr* Exp_2) : Symbol(State, Name), ArrType(ArrType){}
-SymArray::SymArray(SymState State, string Name, Symbol* ArrType, Expr* Left, Expr* Right) : SymDynArray(State, Name, ArrType), Left(Left), Right(Right){}
 
-SymSimpleType::SymSimpleType(SymState State, string Name, Expr* Exp) : Symbol(State, Name), Exp(Exp){}
-SymIntType::SymIntType(SymState State, string Name, Expr* Exp) : SymSimpleType(State, Name, Exp){}
-SymRealType::SymRealType(SymState State, string Name, Expr* Exp) : SymSimpleType(State, Name, Exp){}
-SymCharType::SymCharType(SymState State, string Name, Expr* Exp) : SymSimpleType(State, Name, Exp){}
-SymBoolType::SymBoolType(SymState State, string Name, Expr* Exp) : SymSimpleType(State, Name, Exp){}
-SymStringType::SymStringType(SymState State, string Name, vector<Expr*> VecExp, Expr* Exp_Length) : Symbol(State, Name), VecExp(VecExp), Exp_Length(Exp_Length){}
-SymTypeID::SymTypeID(SymState State, string Name, vector<Expr*> VecExp, string TypeName) : Symbol(State, Name), VecExp(VecExp), TypeName(TypeName){}
 
-bool Symbol::Find(string Value, SymState AState){
-	return Name.length() == Value.length() && _strnicmp(Name.c_str(), Value.c_str(), Name.length()) == 0 && (AState == State_NULL || State == AState);
+bool Symbol::isSame(string Value){
+	return Name.length() == Value.length() && _strnicmp(Name.c_str(), Value.c_str(), Name.length()) == 0;
+}
+
+DeclSection Symbol::GetSection(){
+	return Section;
 }
 
 void SymLabel::Print(){
@@ -28,94 +28,40 @@ void SymLabel::Print(){
 
 void SymType::Print(){
 	cout << "Type\t" << Name << endl;
-	Type->Print();
+	if (Type != nullptr)
+		Type->Print();
 }
 
 void SymDynArray::Print(){
 	cout << "DynArray\t" << Name << endl;
-	ArrType->Print();
+	Type->Print();
 }
 
 void SymArray::Print(){
 	cout << "Array\t" << Name << endl;
 	Left->Print(0);
 	Right->Print(0);
-	ArrType->Print();
-	for (int i = 0; i < VecExp.size(); ++i){
-		VecExp[i]->Print(0);
-	}
-}
-
-void SymIntType::Print(){
-	switch (State){
-	case State_Const: cout << "Const\t" << Name << "\t"; break;
-	case State_Var: cout << "Var\t" << Name << "\t"; break;
-	default: break;
-	}
-	cout << "integer" << endl;
-	if (Exp != nullptr) 
-		Exp->Print(0);
-}
-
-void SymRealType::Print(){
-	switch (State){
-	case State_Const: cout << "Const\t" << Name << "\t"; break;
-	case State_Var: cout << "Var\t" << Name << "\t"; break;
-	default: break;
-	}
-	cout << "real" << endl;
-	if (Exp != nullptr) 
-		Exp->Print(0);
-}
-
-void SymBoolType::Print(){
-	switch (State){
-	case State_Const: cout << "Const\t" << Name << "\t"; break;
-	case State_Var: cout << "Var\t" << Name << "\t"; break;
-	default: break;
-	}
-	cout << "real" << endl;
-	if (Exp != nullptr)
-		Exp->Print(0);
-}
-
-void SymCharType::Print(){
-	switch (State){
-	case State_Const: cout << "Const\t" << Name << "\t"; break;
-	case State_Var: cout << "Var\t" << Name << "\t"; break;
-	default: break;
-	}
-	cout << "char" << endl;
-	if (Exp != nullptr)
-		Exp->Print(0);
+	Type->Print();
 }
 
 void SymStringType::Print(){
-	switch (State){
-	case State_Const: cout << "Const\t" << Name << "\t"; break;
-	case State_Var: cout << "Var\t" << Name << "\t"; break;
-	default: break;
-	}
 	cout << "string" << endl;
 	if (Exp_Length != nullptr) 
 		Exp_Length->Print(0);
+}
+
+void SymVar::Print(){
+	cout << "Var\t" << Name << endl;
+	Type->Print();
 	for (int i = 0; i < VecExp.size(); ++i)
 		VecExp[i]->Print(0);
 }
 
-void SymTypeID::Print(){
-	switch (State){
-	case State_Const: cout << "Const\t" << Name << "\t"; break;
-	case State_Var: cout << "Var\t" << Name << "\t"; break;
-	default: break;
+void SymConst::Print(){
+	cout << "Const\t" << Name << endl;
+	if (Type != nullptr) {
+		Type->Print();
 	}
-	cout << TypeName << endl;
 	for (int i = 0; i < VecExp.size(); ++i)
 		VecExp[i]->Print(0);
-}
-
-void Symbol::InitIdent(vector<Expr*> VecExp){}
-
-void SymArray::InitIdent(vector<Expr*> VecExp){
-	this->VecExp = VecExp;
 }

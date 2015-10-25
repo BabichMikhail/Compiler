@@ -57,6 +57,7 @@ int main(int argc, char **argv){
 				Parser P(argv[2], Test_Exp);
 				P.Print();
 			}
+
 			if (strcmp(argv[1], "-d") == 0){
 				Parser P(argv[2], Test_Decl);
 				P.Print();
