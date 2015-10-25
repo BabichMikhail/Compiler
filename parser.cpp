@@ -121,6 +121,7 @@ void Parser::ParseTypeDecl(){
 	}
 }
 
+
 Symbol* Parser::ParseArray(){
 	Lex.Next();
 	Symbol* Sym;
@@ -131,9 +132,23 @@ Symbol* Parser::ParseArray(){
 		Lex.AssertAndNext(TK_DOUBLE_POINT);
 		Expr* Exp_Right = ParseExpr();
 		AssertConstExpr(Exp_Right);
+		SymArray* Sym = new SymArray(nullptr, Exp_Left, Exp_Right);
+		SymArray** Sym_where_type_nullptr = &Sym;
+		while (Lex.Get().Type == TK_COMMA){
+			Lex.Next();
+			Exp_Left = ParseExpr();
+			AssertConstExpr(Exp_Left);
+			Lex.AssertAndNext(TK_DOUBLE_POINT);
+			Exp_Right = ParseExpr();
+			AssertConstExpr(Exp_Right);
+			(*Sym_where_type_nullptr)->Type = new SymArray(nullptr, Exp_Left, Exp_Right);
+			Sym_where_type_nullptr = (SymArray**)(&(*Sym_where_type_nullptr)->Type);
+
+		}
 		Lex.AssertAndNext(TK_CLOSE_SQUARE_BRACKET);
 		Lex.AssertAndNext(TK_OF);
-		return new SymArray(ParseType(), Exp_Left, Exp_Right);
+		(*Sym_where_type_nullptr)->Type = ParseType();
+		return Sym;
 	}
 	Lex.AssertAndNext(TK_OF);
 	return new SymDynArray(ParseType());

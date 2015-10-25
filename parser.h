@@ -32,7 +32,6 @@ public:
 	//void ParseProcedure();
 
 	Symbol* ParseArray();
-	//template <class ArrayType> Symbol* ParseArrayOF(Expr* Exp_Left = nullptr, Expr* Exp_Right = nullptr);
 	Symbol* ParseString();
 	Symbol* ParseIdentifier(string TypeName = "");
 
