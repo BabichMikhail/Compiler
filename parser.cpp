@@ -111,6 +111,9 @@ void Parser::ParseVarDecl(){
 		}
 		Lex.AssertAndNext(TK_COLON);
 		auto Type = ParseType();
+		if (Names.size() > 1 && Lex.Get().Type == TK_EQUAL) {
+			throw UnexpectedSymbol(";", "=");
+		}
 		for (int i = 0; i < Names.size(); ++i) {
 			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : vector<Expr*>(), Type));
 		}
