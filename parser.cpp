@@ -27,7 +27,7 @@ void Parser::Print(){
 	}
 }
 
-Parser::Parser(const char* filename, PState State) : Lex(filename), State(State){
+Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State){
 	switch (State){
 	case Test_Exp:
 		while (Lex.isToken()){
@@ -132,7 +132,6 @@ void Parser::ParseTypeDecl(){
 	}
 }
 
-
 Symbol* Parser::ParseArray(){
 	Lex.Next();
 	Symbol* Sym;
@@ -144,7 +143,7 @@ Symbol* Parser::ParseArray(){
 		Expr* Exp_Right = ParseExpr();
 		AssertConstExpr(Exp_Right);
 		SymArray* Sym = new SymArray(nullptr, Exp_Left, Exp_Right);
-		SymArray** Sym_where_type_nullptr = &Sym;
+		Symbol** Sym_TypeInit = &Sym->Type;
 		while (Lex.Get().Type == TK_COMMA){
 			Lex.Next();
 			Exp_Left = ParseExpr();
@@ -152,12 +151,12 @@ Symbol* Parser::ParseArray(){
 			Lex.AssertAndNext(TK_DOUBLE_POINT);
 			Exp_Right = ParseExpr();
 			AssertConstExpr(Exp_Right);
-			(*Sym_where_type_nullptr)->Type = new SymArray(nullptr, Exp_Left, Exp_Right); 
-			Sym_where_type_nullptr = (SymArray**)(&(*Sym_where_type_nullptr)->Type);
+			*Sym_TypeInit = new SymArray(nullptr, Exp_Left, Exp_Right);
+			Sym_TypeInit = &((SymArray*)*Sym_TypeInit)->Type;
 		}
 		Lex.AssertAndNext(TK_CLOSE_SQUARE_BRACKET);
 		Lex.AssertAndNext(TK_OF);
-		(*Sym_where_type_nullptr)->Type = ParseType();
+		*Sym_TypeInit = ParseType();
 		return Sym;
 	}
 	Lex.AssertAndNext(TK_OF);
@@ -214,22 +213,19 @@ vector<Expr*> Parser::ParseEqual(){
 }
 
 Symbol* Parser::ParseType(){
-	if (Table.Find(Lex.Get().Source) == -1){
-		throw UnknownType(Lex.Get().Source);
-	}
 	switch (Lex.Get().Type){
 	case TK_STRING:
 		return ParseString();
 	case TK_ARRAY:
 		return ParseArray();
 	default:
-		return ParseIdentifier(Lex.Get().Source);
+		if (Table.Find(Lex.Get().Source) == -1) {
+			throw UnknownType(Lex.Get().Source);
+		}
+		auto Sym = Table.GetSymbol(Lex.Get().Source);
+		Lex.Next();
+		return Sym;
 	}
-}
-
-Symbol* Parser::ParseIdentifier(string TypeName){
-	Lex.Next();
-	return Table.GetSymbol(TypeName);
 }
 
 void Parser::AssertConstExpr(Expr* Exp) {
