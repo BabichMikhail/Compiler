@@ -12,7 +12,7 @@
 using namespace std;
 
 #define print_format \
-	cout << "Usage: Compiler [-h] [-help] [-p] [-l] [-d]" << endl << endl; \
+	cout << "Usage: Compiler [-h] [-help] [-p] [-l] [-d] [-s]" << endl << endl; \
 	cout << "The most commontly used input and output filenames" << endl << endl
 
 
@@ -60,6 +60,11 @@ int main(int argc, char **argv){
 
 			if (strcmp(argv[1], "-d") == 0){
 				Parser P(argv[2], Test_Decl);
+				P.Print();
+			}
+
+			if (strcmp(argv[1], "-s") == 0) {
+				Parser P(argv[2], Test_Statement);
 				P.Print();
 			}
 		}

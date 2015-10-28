@@ -45,6 +45,155 @@ Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State){
 	case Test_Decl:
 		ParseDeclSection();
 		break;
+	case Test_Statement:
+		ParseDeclSection();
+		Stmt = ParseStatement();
+		Lex.AssertAndNext(TK_POINT);
+		break;
+	}
+}
+
+/* Parse Statements */
+
+Statement* Parser::ParseStatement(){
+	switch (Lex.Get().Type) {
+	case TK_BEGIN:
+		return ParseCompoundStmt();
+		break;
+	case TK_IF:
+		return ParseIfStmt();
+		break;
+	case TK_CASE:
+		return ParseCase();
+		break;
+	case TK_FOR:
+		return ParseForStmt();
+		break;
+	case TK_WHILE:
+		return ParseWhileStmt();
+		break;
+	case TK_REPEAT:
+		return ParseRepeatStmt();
+		break;
+	case TK_TRY:
+		return ParseTryStmt();
+		break;
+	case TK_GOTO:
+		return ParseGOTOStmt();
+		break;
+	case TK_BREAK:
+		return new Stmt_BREAK();
+	default:
+		throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
+	}
+}
+
+Statement* Parser::ParseCompoundStmt(){
+	Lex.AssertAndNext(TK_BEGIN);
+	Stmt_Compound* CompStmt = new Stmt_Compound();
+	while (Lex.Get().Type != TK_END) {
+		CompStmt->Add(ParseStatement());
+	}
+	Lex.Next();
+	return CompStmt;
+}
+
+Statement* Parser::ParseGOTOStmt(){
+	Lex.Next();
+	Lex.AssertAndNext(TK_IDENTIFIER);
+	return new Stmt_GOTO(Table.GetSymbol(Lex.Get().Source));
+}
+
+Statement* Parser::ParseIfStmt(){
+	Lex.Next();
+	auto Exp = ParseExpr();
+	Lex.AssertAndNext(TK_THEN);
+	auto Stmt_1 = ParseStatement();
+	Statement* Stmt_2 = nullptr;
+	if (Lex.Get().Type == TK_ELSE) {
+		Lex.Next();
+		Stmt_2 = ParseStatement();
+	}
+	return new Stmt_IF(Exp, Stmt_1, Stmt_2);
+}
+
+Statement* Parser::ParseCase(){
+	Lex.Next();
+	auto Stmt_CASE = new Stmt_Case(ParseExpr());
+	Lex.AssertAndNext(TK_OF);
+	while (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
+		Expr* Exp_1 = ParseExpr();
+		AssertConstExpr(Exp_1);
+		Expr* Exp_2 = nullptr;
+		if (Lex.Get().Type == TK_DOUBLE_POINT) {
+			Lex.Next();
+			Exp_2 = ParseExpr();
+			AssertConstExpr(Exp_2);
+		}
+		Lex.AssertAndNext(TK_COLON);
+		auto Stmt = ParseStatement();
+		Lex.AssertAndNext(TK_SEMICOLON);
+		Stmt_CASE->Add(Case_Selector(Exp_1, Exp_2, Stmt));
+	}
+	if (Lex.Get().Type == TK_ELSE) {
+		Lex.Next();
+		Stmt_CASE->Stmt_Else = ParseStatement();
+	}
+	if (Lex.Get().Type == TK_SEMICOLON) {
+		Lex.Next();
+	}
+	return Stmt_CASE;
+}
+
+Statement* Parser::ParseForStmt(){
+	Lex.Next();
+	auto Exp_1 = ParseExpr();
+	bool isTO;
+	if (Lex.Get().Type == TK_DOWNTO){
+		Lex.Next();
+		isTO = false;
+	}
+	else {
+		Lex.AssertAndNext(TK_TO);
+		isTO = true;
+	}
+	auto Exp_2 = ParseExpr();
+	Lex.AssertAndNext(TK_DO);
+	return new Stmt_FOR(Exp_1, Exp_2, isTO, ParseStatement());
+}
+
+Statement* Parser::ParseWhileStmt(){
+	Lex.Next();
+	auto Cond = ParseExpr();
+	Lex.AssertAndNext(TK_DO);
+	return new Stmt_WHILE(Cond, ParseStatement());
+}
+
+Statement* Parser::ParseRepeatStmt(){
+	Lex.Next();
+	auto ParseStatement();
+	Lex.AssertAndNext(TK_UNTIL);
+	auto Exp = ParseExpr();
+	return new Stmt_REPEAT(Exp, Stmt);
+}
+
+Statement* Parser::ParseTryStmt(){
+	Lex.Next();
+	auto Stmt_1 = ParseStatement();
+	Statement* Stmt_2 = nullptr;
+	switch (Lex.Get().Type){
+	case TK_EXCEPT:
+		Stmt_2 = ParseStatement();
+		Lex.AssertAndNext(TK_END);
+		return new Stmt_Try_Except(Stmt_1, Stmt_2);
+		break;
+	case TK_FINALLY:
+		Stmt_2 = ParseStatement();
+		Lex.AssertAndNext(TK_END);
+		return new Stmt_Try_Finally(Stmt_1, Stmt_2);
+		break;
+	default:
+		throw UnexpectedSymbol("EXCEPT", Lex.Get().Source);
 	}
 }
 

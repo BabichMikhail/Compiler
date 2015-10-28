@@ -6,16 +6,18 @@
 #include "lexer.h" 
 #include <vector>
 #include <set>
+#include "statement.h"
 
 using namespace std;
 
-enum PMod { Test_Exp, Test_Decl };
+enum PMod { Test_Exp, Test_Decl, Test_Statement };
 
 class Parser{
 private:
 	Lexer Lex;
 	SymTable Table;
 	Expr* Exp;
+	Statement* Stmt;
 	PMod State;
 public:
 	Parser(const char* filename, PMod State);
@@ -38,6 +40,16 @@ public:
 
 	vector<Expr*> ParseEqual();
 	void AssertConstExpr(Expr* Exp);
+
+	Statement* ParseStatement();
+	Statement* ParseGOTOStmt();
+	Statement* ParseCompoundStmt();
+	Statement* ParseIfStmt();
+	Statement* ParseCase();
+	Statement* ParseForStmt();
+	Statement* ParseWhileStmt();
+	Statement* ParseRepeatStmt();
+	Statement* ParseTryStmt();
 
 	void Print();
 };

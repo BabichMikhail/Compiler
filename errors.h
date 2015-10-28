@@ -26,6 +26,11 @@ public:
 	Error(string err_msg): err_msg(err_msg){}
 };
 
+class BadType : public Error {
+public:
+	BadType() : Error("BadType") {};
+};
+
 class BadChar: public Error{
 public: 
 	BadChar(const Position Pos) : Error("Unknown Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
