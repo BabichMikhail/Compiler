@@ -24,6 +24,7 @@ public:
 	Expr* ParseExpr();
 	Expr* ParseDesignator();
 
+	void ParseDeclSection();
 	void ParseLabelDecl();
 	void ParseConstDecl();
 	void ParseVarDecl();
@@ -37,7 +38,7 @@ public:
 
 	vector<Expr*> ParseEqual();
 	void AssertConstExpr(Expr* Exp);
-	
+
 	void Print();
 };
 

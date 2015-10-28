@@ -1,5 +1,7 @@
 #include "parser.h"
 #include "errors.h"
+#include <type_traits>
+#include "calculate.h"
 
 using namespace std;
 
@@ -16,7 +18,7 @@ vector<set<TokenType>> level_list = { rel_op, add_op, mul_op };
 set<TypeExpr> Left_Op_Assign = { VarExp, RecordExp, ArrayExp };
 
 void Parser::Print(){
-	switch (State){
+	switch (State) {
 	case Test_Exp:
 		if (Exp != nullptr)
 			Exp->Print(0);
@@ -24,51 +26,59 @@ void Parser::Print(){
 	case Test_Decl:
 		Table.Print();
 		break;
+	case Test_Statement:
+		Stmt->Print(0);
+		break;
 	}
 }
 
 Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State){
-	switch (State){
+	switch (State) {
 	case Test_Exp:
-		while (Lex.isToken()){
+		while (Lex.isToken()) {
 			Lex.Next();
-			if (start_expr_tk.find(Lex.Get().Type) != start_expr_tk.end()){
+			if (start_expr_tk.find(Lex.Get().Type) != start_expr_tk.end()) {
 				Exp = ParseExpr();
-				//continue;
 			}
 		}
 		break;
 	case Test_Decl:
-		Lex.Next();
-		while (Lex.isToken()){
-			switch (Lex.Get().Type){
-			case TK_LABEL: 
-				ParseLabelDecl();
-				break;
-			case TK_CONST:
-				ParseConstDecl();
-				break;
-			case TK_TYPE:
-				ParseTypeDecl();
-				break;
+		ParseDeclSection();
+		break;
+	}
+}
+
+/* Parse Declarations */
+
+void Parser::ParseDeclSection(){
+	Lex.Next();
+	while (Lex.isToken()){
+		switch (Lex.Get().Type){
+		case TK_LABEL:
+			ParseLabelDecl();
+			break;
+		case TK_CONST:
+			ParseConstDecl();
+			break;
+		case TK_TYPE:
+			ParseTypeDecl();
+			break;
 			//case TK_FUNCTION:
 			//	ParseFunction();
 			//	break;
 			//case TK_PROCEDURE:
 			//	ParseProcedure();
 			//	break;
-			case TK_VAR:
-				ParseVarDecl();
-				break; 
-			default:
-				throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
-			}
+		case TK_VAR:
+			ParseVarDecl();
+			break;
+		case TK_BEGIN:
+			return;
+		default:
+			throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
 		}
-		break;
 	}
 }
-
-/* Parse Declarations */
 
 void Parser::ParseLabelDecl(){
 	Lex.NextAndAssert(TK_IDENTIFIER);
@@ -137,21 +147,25 @@ Symbol* Parser::ParseArray(){
 	Symbol* Sym;
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
-		Expr* Exp_Left = ParseExpr();
+		Expr* Exp_Left = ParseExpr(); 
 		AssertConstExpr(Exp_Left);
+		int A = CalculateConstExpr<int>(&Table).Calculate(Exp_Left);
 		Lex.AssertAndNext(TK_DOUBLE_POINT);
 		Expr* Exp_Right = ParseExpr();
 		AssertConstExpr(Exp_Right);
-		SymArray* Sym = new SymArray(nullptr, Exp_Left, Exp_Right);
+		int B = CalculateConstExpr<int>(&Table).Calculate(Exp_Right);
+		SymArray* Sym = new SymArray(nullptr, A, B);
 		Symbol** Sym_TypeInit = &Sym->Type;
 		while (Lex.Get().Type == TK_COMMA){
 			Lex.Next();
 			Exp_Left = ParseExpr();
 			AssertConstExpr(Exp_Left);
+			A = CalculateConstExpr<int>(&Table).Calculate(Exp_Left);
 			Lex.AssertAndNext(TK_DOUBLE_POINT);
 			Exp_Right = ParseExpr();
 			AssertConstExpr(Exp_Right);
-			*Sym_TypeInit = new SymArray(nullptr, Exp_Left, Exp_Right);
+			B = CalculateConstExpr<int>(&Table).Calculate(Exp_Right);
+			*Sym_TypeInit = new SymArray(nullptr, A, B);
 			Sym_TypeInit = &((SymArray*)*Sym_TypeInit)->Type;
 		}
 		Lex.AssertAndNext(TK_CLOSE_SQUARE_BRACKET);
@@ -165,15 +179,16 @@ Symbol* Parser::ParseArray(){
 
 Symbol* Parser::ParseString(){
 	Lex.Next();
-	Expr* Exp_Length = nullptr;
+	int Length = -1;
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
-		Exp_Length = ParseExpr();
+		auto Exp_Length = ParseExpr();
 		AssertConstExpr(Exp_Length);
+		Length = CalculateConstExpr<int>(&Table).Calculate(Exp_Length);
 		Lex.Assert(TK_CLOSE_SQUARE_BRACKET);
 		Lex.Next();
 	}
-	return new SymStringType(Exp_Length);
+	return new SymStringType(Length);
 }
 
 vector<Expr*> Parser::ParseEqual(){
