@@ -55,16 +55,16 @@ public:
 
 class SymArray : public SymDynArray{
 public:
-	Expr* Left;
-	Expr* Right;
-	SymArray(Symbol* Type, Expr* Left, Expr* Right);
+	int Left;
+	int Right;
+	SymArray(Symbol* Type, int Left, int Right);
 	void Print();
 };
 
 class SymStringType : public Symbol{
 public:
-	Expr* Exp_Length;
-	SymStringType(Expr* Length);
+	int Length;
+	SymStringType(int Length);
 	void Print();
 };
 

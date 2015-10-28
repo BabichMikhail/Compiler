@@ -9,10 +9,8 @@ SymVar::SymVar(string Name, vector<Expr*> VecExp, Symbol* Type) : Symbol(DeclVar
 SymConst::SymConst(string Name, vector<Expr*> VecExp, Symbol* Type) : Symbol(DeclConst, Name), VecExp(VecExp), Type(Type){}
 
 SymDynArray::SymDynArray(Symbol* Type) : Type(Type){}
-SymArray::SymArray(Symbol* Type, Expr* Left, Expr* Right) : SymDynArray(Type), Left(Left), Right(Right){}
-SymStringType::SymStringType(Expr* Exp_Length) : Exp_Length(Exp_Length){}
-
-
+SymArray::SymArray(Symbol* Type, int Left, int Right) : SymDynArray(Type), Left(Left), Right(Right){}
+SymStringType::SymStringType(int Length) : Length(Length){}
 
 bool Symbol::isSame(string Value){
 	return Name.length() == Value.length() && _strnicmp(Name.c_str(), Value.c_str(), Name.length()) == 0;
@@ -38,16 +36,13 @@ void SymDynArray::Print(){
 }
 
 void SymArray::Print(){
-	cout << "Array\t" << Name << endl;
-	Left->Print(0);
-	Right->Print(0);
+	cout << "Array\t" << Left << "\t" << Right << endl;
 	Type->Print();
 }
 
 void SymStringType::Print(){
-	cout << "string" << endl;
-	if (Exp_Length != nullptr) 
-		Exp_Length->Print(0);
+	cout << "string\t";
+	Length != -1 ? cout << Length << endl : cout << endl;
 }
 
 void SymVar::Print(){
