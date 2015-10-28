@@ -5,8 +5,8 @@ Symbol::Symbol(DeclSection Section, string Name) : Name(Name), Section(Section){
 
 SymLabel::SymLabel(string Name) : Symbol(DeclLabel, Name){}
 SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type){}
-SymVar::SymVar(string Name, vector<Expr*> VecExp, Symbol* Type) : Symbol(DeclVar, Name), VecExp(VecExp), Type(Type){}
-SymConst::SymConst(string Name, vector<Expr*> VecExp, Symbol* Type) : Symbol(DeclConst, Name), VecExp(VecExp), Type(Type){}
+SymVar::SymVar(string Name, vector<InitExpr*> InitExp, Symbol* Type) : Symbol(DeclVar, Name), InitExp(InitExp), Type(Type){}
+SymConst::SymConst(string Name, vector<InitExpr*> InitExp, Symbol* Type) : Symbol(DeclConst, Name), InitExp(InitExp), Type(Type){}
 
 SymDynArray::SymDynArray(Symbol* Type) : Type(Type){}
 SymArray::SymArray(Symbol* Type, int Left, int Right) : SymDynArray(Type), Left(Left), Right(Right){}
@@ -48,8 +48,8 @@ void SymStringType::Print(){
 void SymVar::Print(){
 	cout << "Var\t" << Name << endl;
 	Type->Print();
-	for (int i = 0; i < VecExp.size(); ++i)
-		VecExp[i]->Print(0);
+	for (int i = 0; i < InitExp.size(); ++i)
+		InitExp[i]->Exp->Print(0);
 }
 
 void SymConst::Print(){
@@ -57,6 +57,6 @@ void SymConst::Print(){
 	if (Type != nullptr) {
 		Type->Print();
 	}
-	for (int i = 0; i < VecExp.size(); ++i)
-		VecExp[i]->Print(0);
+	for (int i = 0; i < InitExp.size(); ++i)
+		InitExp[i]->Exp->Print(0);
 }

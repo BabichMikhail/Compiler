@@ -23,7 +23,7 @@ template <class T> CalculateConstExpr<T>::CalculateConstExpr(SymTable* Table) : 
 template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 	switch (Exp->TypeExp) {
 	case VarExp:
-		return Calculate(((SymVar*)Table->GetSymbol(((ExprVar*)Exp)->Var.Source.c_str()))->VecExp[0]);
+		return Calculate(((SymVar*)Table->GetSymbol(((ExprVar*)Exp)->Var.Source.c_str()))->InitExp[0]->Exp);
 	
 	/*case ArrayExp:
 		return ((ArrayIndex*)Exp)->Right*/

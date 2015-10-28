@@ -108,4 +108,10 @@ public:
 	void Print(const int Spaces);
 };
 
+typedef struct InitExpr{
+	InitExpr(Expr* Exp, int Level) : level(Level), Exp(Exp){}
+	int level;
+	Expr* Exp;
+} InitExpr;
+
 #endif

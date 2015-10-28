@@ -38,7 +38,7 @@ public:
 	Symbol* ParseString();
 	Symbol* ParseType();
 
-	vector<Expr*> ParseEqual();
+	vector<InitExpr*> ParseEqual();
 	void AssertConstExpr(Expr* Exp);
 
 	Statement* ParseStatement();

@@ -32,17 +32,17 @@ public:
 
 class SymVar : public Symbol{
 public:
-	vector<Expr*> VecExp;
+	vector<InitExpr*> InitExp;
 	Symbol* Type;
-	SymVar(string Name, vector<Expr*> VecExp, Symbol* Type);
+	SymVar(string Name, vector<InitExpr*> InitExp, Symbol* Type);
 	void Print();
 };
 
 class SymConst : public Symbol{
 public:
-	vector<Expr*> VecExp;
+	vector<InitExpr*> InitExp;
 	Symbol* Type;
-	SymConst(string Name, vector<Expr*> VecExp, Symbol* Type);
+	SymConst(string Name, vector<InitExpr*> InitExp, Symbol* Type);
 	void Print();
 };
 
