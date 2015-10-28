@@ -10,11 +10,11 @@ ExprBinOp::ExprBinOp(Expr* Left, Token Op, Expr* Right) : Left(Left), Op(Op), Ri
 
 ExprUnarOp::ExprUnarOp(Token Op, Expr* Exp) : Op(Op), Exp(Exp), Expr(UnarExp){}
 
-ExprConst::ExprConst(Token Value) : Value(Value), Expr(ConstExp){}
-ExprBoolConst::ExprBoolConst(Token Value) : ExprConst(Value){}
-ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value){}
-ExprRealConst::ExprRealConst(Token Value) : ExprConst(Value){}
-ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value){}
+ExprConst::ExprConst(Token Value, TypeExpr TypeExp) : Value(Value), Expr(TypeExp){}
+ExprBoolConst::ExprBoolConst(Token Value) : ExprConst(Value, ConstBoolExp){}
+ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value, ConstIntExp){}
+ExprRealConst::ExprRealConst(Token Value) : ExprConst(Value, ConstRealExp){}
+ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value, ConstStringExp){}
 
 ExprVar::ExprVar(Token Var) : Var(Var), Expr(VarExp){}
 

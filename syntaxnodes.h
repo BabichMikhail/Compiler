@@ -7,7 +7,7 @@
 #include <set>
 #include "utils.h"
 
-enum TypeExpr { BinExp, UnarExp, ConstExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
+enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstRealExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
 
 class Expr{
 public:
@@ -18,31 +18,28 @@ public:
 };
 
 class ExprBinOp : public Expr{
-private:
+public:
 	Expr* Left;
 	Token Op;
 	Expr* Right;
-public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
 class ExprUnarOp : public Expr{
-private:
+public:
 	Token Op;
 	Expr* Exp;
-public:
 	ExprUnarOp(Token Op, Expr* Exp);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
 class ExprConst : public Expr{
-private:
-	Token Value;
 public:
-	ExprConst(Token Value);
+	Token Value;
+	ExprConst(Token Value, TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces);
 };
@@ -68,49 +65,44 @@ public:
 };
 
 class ExprVar : public Expr{
-private:
-	Token Var;
 public:
+	Token Var;
 	ExprVar(Token Var);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
 class Assign : public Expr{
-private:
+public:
 	Expr* Left;
 	Expr* Right;
-public:
 	Assign(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
 class ArrayIndex : public Expr{
-private:
+public:
 	Expr* Left;
 	Expr* Right;
-public:
 	ArrayIndex(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
 class Function : public Expr{
-private:
+public:
 	Expr* Left;
 	vector<Expr*> Rights;
-public:
 	Function(Expr* Left, vector<Expr*> Rights);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
 class Record : public Expr{
-private:
+public:
 	Expr* Left;
 	Expr* Right;
-public:
 	Record(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
