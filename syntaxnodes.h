@@ -7,7 +7,7 @@
 #include <set>
 #include "utils.h"
 
-enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstRealExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp };
+enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstRealExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp };
 
 class Expr{
 public:
@@ -108,10 +108,11 @@ public:
 	void Print(const int Spaces);
 };
 
-typedef struct InitExpr{
-	InitExpr(Expr* Exp, int Level) : level(Level), Exp(Exp){}
-	int level;
-	Expr* Exp;
-} InitExpr;
+class InitList : public Expr {
+public:
+	vector<Expr*> List;
+	InitList(vector<Expr*> List = vector<Expr*>());
+	void Print(const int Spaces);
+};
 
 #endif

@@ -23,6 +23,8 @@ Assign::Assign(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(AssignE
 Function::Function(Expr* Left, vector<Expr*> Rights) : Left(Left), Rights(Rights), Expr(FunctionExp){}
 Record::Record(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(RecordExp){}
 
+InitList::InitList(vector<Expr*> List) : Expr(InitExp), List(List) {}
+
 void ExprUnarOp::Print(int Spaces){
 	Exp->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
@@ -90,6 +92,12 @@ void ArrayIndex::Print(int Spaces){
 	}
 	cout << "[]" << endl;
 	Left->Print(Spaces + 1);
+}
+
+void InitList::Print(const int Spaces) {
+	for (int i = 0; i < List.size(); ++i) {
+		List[i]->Print(Spaces);
+	}
 }
 
 void Expr::GetIdentStr(ExpArgList* List){}

@@ -274,7 +274,7 @@ void Parser::ParseVarDecl(){
 			throw UnexpectedSymbol(";", "=");
 		}
 		for (int i = 0; i < Names.size(); ++i) {
-			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : vector<InitExpr*>(), Type));
+			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : nullptr, Type));
 		}
 		Lex.AssertAndNext(TK_SEMICOLON);
 	}
@@ -340,41 +340,36 @@ Symbol* Parser::ParseString(){
 	return new SymStringType(Length);
 }
 
-vector<InitExpr*> Parser::ParseEqual(){
-	Lex.Next();
+Expr* Parser::ParseInitList(){
+	InitList* Ans = new InitList();
+	do {
+		Lex.Next();
+		if (Lex.Get().Type == TK_OPEN_BRACKET) {
+			Ans->List.push_back(ParseInitList());
+			Lex.AssertAndNext(TK_CLOSE_BRACKET);
+			if (Lex.Get().Type != TK_COMMA) {
+				return Ans;
+			}
+			continue;
+		}
+		auto Exp = ParseExpr();
+		AssertConstExpr(Exp);
+		Ans->List.push_back(Exp);
+	} while (Lex.Get().Type == TK_COMMA);
+	return Ans;
+}
 
-	vector<InitExpr*> Vec;
+Expr* Parser::ParseEqual(){
+	Lex.Next();
 	int count = 0;
 	if (Lex.Get().Type == TK_OPEN_BRACKET){
-		do {
-			while (Lex.Get().Type == TK_OPEN_BRACKET){
-				Lex.Next();
-				++count;
-			}
-			Exp = ParseExpr();
-			AssertConstExpr(Exp);
-			Vec.push_back(new InitExpr(Exp, count));
-			while (Lex.Get().Type == TK_COMMA) {
-				Lex.Next();
-				Exp = ParseExpr();
-				AssertConstExpr(Exp);
-				Vec.push_back(new InitExpr(Exp, count));
-			} 
-			while (Lex.Get().Type == TK_CLOSE_BRACKET && count > 0){
-				Lex.Next();
-				--count;
-			}
-			if (Lex.Get().Type == TK_COMMA){
-				Lex.Next();
-				Lex.Assert(TK_OPEN_BRACKET);
-			}
-		} while (Lex.Get().Type == TK_OPEN_BRACKET);
-		return Vec;
+		auto Exp = ParseInitList();
+		Lex.AssertAndNext(TK_CLOSE_BRACKET);
+		return Exp;
 	}
-	Exp = ParseExpr();
+	auto Exp = ParseExpr();
 	AssertConstExpr(Exp);
-	Vec.push_back(new InitExpr(Exp, 0));
-	return Vec;
+	return Exp;
 }
 
 Symbol* Parser::ParseType(){
