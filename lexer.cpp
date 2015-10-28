@@ -6,26 +6,21 @@
 using namespace std;
 
 static const char *const Tokens_str[] = {
-	"absolute", "and", "array", "asm", "begin", 
-	"boolean", "bytebool", "byte", "cardinal", "case", 
-	"char", "constructor", "const", "comp", "currency", 
-	"destructor", "dispose", "div", "downto", "double", 
-	"do", "else", "end", "exit", "extended", 
-	"false", "file", "for",	"function",	"goto", 
-	"if", "implementation", "inherited", "inline", "int64", 
-	"interface", "integer", "in", "label", "longbool", 
-	"longint", "longword", "mod", "new", "nil", 
-	"not", "object", "of", "operator", "or", 
-	"packed", "procedure", "program", "record", "reintroduce", 
-	"real", "repeat", "self", "set", "shl", 
-	"shortint", "shr", "smallint", "single", "string", 
-	"text", "then", "to", "true", "type", 
-	"qword", "unit", "until", "uses", "var", 
-	"wordbool", "word", "while", "with", "xor",
+	"and", "array", "begin", "boolean", "break", 
+	"case", "char", "const", 
+	"div", "downto", "double", "do", 
+	"except", "else", "end", "exit", 
+	"false", "finally", "for", "function", 
+	"goto", "if", "integer",
+	"label", "mod", "nil", "not", 
+	"of", "or", "procedure", "program", 
+	"record", "real", "repeat",
+	"shl", "shr", "string", 
+	"then", "to", "true", "try", "type", 
+	"until", "var", "while", "xor",
 
-	"<<", ">>", "**", "<>", "<=",
-	">=", ":=", "+=", "-=", "*=",
-	"/=", "//",
+	"<>", "<=", ">=", ":=", 
+	"+=", "-=", "*=", "/=",
 
 	"+", "-", "*", "/", "=",
 	"<", ">", "[", "]", "..", 
@@ -37,19 +32,15 @@ static const char *const Tokens_str[] = {
 };
 
 TokenType Reserved_Words[] = {
-	TK_ABSOLUTE, TK_AND, TK_ARRAY, TK_ASM, TK_BEGIN, TK_BOOLEAN, TK_BYTEBOOL, TK_BYTE, TK_CARDINAL, TK_CASE, TK_CHAR, TK_CONSTRUCTOR, TK_CONST, TK_COMP, 
-	TK_CURRENCY, TK_DESTRUCTOR, TK_DISPOSE, TK_DIV_INT, TK_DOWNTO, TK_DOUBLE, TK_DO, TK_ELSE, TK_END, TK_EXIT, TK_EXTENDED, TK_FALSE, TK_FILE, TK_FOR,
-	TK_FUNCTION, TK_GOTO, TK_IF, TK_IMPLEMENTATION, TK_INHERITED, TK_INLINE, TK_INT64, TK_INTERFACE, TK_INTEGER, TK_IN, TK_LABEL, TK_LONGBOOL, TK_LONGINT,
-	TK_LONGWORD, TK_MOD, TK_NEW, TK_NIL, TK_NOT, TK_OBJECT, TK_OF, TK_OPERATOR, TK_OR, TK_PACKED, TK_PROCEDURE, TK_PROGRAM, TK_RECORD, TK_REINTRODUCE,
-	TK_REAL, TK_REPEAT, TK_SELF, TK_SET, TK_SHL, TK_SHORTINT, TK_SHR, TK_SMALLINT, TK_SINGLE, TK_STRING, TK_TEXT, TK_THEN, TK_TO, TK_TRUE, TK_TYPE,
-	TK_QWORD, TK_UNIT, TK_UNTIL, TK_USES, TK_VAR, TK_WORDBOOL, TK_WORD, TK_WHILE, TK_WITH, TK_XOR
+	TK_AND, TK_ARRAY, TK_BEGIN, TK_BOOLEAN, TK_CASE, TK_CHAR, TK_CONST, TK_DIV_INT, TK_DOWNTO, TK_DOUBLE, TK_DO, TK_ELSE, TK_END, TK_EXIT, TK_FALSE, 
+	TK_FOR, TK_FUNCTION, TK_GOTO, TK_IF, TK_INTEGER, TK_LABEL, TK_MOD, TK_NIL, TK_NOT, TK_OF, TK_OR, TK_PROCEDURE, TK_PROGRAM, TK_RECORD, TK_REAL, 
+	TK_REPEAT, TK_SHL, TK_SHR, TK_STRING, TK_THEN, TK_TO, TK_TRUE, TK_TYPE, TK_UNTIL, TK_VAR, TK_WHILE, TK_XOR
 };
 
 TokenType Operators[] = {
-	TK_LESS_LESS, TK_GREAT_GREAT, TK_MUL_MUL, TK_NOT_EQUAL, TK_LESS_EQUAL, TK_GREAT_EQUAL, TK_ASSIGNED, TK_PLUS_EQUAL, TK_SUB_EQUAL, TK_MUL_EQUAL,
-	TK_DIV_EQUAL, TK_DIV_DIV, TK_PLUS, TK_MINUS, TK_MUL, TK_DIV, TK_EQUAL, TK_LESS, TK_GREAT, TK_OPEN_SQUARE_BRACKET, TK_CLOSE_SQUARE_BRACKET, 
-	TK_DOUBLE_POINT, TK_POINT, TK_COMMA, TK_OPEN_BRACKET, TK_CLOSE_BRACKET, TK_COLON, TK_CAP, TK_DOG, TK_OPEN_BRACE, TK_CLOSE_BRACE, TK_DOLLAR, TK_GRILL, 
-	TK_AMPERSAND, TK_PERCENT, TK_SEMICOLON
+	TK_NOT_EQUAL, TK_LESS_EQUAL, TK_GREAT_EQUAL, TK_ASSIGNED, TK_PLUS_EQUAL, TK_SUB_EQUAL, TK_MUL_EQUAL, TK_DIV_EQUAL, TK_PLUS, TK_MINUS, TK_MUL, 
+	TK_DIV, TK_EQUAL, TK_LESS, TK_GREAT, TK_OPEN_SQUARE_BRACKET, TK_CLOSE_SQUARE_BRACKET, TK_DOUBLE_POINT, TK_POINT, TK_COMMA, TK_OPEN_BRACKET, 
+	TK_CLOSE_BRACKET, TK_COLON, TK_CAP, TK_DOG, TK_OPEN_BRACE, TK_CLOSE_BRACE, TK_DOLLAR, TK_GRILL, TK_AMPERSAND, TK_PERCENT, TK_SEMICOLON
 };
 
 void Token::Set(const Position Pos, const string Source, const TokenType Type){
