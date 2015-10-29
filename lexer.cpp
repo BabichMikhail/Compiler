@@ -7,7 +7,7 @@ using namespace std;
 
 static const char *const Tokens_str[] = {
 	"and", "array", "begin", "boolean", "break", 
-	"case", "char", "const",
+	"case", "char", "const", "continue",
 	"div", "downto", "double", "do", 
 	"except", "else", "end", "exit", 
 	"false", "finally", "for", "function", 
