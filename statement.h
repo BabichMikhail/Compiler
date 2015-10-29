@@ -79,8 +79,8 @@ public:
 class Stmt_REPEAT : public Statement {
 public:
 	Expr* Cond;
-	Statement* Stmt;
-	Stmt_REPEAT(Expr* Cond, Statement* Stmt); 
+	vector<Statement*> Stmt_List;
+	Stmt_REPEAT(Expr* Cond, vector<Statement*> Stmt_List); 
 	void Print(int Spaces);
 };
 
@@ -89,19 +89,31 @@ public:
 	void Print(int Spaces);
 };
 
+class Stmt_Continue : public Statement {
+public:
+	void Print(int Spaces);
+};
+
 class Stmt_Try_Except : public Statement{
 public:
-	Statement* Stmt_1;
-	Statement* Stmt_2; // exp_bl
-	Stmt_Try_Except(Statement* Stmt_1, Statement* Stmt_2);
+	vector<Statement*> Stmt_List_Try;
+	vector<Statement*> Stmt_List_Except;
+	Stmt_Try_Except(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Except);
 	void Print(int Spaces);
 };
 
 class Stmt_Try_Finally : public Statement{
 public:
-	Statement* Stmt_1;
-	Statement* Stmt_2;
-	Stmt_Try_Finally(Statement* Stmt_1, Statement* Stmt_2);
+	vector<Statement*> Stmt_List_Try;
+	vector<Statement*> Stmt_List_Finally;
+	Stmt_Try_Finally(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Finally);
+	void Print(int Spaces);
+};
+
+class Stmt_Assign : public Statement {
+public:
+	Expr* Exp;
+	Stmt_Assign(Expr* Exp);
 	void Print(int Spaces);
 };
 

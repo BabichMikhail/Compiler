@@ -47,7 +47,11 @@ Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State){
 		break;
 	case Test_Statement:
 		ParseDeclSection();
-		Stmt = ParseStatement(0);
+		Lex.Check(TK_BEGIN);
+		Lex.Next();
+		Stmt = new Stmt_Compound();
+		((Stmt_Compound*)Stmt)->StmtList = ParseStmtList(0);
+		Lex.CheckAndNext(TK_END);
 		Lex.CheckAndNext(TK_POINT);
 		break;
 	}
@@ -82,14 +86,31 @@ Statement* Parser::ParseStatement(int State){
 		return ParseGOTOStmt(State);
 		break;
 	case TK_BREAK:
-		if (State & 2 == 0) {
+		if (State & 2 != 0) {
 			throw NotAllowedStmt("BREAK");
 		}
+		Lex.Next();
 		return new Stmt_BREAK();
 	case TK_CONTINUE:
-		if (State & 2 == 0) {
+		if (State & 2 != 0) {
 			throw NotAllowedStmt("CONTINUE");
 		}
+		Lex.Next();
+		return new Stmt_Continue();
+	case TK_ELSE:
+	case TK_END:
+	case TK_EXCEPT:
+	case TK_FINALLY:
+	case TK_UNTIL:
+		return nullptr;
+	case TK_SEMICOLON:
+		Lex.Next();
+		return nullptr;
+		break;
+	case TK_IDENTIFIER:
+		Exp = ParseExpr();
+		CheckSemicolon();
+		return new Stmt_Assign(Exp);
 	default:
 		throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
 	}
@@ -98,17 +119,18 @@ Statement* Parser::ParseStatement(int State){
 Statement* Parser::ParseCompoundStmt(int State){
 	Lex.CheckAndNext(TK_BEGIN);
 	Stmt_Compound* CompStmt = new Stmt_Compound();
-	while (Lex.Get().Type != TK_END) {
-		CompStmt->Add(ParseStatement(State));
-	}
-	Lex.Next();
+	CompStmt->StmtList = ParseStmtList(State);
+	Lex.CheckAndNext(TK_END);
+	CheckSemicolon();
 	return CompStmt;
 }
 
 Statement* Parser::ParseGOTOStmt(int State){
+	Lex.NextAndCheck(TK_IDENTIFIER);
+	auto Sym = Table.GetSymbol(Lex.Get().Source);
 	Lex.Next();
-	Lex.CheckAndNext(TK_IDENTIFIER);
-	return new Stmt_GOTO(Table.GetSymbol(Lex.Get().Source));
+	CheckSemicolon();
+	return new Stmt_GOTO(Sym);
 }
 
 Statement* Parser::ParseIfStmt(int State){
@@ -128,6 +150,9 @@ Statement* Parser::ParseCase(int State){
 	Lex.Next();
 	auto Stmt_CASE = new Stmt_Case(ParseExpr());
 	Lex.CheckAndNext(TK_OF);
+	if (Lex.Get().Type == TK_ELSE || Lex.Get().Type == TK_END) {
+		throw IllegalExpr();
+	}
 	while (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
 		Expr* Exp_1 = ParseExpr();
 		CheckConstExpr(Exp_1);
@@ -139,16 +164,16 @@ Statement* Parser::ParseCase(int State){
 		}
 		Lex.CheckAndNext(TK_COLON);
 		auto Stmt = ParseStatement(State | 4);
-		Lex.CheckAndNext(TK_SEMICOLON);
+		if (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
+			Lex.CheckAndNext(TK_SEMICOLON);
+		}
 		Stmt_CASE->Add(Case_Selector(Exp_1, Exp_2, Stmt));
 	}
 	if (Lex.Get().Type == TK_ELSE) {
 		Lex.Next();
 		Stmt_CASE->Stmt_Else = ParseStatement(State);
 	}
-	if (Lex.Get().Type == TK_SEMICOLON) {
-		Lex.Next();
-	}
+	CheckSemicolon();
 	return Stmt_CASE;
 }
 
@@ -166,7 +191,11 @@ Statement* Parser::ParseForStmt(int State){
 	}
 	auto Exp_2 = ParseExpr();
 	Lex.CheckAndNext(TK_DO);
-	return new Stmt_FOR(Exp_1, Exp_2, isTO, ParseStatement(State | 2));
+	auto Stmt = ParseStatement(State | 2);
+	if (Stmt != nullptr) {
+		CheckSemicolon();
+	}
+	return new Stmt_FOR(Exp_1, Exp_2, isTO, Stmt);
 }
 
 Statement* Parser::ParseWhileStmt(int State){
@@ -178,29 +207,50 @@ Statement* Parser::ParseWhileStmt(int State){
 
 Statement* Parser::ParseRepeatStmt(int State){
 	Lex.Next();
-	auto ParseStatement();
+	auto Stmt_List = ParseStmtList(State);
 	Lex.CheckAndNext(TK_UNTIL);
 	auto Exp = ParseExpr();
-	return new Stmt_REPEAT(Exp, Stmt);
+	return new Stmt_REPEAT(Exp, Stmt_List);
 }
 
 Statement* Parser::ParseTryStmt(int State){
 	Lex.Next();
-	auto Stmt_1 = ParseStatement(State | 1);
-	Statement* Stmt_2 = nullptr;
+	auto Stmt_1 = ParseStmtList(State);
+	vector<Statement*> Stmt_2;
 	switch (Lex.Get().Type){
 	case TK_EXCEPT:
-		Stmt_2 = ParseStatement(State | 1);
+		Lex.Next();
+		Stmt_2 = ParseStmtList(State);
 		Lex.CheckAndNext(TK_END);
 		return new Stmt_Try_Except(Stmt_1, Stmt_2);
 		break;
 	case TK_FINALLY:
-		Stmt_2 = ParseStatement(State);
+		Lex.Next();
+		Stmt_2 = ParseStmtList(State);
 		Lex.CheckAndNext(TK_END);
 		return new Stmt_Try_Finally(Stmt_1, Stmt_2);
 		break;
 	default:
 		throw UnexpectedSymbol("EXCEPT", Lex.Get().Source);
+	}
+}
+
+set<TokenType> end_block_tk = { TK_END, TK_EXCEPT, TK_FINALLY, TK_ELSE, TK_UNTIL, TK_POINT };
+
+vector<Statement*> Parser::ParseStmtList(int State) {
+	vector<Statement*> Ans;
+	while (end_block_tk.find(Lex.Get().Type) == end_block_tk.cend()){
+		auto Stmt = ParseStatement(State);
+		if (Stmt != nullptr) {
+			Ans.push_back(Stmt);
+		}
+	}
+	return Ans;
+}
+
+void Parser::CheckSemicolon() {
+	if (end_block_tk.find(Lex.Get().Type) == end_block_tk.cend()) {
+		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
 

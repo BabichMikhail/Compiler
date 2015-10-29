@@ -52,6 +52,9 @@ public:
 	Statement* ParseRepeatStmt(int State);
 	Statement* ParseTryStmt(int State);
 
+	vector<Statement*> ParseStmtList(int State);
+	void CheckSemicolon();
+
 	void Print();
 };
 
