@@ -305,22 +305,22 @@ Symbol* Parser::ParseArray(){
 		Lex.Next();
 		Expr* Exp_Left = ParseExpr(); 
 		CheckConstExpr(Exp_Left);
-		int A = CalculateConstExpr<int>(&Table).Calculate(Exp_Left);
+		int A = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Left);
 		Lex.CheckAndNext(TK_DOUBLE_POINT);
 		Expr* Exp_Right = ParseExpr();
 		CheckConstExpr(Exp_Right);
-		int B = CalculateConstExpr<int>(&Table).Calculate(Exp_Right);
+		int B = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Right);
 		SymArray* Sym = new SymArray(nullptr, A, B);
 		Symbol** Sym_TypeInit = &Sym->Type;
 		while (Lex.Get().Type == TK_COMMA){
 			Lex.Next();
 			Exp_Left = ParseExpr();
 			CheckConstExpr(Exp_Left);
-			A = CalculateConstExpr<int>(&Table).Calculate(Exp_Left);
+			A = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Left);
 			Lex.CheckAndNext(TK_DOUBLE_POINT);
 			Exp_Right = ParseExpr();
 			CheckConstExpr(Exp_Right);
-			B = CalculateConstExpr<int>(&Table).Calculate(Exp_Right);
+			B = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Right);
 			*Sym_TypeInit = new SymArray(nullptr, A, B);
 			Sym_TypeInit = &((SymArray*)*Sym_TypeInit)->Type;
 		}
@@ -340,7 +340,7 @@ Symbol* Parser::ParseString(){
 		Lex.Next();
 		auto Exp_Length = ParseExpr();
 		CheckConstExpr(Exp_Length);
-		Length = CalculateConstExpr<int>(&Table).Calculate(Exp_Length);
+		Length = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Length);
 		Lex.Check(TK_CLOSE_SQUARE_BRACKET);
 		Lex.Next();
 	}

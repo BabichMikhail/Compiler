@@ -9,6 +9,7 @@ template <class T>
 class CalculateConstExpr {
 private:
 	SymTable* Table;
+	string TypeName;
 	T CalculateUnarConstExpr(ExprUnarOp* Exp);
 	T CalculateBinConstExpr(ExprBinOp* Exp);
 	T CalculateArrayIndex(ArrayIndex* Exp);
@@ -16,10 +17,10 @@ private:
 public:
 	T Ans;
 	T Calculate(Expr* Exp);
-	CalculateConstExpr(SymTable* Table);
+	CalculateConstExpr(SymTable* Table, string TypeName);
 };
 
-template <class T> CalculateConstExpr<T>::CalculateConstExpr(SymTable* Table) : Table(Table) {}
+template <class T> CalculateConstExpr<T>::CalculateConstExpr(SymTable* Table, string TypeName) : Table(Table), TypeName(TypeName) {}
 
 template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 	switch (Exp->TypeExp) {
@@ -32,9 +33,13 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 
 	case ConstRealExp:
 		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType();
+			throw BadType(TypeName);
 		}
 		return atof(((ExprRealConst*)Exp)->Value.Source.c_str());
+
+	case ConstBoolExp:
+		CheckType<bool>();
+		return _strnicmp(((ExprBoolConst*)Exp)->Value.Source.c_str(), "true", 4) == 0 ? true : false;
 
 	case BinExp:
 		return CalculateBinConstExpr((ExprBinOp*)Exp);
@@ -44,32 +49,42 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 
 	case ArrayExp:
 		return CalculateArrayIndex((ArrayIndex*)Exp);
-
-	default:
-		throw BadType();
 	}
 }
 
 template <class T> T CalculateConstExpr<T>::CalculateUnarConstExpr(ExprUnarOp* Exp) {
 	switch (Exp->Op.Type) {
 	case TK_MINUS:
+		if (!is_same<T, int>::value && !is_same<T, double>::value) {
+			throw BadType(TypeName);
+		}
 		return - Calculate(Exp->Exp);
 	case TK_PLUS:
+		if (!is_same<T, int>::value && !is_same<T, double>::value) {
+			throw BadType(TypeName);
+		}
 		return + Calculate(Exp->Exp);
 	case TK_NOT: 
 		return ! Calculate(Exp->Exp);
-	default:
-		throw BadType();
 	}
 }
 
 template <class T> T CalculateConstExpr<T>::CalculateBinConstExpr(ExprBinOp* Exp) {
 	switch (Exp->Op.Type) {
 	case TK_PLUS: 
+		if (!is_same<T, int>::value && !is_same<T, double>::value) {
+			throw BadType(TypeName);
+		}
 		return Calculate(Exp->Left) + Calculate(Exp->Right);
 	case TK_MINUS: 
+		if (!is_same<T, int>::value && !is_same<T, double>::value) {
+			throw BadType(TypeName);
+		}
 		return Calculate(Exp->Left) - Calculate(Exp->Right);
 	case TK_MUL: 
+		if (!is_same<T, int>::value && !is_same<T, double>::value) {
+			throw BadType(TypeName);
+		}
 		return Calculate(Exp->Left) * Calculate(Exp->Right);
 	case TK_DIV_INT:
 		CheckType<int>();
@@ -93,8 +108,6 @@ template <class T> T CalculateConstExpr<T>::CalculateBinConstExpr(ExprBinOp* Exp
 	case TK_SHR:
 		CheckType<int>();
 		return (int)Calculate(Exp->Left) >> (int)Calculate(Exp->Right);
-	default:
-		throw BadType();
 	}
 }
 
@@ -107,7 +120,7 @@ template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ArrayIndex* Exp)
 	}
 	InitList* ExpList = (InitList*)((SymConst*)Table->GetSymbol(((ExprVar*)IdentExp)->Var.Source.c_str()))->InitExp;
 	IdentExp = Exp;
-	for (int i = idxs.size() - 1; i >= 0; --i) { 
+	for (int i = idxs.size() - 1; i >= 0; --i) {
 		ExpList = (InitList*)ExpList->List[idxs[i]];
 	}
 	return Calculate(ExpList);
@@ -115,7 +128,7 @@ template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ArrayIndex* Exp)
 
 template <class T> template <class X> void CalculateConstExpr<T>::CheckType() {
 	if (!is_same<X, T>::value) {
-		throw BadType();
+		throw BadType(TypeName);
 	}
 }
 

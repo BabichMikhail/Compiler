@@ -28,7 +28,7 @@ public:
 
 class BadType : public Error {
 public:
-	BadType() : Error("BadType") {};
+	BadType(string TypeExpected) : Error("Error: Incompatible types: expected \"" + TypeExpected + "\"") {};
 };
 
 class BadChar: public Error{
@@ -84,6 +84,11 @@ public:
 class UnknownType : public Error{
 public:
 	UnknownType(string TypeName) : Error("Error: Unknown TypeName \"" + CheckSymbol(TypeName) + "\""){};
+};
+
+class NotAllowedStmt : public Error {
+public:
+	NotAllowedStmt(string StmtName) : Error("Error: " + StmtName + " not allowed") {};
 };
 
 #endif 
