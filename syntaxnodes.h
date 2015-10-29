@@ -7,6 +7,9 @@
 #include <set>
 #include "utils.h"
 
+#define indent "   "
+#define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
+
 enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstRealExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp };
 
 class Expr{

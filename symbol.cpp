@@ -20,45 +20,56 @@ DeclSection Symbol::GetSection(){
 	return Section;
 }
 
-void SymLabel::Print(){
+void SymLabel::Print(int Spaces){
+	print_indent(Spaces);
 	cout << "Label\t" << Name << endl;
 }
 
-void SymType::Print(){
-	cout << "Type\t" << Name << endl;
+void SymType::Print(int Spaces){
+	if (Spaces > 1) return;
+	print_indent(Spaces);
+	cout << "Type" << indent << Name << endl;
 	if (Type != nullptr)
-		Type->Print();
+		Type->Print(Spaces + 1);
 }
 
-void SymDynArray::Print(){
-	cout << "DynArray\t" << Name << endl;
-	Type->Print();
+void SymDynArray::Print(int Spaces){
+	if (Spaces > 1) return;
+	print_indent(Spaces);
+	cout << "DynArray" << indent << Name << endl;
+	Type->Print(Spaces);
 }
 
-void SymArray::Print(){
-	cout << "Array\t" << Left << "\t" << Right << endl;
-	Type->Print();
+void SymArray::Print(int Spaces){
+	if (Spaces > 1) return;
+	print_indent(Spaces);
+	cout << "Array" << indent << Left << indent << Right << endl;
+	Type->Print(Spaces);
 }
 
-void SymStringType::Print(){
-	cout << "string\t";
+void SymStringType::Print(int Spaces){
+	if (Spaces > 1) return;
+	print_indent(Spaces);
+	cout << "string" << indent;
 	Length != -1 ? cout << Length << endl : cout << endl;
 }
 
-void SymVar::Print(){
-	cout << "Var\t" << Name << endl;
-	Type->Print();
+void SymVar::Print(int Spaces){
+	if (Spaces > 1) return;
+	print_indent(Spaces);
+	cout << "Var" << indent << Name << endl;
+	Type->Print(1);
 	if (InitExp != nullptr) {
-		InitExp->Print(0);
+		InitExp->Print(1);
 	}
 }
 
-void SymConst::Print(){
-	cout << "Const\t" << Name << endl;
+void SymConst::Print(int Spaces){
+	if (Spaces > 1) return;
+	print_indent(Spaces);
+	cout << "Const" << indent << Name << endl;
 	if (Type != nullptr) {
-		Type->Print();
+		Type->Print(1);
 	}
-	if (InitExp != nullptr) {
-		InitExp->Print(0);
-	}
+	InitExp->Print(1);
 }

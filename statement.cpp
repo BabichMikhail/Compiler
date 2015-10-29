@@ -1,8 +1,5 @@
 #include "statement.h"
 
-#define indent "   "
-#define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
-
 Stmt_GOTO::Stmt_GOTO(Symbol* Sym) : LabelSym(Sym){};
 Stmt_Conditional::Stmt_Conditional(Expr* Exp) : Exp(Exp){};
 Stmt_IF::Stmt_IF(Expr* Exp, Statement* Stmt, Statement* Stmt_Else) : Stmt_Conditional(Exp), Stmt(Stmt), Stmt_Else(Stmt_Else){}
@@ -36,13 +33,12 @@ void Stmt_Compound::Print(int Spaces) {
 		StmtList[i]->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
-	cout << "end";
+	cout << "end" << endl;
 }
 
 void Stmt_GOTO::Print(int Spaces) {
 	print_indent(Spaces);
-	cout << "goto" << endl;
-	LabelSym->Print();
+	cout << "goto" << indent << LabelSym->Name << endl;
 }
 
 void Stmt_IF::Print(int Spaces){
@@ -60,6 +56,7 @@ void Stmt_FOR::Print(int Spaces){
 	print_indent(Spaces + 1);
 	isTO ? cout << "true" << endl : cout << "false" << endl;
 	Exp_2->Print(Spaces + 1);
+	cout << endl;
 	Stmt->Print(Spaces + 1);
 }
 
@@ -87,7 +84,6 @@ void Stmt_Case::Print(int Spaces) {
 	cout << "case" << endl;
 	Exp->Print(Spaces);
 	for (int i = 0; i < SelectorList.size(); ++i) {
-		// const Expr!! 
 		SelectorList[i].Stmt->Print(Spaces + 1);
 	}
 }

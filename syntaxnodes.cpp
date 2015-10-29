@@ -2,8 +2,6 @@
 #include <vector>
 #include <set>
 
-#define indent "   "
-
 Expr::Expr(TypeExpr TypeExp) : TypeExp(TypeExp){}
 
 ExprBinOp::ExprBinOp(Expr* Left, Token Op, Expr* Right) : Left(Left), Op(Op), Right(Right), Expr(BinExp){}

@@ -26,13 +26,17 @@ int SymTable::Find(string Value){
 	return -1;
 }
 
-Symbol* SymTable::GetSymbol(string TypeName){
-	return Table[Find(TypeName)];
+Symbol* SymTable::GetSymbol(string Name){
+	int idx = Find(Name);
+	if (idx == -1) {
+		throw IdentifierNotFound(Name);
+	}
+	return Table[idx];
 }
 
 void SymTable::Print(){
 	for (int i = DeclTypeCount; i < Table.size(); ++i){ /* No Print STD Type */
-		Table[i]->Print();
+		Table[i]->Print(0);
 		cout << endl;
 	}
 }
