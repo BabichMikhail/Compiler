@@ -47,97 +47,104 @@ Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State){
 		break;
 	case Test_Statement:
 		ParseDeclSection();
-		Stmt = ParseStatement();
-		Lex.AssertAndNext(TK_POINT);
+		Stmt = ParseStatement(0);
+		Lex.CheckAndNext(TK_POINT);
 		break;
 	}
 }
 
 /* Parse Statements */
 
-Statement* Parser::ParseStatement(){
+Statement* Parser::ParseStatement(int State){
 	switch (Lex.Get().Type) {
 	case TK_BEGIN:
-		return ParseCompoundStmt();
+		return ParseCompoundStmt(State);
 		break;
 	case TK_IF:
-		return ParseIfStmt();
+		return ParseIfStmt(State);
 		break;
 	case TK_CASE:
-		return ParseCase();
+		return ParseCase(State);
 		break;
 	case TK_FOR:
-		return ParseForStmt();
+		return ParseForStmt(State);
 		break;
 	case TK_WHILE:
-		return ParseWhileStmt();
+		return ParseWhileStmt(State);
 		break;
 	case TK_REPEAT:
-		return ParseRepeatStmt();
+		return ParseRepeatStmt(State);
 		break;
 	case TK_TRY:
-		return ParseTryStmt();
+		return ParseTryStmt(State);
 		break;
 	case TK_GOTO:
-		return ParseGOTOStmt();
+		return ParseGOTOStmt(State);
 		break;
 	case TK_BREAK:
+		if (State & 2 == 0) {
+			throw NotAllowedStmt("BREAK");
+		}
 		return new Stmt_BREAK();
+	case TK_CONTINUE:
+		if (State & 2 == 0) {
+			throw NotAllowedStmt("CONTINUE");
+		}
 	default:
 		throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
 	}
 }
 
-Statement* Parser::ParseCompoundStmt(){
-	Lex.AssertAndNext(TK_BEGIN);
+Statement* Parser::ParseCompoundStmt(int State){
+	Lex.CheckAndNext(TK_BEGIN);
 	Stmt_Compound* CompStmt = new Stmt_Compound();
 	while (Lex.Get().Type != TK_END) {
-		CompStmt->Add(ParseStatement());
+		CompStmt->Add(ParseStatement(State));
 	}
 	Lex.Next();
 	return CompStmt;
 }
 
-Statement* Parser::ParseGOTOStmt(){
+Statement* Parser::ParseGOTOStmt(int State){
 	Lex.Next();
-	Lex.AssertAndNext(TK_IDENTIFIER);
+	Lex.CheckAndNext(TK_IDENTIFIER);
 	return new Stmt_GOTO(Table.GetSymbol(Lex.Get().Source));
 }
 
-Statement* Parser::ParseIfStmt(){
+Statement* Parser::ParseIfStmt(int State){
 	Lex.Next();
 	auto Exp = ParseExpr();
-	Lex.AssertAndNext(TK_THEN);
-	auto Stmt_1 = ParseStatement();
+	Lex.CheckAndNext(TK_THEN);
+	auto Stmt_1 = ParseStatement(State);
 	Statement* Stmt_2 = nullptr;
 	if (Lex.Get().Type == TK_ELSE) {
 		Lex.Next();
-		Stmt_2 = ParseStatement();
+		Stmt_2 = ParseStatement(State);
 	}
 	return new Stmt_IF(Exp, Stmt_1, Stmt_2);
 }
 
-Statement* Parser::ParseCase(){
+Statement* Parser::ParseCase(int State){
 	Lex.Next();
 	auto Stmt_CASE = new Stmt_Case(ParseExpr());
-	Lex.AssertAndNext(TK_OF);
+	Lex.CheckAndNext(TK_OF);
 	while (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
 		Expr* Exp_1 = ParseExpr();
-		AssertConstExpr(Exp_1);
+		CheckConstExpr(Exp_1);
 		Expr* Exp_2 = nullptr;
 		if (Lex.Get().Type == TK_DOUBLE_POINT) {
 			Lex.Next();
 			Exp_2 = ParseExpr();
-			AssertConstExpr(Exp_2);
+			CheckConstExpr(Exp_2);
 		}
-		Lex.AssertAndNext(TK_COLON);
-		auto Stmt = ParseStatement();
-		Lex.AssertAndNext(TK_SEMICOLON);
+		Lex.CheckAndNext(TK_COLON);
+		auto Stmt = ParseStatement(State | 4);
+		Lex.CheckAndNext(TK_SEMICOLON);
 		Stmt_CASE->Add(Case_Selector(Exp_1, Exp_2, Stmt));
 	}
 	if (Lex.Get().Type == TK_ELSE) {
 		Lex.Next();
-		Stmt_CASE->Stmt_Else = ParseStatement();
+		Stmt_CASE->Stmt_Else = ParseStatement(State);
 	}
 	if (Lex.Get().Type == TK_SEMICOLON) {
 		Lex.Next();
@@ -145,7 +152,7 @@ Statement* Parser::ParseCase(){
 	return Stmt_CASE;
 }
 
-Statement* Parser::ParseForStmt(){
+Statement* Parser::ParseForStmt(int State){
 	Lex.Next();
 	auto Exp_1 = ParseExpr();
 	bool isTO;
@@ -154,42 +161,42 @@ Statement* Parser::ParseForStmt(){
 		isTO = false;
 	}
 	else {
-		Lex.AssertAndNext(TK_TO);
+		Lex.CheckAndNext(TK_TO);
 		isTO = true;
 	}
 	auto Exp_2 = ParseExpr();
-	Lex.AssertAndNext(TK_DO);
-	return new Stmt_FOR(Exp_1, Exp_2, isTO, ParseStatement());
+	Lex.CheckAndNext(TK_DO);
+	return new Stmt_FOR(Exp_1, Exp_2, isTO, ParseStatement(State | 2));
 }
 
-Statement* Parser::ParseWhileStmt(){
+Statement* Parser::ParseWhileStmt(int State){
 	Lex.Next();
 	auto Cond = ParseExpr();
-	Lex.AssertAndNext(TK_DO);
-	return new Stmt_WHILE(Cond, ParseStatement());
+	Lex.CheckAndNext(TK_DO);
+	return new Stmt_WHILE(Cond, ParseStatement(State | 2));
 }
 
-Statement* Parser::ParseRepeatStmt(){
+Statement* Parser::ParseRepeatStmt(int State){
 	Lex.Next();
 	auto ParseStatement();
-	Lex.AssertAndNext(TK_UNTIL);
+	Lex.CheckAndNext(TK_UNTIL);
 	auto Exp = ParseExpr();
 	return new Stmt_REPEAT(Exp, Stmt);
 }
 
-Statement* Parser::ParseTryStmt(){
+Statement* Parser::ParseTryStmt(int State){
 	Lex.Next();
-	auto Stmt_1 = ParseStatement();
+	auto Stmt_1 = ParseStatement(State | 1);
 	Statement* Stmt_2 = nullptr;
 	switch (Lex.Get().Type){
 	case TK_EXCEPT:
-		Stmt_2 = ParseStatement();
-		Lex.AssertAndNext(TK_END);
+		Stmt_2 = ParseStatement(State | 1);
+		Lex.CheckAndNext(TK_END);
 		return new Stmt_Try_Except(Stmt_1, Stmt_2);
 		break;
 	case TK_FINALLY:
-		Stmt_2 = ParseStatement();
-		Lex.AssertAndNext(TK_END);
+		Stmt_2 = ParseStatement(State);
+		Lex.CheckAndNext(TK_END);
 		return new Stmt_Try_Finally(Stmt_1, Stmt_2);
 		break;
 	default:
@@ -230,16 +237,16 @@ void Parser::ParseDeclSection(){
 }
 
 void Parser::ParseLabelDecl(){
-	Lex.NextAndAssert(TK_IDENTIFIER);
+	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		Table.Add(new SymLabel(Lex.Get().Source));
 		Lex.Next();
-		Lex.AssertAndNext(TK_SEMICOLON);
+		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
 
 void Parser::ParseConstDecl(){
-	Lex.NextAndAssert(TK_IDENTIFIER);
+	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		auto Name = Lex.Get().Source;
 		Lex.Next(); 
@@ -248,9 +255,9 @@ void Parser::ParseConstDecl(){
 			Lex.Next();
 			Type = ParseType();
 		}
-		Lex.Assert(TK_EQUAL);
+		Lex.Check(TK_EQUAL);
 		Table.Add(new SymConst(Name, ParseEqual(), Type));
-		Lex.AssertAndNext(TK_SEMICOLON);
+		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
 
@@ -258,17 +265,17 @@ void Parser::ParseConstDecl(){
 //void Parser::ParseProcedure(){}
 
 void Parser::ParseVarDecl(){
-	Lex.NextAndAssert(TK_IDENTIFIER);
+	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		vector<string> Names;
 		Names.push_back(Lex.Get().Source);
 		Lex.Next();
 		while (Lex.Get().Type == TK_COMMA) {
-			Lex.NextAndAssert(TK_IDENTIFIER);
+			Lex.NextAndCheck(TK_IDENTIFIER);
 			Names.push_back(Lex.Get().Source);
 			Lex.Next();
 		}
-		Lex.AssertAndNext(TK_COLON);
+		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType();
 		if (Names.size() > 1 && Lex.Get().Type == TK_EQUAL) {
 			throw UnexpectedSymbol(";", "=");
@@ -276,18 +283,18 @@ void Parser::ParseVarDecl(){
 		for (int i = 0; i < Names.size(); ++i) {
 			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : nullptr, Type));
 		}
-		Lex.AssertAndNext(TK_SEMICOLON);
+		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
 
 void Parser::ParseTypeDecl(){
-	Lex.NextAndAssert(TK_IDENTIFIER);
+	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		string NameNew = Lex.Get().Source;
-		Lex.NextAndAssert(TK_EQUAL);
+		Lex.NextAndCheck(TK_EQUAL);
 		Lex.Next();
 		Table.Add(new SymType(NameNew, ParseType()));
-		Lex.AssertAndNext(TK_SEMICOLON);
+		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
 
@@ -297,32 +304,32 @@ Symbol* Parser::ParseArray(){
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
 		Expr* Exp_Left = ParseExpr(); 
-		AssertConstExpr(Exp_Left);
+		CheckConstExpr(Exp_Left);
 		int A = CalculateConstExpr<int>(&Table).Calculate(Exp_Left);
-		Lex.AssertAndNext(TK_DOUBLE_POINT);
+		Lex.CheckAndNext(TK_DOUBLE_POINT);
 		Expr* Exp_Right = ParseExpr();
-		AssertConstExpr(Exp_Right);
+		CheckConstExpr(Exp_Right);
 		int B = CalculateConstExpr<int>(&Table).Calculate(Exp_Right);
 		SymArray* Sym = new SymArray(nullptr, A, B);
 		Symbol** Sym_TypeInit = &Sym->Type;
 		while (Lex.Get().Type == TK_COMMA){
 			Lex.Next();
 			Exp_Left = ParseExpr();
-			AssertConstExpr(Exp_Left);
+			CheckConstExpr(Exp_Left);
 			A = CalculateConstExpr<int>(&Table).Calculate(Exp_Left);
-			Lex.AssertAndNext(TK_DOUBLE_POINT);
+			Lex.CheckAndNext(TK_DOUBLE_POINT);
 			Exp_Right = ParseExpr();
-			AssertConstExpr(Exp_Right);
+			CheckConstExpr(Exp_Right);
 			B = CalculateConstExpr<int>(&Table).Calculate(Exp_Right);
 			*Sym_TypeInit = new SymArray(nullptr, A, B);
 			Sym_TypeInit = &((SymArray*)*Sym_TypeInit)->Type;
 		}
-		Lex.AssertAndNext(TK_CLOSE_SQUARE_BRACKET);
-		Lex.AssertAndNext(TK_OF);
+		Lex.CheckAndNext(TK_CLOSE_SQUARE_BRACKET);
+		Lex.CheckAndNext(TK_OF);
 		*Sym_TypeInit = ParseType();
 		return Sym;
 	}
-	Lex.AssertAndNext(TK_OF);
+	Lex.CheckAndNext(TK_OF);
 	return new SymDynArray(ParseType());
 }
 
@@ -332,9 +339,9 @@ Symbol* Parser::ParseString(){
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
 		auto Exp_Length = ParseExpr();
-		AssertConstExpr(Exp_Length);
+		CheckConstExpr(Exp_Length);
 		Length = CalculateConstExpr<int>(&Table).Calculate(Exp_Length);
-		Lex.Assert(TK_CLOSE_SQUARE_BRACKET);
+		Lex.Check(TK_CLOSE_SQUARE_BRACKET);
 		Lex.Next();
 	}
 	return new SymStringType(Length);
@@ -346,14 +353,14 @@ Expr* Parser::ParseInitList(){
 		Lex.Next();
 		if (Lex.Get().Type == TK_OPEN_BRACKET) {
 			Ans->List.push_back(ParseInitList());
-			Lex.AssertAndNext(TK_CLOSE_BRACKET);
+			Lex.CheckAndNext(TK_CLOSE_BRACKET);
 			if (Lex.Get().Type != TK_COMMA) {
 				return Ans;
 			}
 			continue;
 		}
 		auto Exp = ParseExpr();
-		AssertConstExpr(Exp);
+		CheckConstExpr(Exp);
 		Ans->List.push_back(Exp);
 	} while (Lex.Get().Type == TK_COMMA);
 	return Ans;
@@ -364,11 +371,11 @@ Expr* Parser::ParseEqual(){
 	int count = 0;
 	if (Lex.Get().Type == TK_OPEN_BRACKET){
 		auto Exp = ParseInitList();
-		Lex.AssertAndNext(TK_CLOSE_BRACKET);
+		Lex.CheckAndNext(TK_CLOSE_BRACKET);
 		return Exp;
 	}
 	auto Exp = ParseExpr();
-	AssertConstExpr(Exp);
+	CheckConstExpr(Exp);
 	return Exp;
 }
 
@@ -388,7 +395,7 @@ Symbol* Parser::ParseType(){
 	}
 }
 
-void Parser::AssertConstExpr(Expr* Exp) {
+void Parser::CheckConstExpr(Expr* Exp) {
 	auto List = new ExpArgList();
 	Exp->GetIdentStr(List);
 	if (List->Flag == false) {

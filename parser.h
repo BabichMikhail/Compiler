@@ -40,17 +40,17 @@ public:
 
 	Expr* ParseEqual();
 	Expr* ParseInitList();
-	void AssertConstExpr(Expr* Exp);
+	void CheckConstExpr(Expr* Exp);
 
-	Statement* ParseStatement();
-	Statement* ParseGOTOStmt();
-	Statement* ParseCompoundStmt();
-	Statement* ParseIfStmt();
-	Statement* ParseCase();
-	Statement* ParseForStmt();
-	Statement* ParseWhileStmt();
-	Statement* ParseRepeatStmt();
-	Statement* ParseTryStmt();
+	Statement* ParseStatement(int State);
+	Statement* ParseGOTOStmt(int State);
+	Statement* ParseCompoundStmt(int State);
+	Statement* ParseIfStmt(int State);
+	Statement* ParseCase(int State);
+	Statement* ParseForStmt(int State);
+	Statement* ParseWhileStmt(int State);
+	Statement* ParseRepeatStmt(int State);
+	Statement* ParseTryStmt(int State);
 
 	void Print();
 };

@@ -6,6 +6,8 @@ using namespace std;
 #include <vector>
 #include "symbol.h"
 
+//enum Stmt_State { Stmt_State_Default = 0, Stmt_State_Try = 1, Stmt_State_Loop = 2, Stmt_State_Case = 4 };
+
 class Statement{
 public:
 	virtual void Print(int Spaces);
