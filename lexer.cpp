@@ -7,7 +7,7 @@ using namespace std;
 
 static const char *const Tokens_str[] = {
 	"and", "array", "begin", "boolean", "break", 
-	"case", "char", "const", 
+	"case", "char", "const",
 	"div", "downto", "double", "do", 
 	"except", "else", "end", "exit", 
 	"false", "finally", "for", "function", 
@@ -58,20 +58,20 @@ const Token Lexer::Get(){
 	return Token(TK);
 }
 
-void Lexer::Assert(const TokenType TT){
+void Lexer::Check(const TokenType TT){
 	if (TK.Type != TT){
 		throw UnexpectedSymbol(Tokens_str[TT], TK.Source);
 	}
 }
 
-void Lexer::AssertAndNext(const TokenType TT){
-	Assert(TT);
+void Lexer::CheckAndNext(const TokenType TT){
+	Check(TT);
 	Next();
 }
 
-void Lexer::NextAndAssert(const TokenType TT){
+void Lexer::NextAndCheck(const TokenType TT){
 	Next();
-	Assert(TT);
+	Check(TT);
 }
 
 bool Lexer::CanNumberLexem(const string::iterator It){

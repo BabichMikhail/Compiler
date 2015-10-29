@@ -77,9 +77,9 @@ public:
 	const Token Get();
 	void Next();
 
-	void AssertAndNext(const TokenType TT);
-	void Assert(const TokenType TT);
-	void NextAndAssert(const TokenType TT);
+	void CheckAndNext(const TokenType TT);
+	void Check(const TokenType TT);
+	void NextAndCheck(const TokenType TT);
 	
 	void Print();
 };
