@@ -1,0 +1,16 @@
+begin
+   for
+         10
+      :=
+         i
+      false
+      1
+   do
+      begin
+         begin
+               50
+            :=
+               a
+         end
+      end
+end

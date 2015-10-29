@@ -1,0 +1,7 @@
+begin
+   try
+      begin
+      end
+   except
+   end
+end

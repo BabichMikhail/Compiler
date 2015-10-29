@@ -1,0 +1,17 @@
+begin
+   if
+         20
+      >
+         10
+   then
+      begin
+            50
+         :=
+            a
+      end
+   else
+      begin
+         begin
+         end
+      end
+end

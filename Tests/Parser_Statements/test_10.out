@@ -1,0 +1,12 @@
+begin
+   while
+         20
+      >
+         10
+   do
+      begin
+            50
+         :=
+            a
+      end
+end

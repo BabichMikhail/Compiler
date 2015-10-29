@@ -1,0 +1,10 @@
+begin 
+   	if ( 10 > 20 ) then begin
+		;;;; 
+		a := 50;
+	end	
+	else begin
+		begin 
+		end;
+	end;
+end.

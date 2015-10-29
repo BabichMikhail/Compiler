@@ -1,0 +1,26 @@
+begin
+   for
+         10
+      :=
+         i
+      true
+      50
+   do
+      begin
+         if
+               b
+            >
+               a
+         then
+            break
+         else
+            if
+                  10
+               >
+                     b
+                  +
+                     a
+            then
+               continue
+      end
+end

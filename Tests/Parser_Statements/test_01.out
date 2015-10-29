@@ -1,0 +1,11 @@
+begin
+   for
+         0
+      :=
+         i
+      true
+      10
+   do
+      begin
+      end
+end

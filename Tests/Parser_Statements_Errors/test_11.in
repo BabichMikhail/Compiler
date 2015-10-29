@@ -1,0 +1,7 @@
+begin 
+   	repeat
+		
+		;;;; 
+		a := 50;
+	until ;	 
+end.

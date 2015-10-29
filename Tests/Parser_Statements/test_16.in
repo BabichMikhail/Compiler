@@ -1,0 +1,8 @@
+begin 
+	for i := 10 to 50 do begin
+		if (a > b) then
+			break
+		else if a + b > 10 then
+			continue
+	end  
+end.
