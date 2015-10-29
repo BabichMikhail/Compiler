@@ -41,6 +41,9 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 		CheckType<bool>();
 		return _strnicmp(((ExprBoolConst*)Exp)->Value.Source.c_str(), "true", 4) == 0 ? true : false;
 
+	case ConstStringExp:
+		throw BadType("DOUBLE\" || \"INTEGER\" || \"BOOL");
+
 	case BinExp:
 		return CalculateBinConstExpr((ExprBinOp*)Exp);
 
