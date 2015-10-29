@@ -1,13 +1,9 @@
-Var	str
-Array	
-0
-1
-Array	
-0
-1
-Type	integer
-1
-2
-3
-4
+Var   str
+   Array   0   1
+   Array   0   1
+   Type   integer
+   1
+   2
+   3
+   4
 

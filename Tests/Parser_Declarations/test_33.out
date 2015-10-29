@@ -1,4 +1,4 @@
-Type	MyArr
-DynArray	
-Type	integer
+Type   MyArr
+   DynArray   
+   Type   integer
 

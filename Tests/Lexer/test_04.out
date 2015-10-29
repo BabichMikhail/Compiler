@@ -1,4 +1,4 @@
-1	1	real_value	123.01
+1	1	double_value	123.01
 2	1	integer_value	123
 3	1	integer_value	321
-4	1	real_value	0e+01
+4	1	double_value	0e+01

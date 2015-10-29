@@ -1,19 +1,19 @@
-Const	a
-0
-1
-2
+Const   a
+   0
+   1
+   2
 
-Const	b
-a
+Const   b
+   a
 
-Const	c
-2
+Const   c
+   2
 
-Var	e
-Type	integer
+Var   e
+   Type   integer
 
-Const	d
-0
-1
-c
+Const   d
+   0
+   1
+   c
 

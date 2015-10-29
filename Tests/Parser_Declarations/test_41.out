@@ -1,14 +1,12 @@
-Const	a
-abc
+Const   a
+   abc
 
-Const	b
-cba
+Const   b
+   cba
 
-Const	const_arr
-Array	
-1
-2
-string
-a
-b
+Const   const_arr
+   Array   1   2
+   string   
+   a
+   b
 

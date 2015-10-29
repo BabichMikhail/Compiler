@@ -1,6 +1,4 @@
-Type	MyArr
-Array	
-1
-100
-Type	integer
+Type   MyArr
+   Array   1   100
+   Type   integer
 

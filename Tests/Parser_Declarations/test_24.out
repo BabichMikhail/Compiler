@@ -1,8 +1,6 @@
-Var	str
-Array	
-0
-1
-Type	integer
-1
-2
+Var   str
+   Array   0   1
+   Type   integer
+   1
+   2
 

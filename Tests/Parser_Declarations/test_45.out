@@ -1,44 +1,14 @@
-Const	A
-1
-2
-3
-4
-5
-6
+Const   A
+   1
+   2
+   3
+   4
+   5
+   6
 
-Var	arr
-Array	
-   0
-[]
-      0
-   []
-      A
-   1
-[]
-      0
-   []
-      A
-Array	
-   0
-[]
-      1
-   []
-      A
-   1
-[]
-      1
-   []
-      A
-Array	
-   0
-[]
-      2
-   []
-      A
-   1
-[]
-      2
-   []
-      A
-Type	integer
+Var   arr
+   Array   1   2
+   Array   3   4
+   Array   5   6
+   Type   integer
 

@@ -1,45 +1,27 @@
-Var	a
-Array	
-1
-2
-Array	
-3
-4
-Array	
-5
-6
-Type	integer
+Var   a
+   Array   1   2
+   Array   3   4
+   Array   5   6
+   Type   integer
 
-Var	b
-Array	
-1
-2
-Array	
-3
-4
-Array	
-5
-6
-Type	integer
+Var   b
+   Array   1   2
+   Array   3   4
+   Array   5   6
+   Type   integer
 
-Var	c
-Array	
-1
-2
-Array	
-3
-4
-Array	
-5
-6
-Type	integer
+Var   c
+   Array   1   2
+   Array   3   4
+   Array   5   6
+   Type   integer
 
-Var	d
-Type	integer
+Var   d
+   Type   integer
 
-Var	e
-Type	integer
+Var   e
+   Type   integer
 
-Var	f
-Type	integer
+Var   f
+   Type   integer
 

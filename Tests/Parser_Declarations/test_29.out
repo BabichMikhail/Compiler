@@ -1,19 +1,15 @@
-Const	a
-10
+Const   a
+   10
 
-Const	b
-15
+Const   b
+   15
 
-Const	c
-   a
--
-   b
+Const   c
+      a
+   -
+      b
 
-Var	arr
-Array	
-c
-   b
-+
-   a
-Type	integer
+Var   arr
+   Array   5   25
+   Type   integer
 

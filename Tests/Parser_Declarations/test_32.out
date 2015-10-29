@@ -1,9 +1,7 @@
-Var	a
-Array	
-1
-2
-DynArray	
-string
-Hello
-World
+Var   a
+   Array   1   2
+   DynArray   
+   string   
+   Hello
+   World
 
