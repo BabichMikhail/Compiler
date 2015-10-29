@@ -91,4 +91,9 @@ public:
 	NotAllowedStmt(string StmtName) : Error("Error: " + StmtName + " not allowed") {};
 };
 
+class IdentifierNotFound : public Error {
+public:
+	IdentifierNotFound(string IdName) : Error("Error: Identifier \"" + IdName + "\" not found") {};
+};
+
 #endif 
