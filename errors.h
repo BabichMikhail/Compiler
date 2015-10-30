@@ -105,4 +105,9 @@ public:
 	IdentifierNotFound(const string IdName, const Position Pos) : Error("Error: Identifier \"" + IdName + "\" not found. " + StrPos(Pos), Pos) {};
 };
 
+class DuplicateIdentifier : public Error {
+public:
+	DuplicateIdentifier(const string IdName, const Position Pos) : Error("Error: Duplicate Identifier \"" + IdName + "\". " + StrPos(Pos), Pos) {};
+};
+
 #endif 
