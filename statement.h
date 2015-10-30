@@ -110,6 +110,13 @@ public:
 	void Print(int Spaces);
 };
 
+class Stmt_Raise : public Statement {
+public:
+	Expr* Exp;
+	Stmt_Raise(Expr* Exp);
+	void Print(int Spaces);
+};
+
 class Stmt_Assign : public Statement {
 public:
 	Expr* Exp;

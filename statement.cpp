@@ -14,6 +14,8 @@ Stmt_Case::Stmt_Case(Expr* Exp) : Stmt_Conditional(Exp), Stmt_Else(nullptr) {};
 Stmt_Try_Except::Stmt_Try_Except(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Except) : Stmt_List_Try(Stmt_Try), Stmt_List_Except(Stmt_Except){}
 Stmt_Try_Finally::Stmt_Try_Finally(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Finally) : Stmt_List_Try(Stmt_Try), Stmt_List_Finally(Stmt_Finally){}
 
+Stmt_Raise::Stmt_Raise(Expr* Exp) : Exp(Exp) {};
+
 Stmt_Assign::Stmt_Assign(Expr* Exp) : Exp(Exp) {};
 
 void Stmt_Compound::Add(Statement* Stmt){
@@ -26,7 +28,7 @@ void Stmt_Case::Add(Case_Selector Selector) {
 
 void Statement::Print(int Spaces) {
 	
- }
+}
 
 void Stmt_Compound::Print(int Spaces) {
 	print_indent(Spaces);
@@ -140,6 +142,12 @@ void Stmt_Try_Finally::Print(int Spaces) {
 	}
 	print_indent(Spaces);
 	cout << "end" << endl;
+}
+
+void Stmt_Raise::Print(int Spaces) {
+	print_indent(Spaces);
+	cout << "raise" << endl;
+	Exp->Print(Spaces + 1);
 }
 
 void Stmt_Assign::Print(int Spaces) {

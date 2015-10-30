@@ -14,7 +14,7 @@ static const char *const Tokens_str[] = {
 	"goto", "if", "integer",
 	"label", "mod", "nil", "not", 
 	"of", "or", "procedure", "program", 
-	"record", "repeat",
+	"raise", "record", "repeat",
 	"shl", "shr", "string", 
 	"then", "to", "true", "try", "type", 
 	"until", "var", "while", "xor",
@@ -34,7 +34,7 @@ static const char *const Tokens_str[] = {
 TokenType Reserved_Words[] = {
 	TK_AND, TK_ARRAY, TK_BEGIN, TK_BOOLEAN, TK_BREAK, TK_CASE, TK_CHAR, TK_CONST, TK_CONTINUE, TK_DIV_INT, TK_DOWNTO, TK_DOUBLE, TK_DO, TK_EXCEPT, TK_ELSE, 
 	TK_END, TK_EXIT, TK_FALSE, TK_FINALLY, TK_FOR, TK_FUNCTION, TK_GOTO, TK_IF, TK_INTEGER, TK_LABEL, TK_MOD, TK_NIL, TK_NOT, TK_OF, TK_OR, TK_PROCEDURE, 
-	TK_PROGRAM, TK_RECORD, TK_REPEAT, TK_SHL, TK_SHR, TK_STRING, TK_THEN, TK_TO, TK_TRUE, TK_TRY, TK_TYPE, TK_UNTIL, TK_VAR, TK_WHILE, TK_XOR
+	TK_PROGRAM, TK_RAISE, TK_RECORD, TK_REPEAT, TK_SHL, TK_SHR, TK_STRING, TK_THEN, TK_TO, TK_TRUE, TK_TRY, TK_TYPE, TK_UNTIL, TK_VAR, TK_WHILE, TK_XOR
 };
 
 TokenType Operators[] = {

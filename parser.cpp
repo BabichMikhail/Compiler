@@ -97,6 +97,9 @@ Statement* Parser::ParseStatement(int State){
 		}
 		Lex.Next();
 		return new Stmt_Continue();
+	case TK_RAISE:
+		Lex.Next();
+		return new Stmt_Raise(ParseExpr());
 	case TK_ELSE:
 	case TK_END:
 	case TK_EXCEPT:
