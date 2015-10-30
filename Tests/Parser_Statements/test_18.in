@@ -1,0 +1,7 @@
+begin   
+	try                   
+		raise abc;
+	except
+		raise 123;
+	end;
+end.
