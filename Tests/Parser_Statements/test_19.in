@@ -1,3 +1,7 @@
 begin
- a)
+ while true do begin
+	continue;
+	break;
+	continue
+ end
 end.

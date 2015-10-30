@@ -1,1 +1,10 @@
-Fatal: Syntax error, ";" expected but ")" found in Line 2 Column 3
+begin
+   while
+      true
+   do
+      begin
+         continue
+         break
+         continue
+      end
+end
