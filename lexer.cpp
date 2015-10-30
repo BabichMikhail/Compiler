@@ -44,8 +44,8 @@ TokenType Operators[] = {
 };
 
 void Token::Set(const Position Pos, const string Source, const TokenType Type){
-	this->Pos.Line = Pos.Line + 1;
-	this->Pos.Column = Pos.Column + 1;
+	this->Pos.Line = Pos.Line;
+	this->Pos.Column = Pos.Column;
 	this->Source = Source;
 	this->Type = Type;
 }
@@ -60,7 +60,7 @@ const Token Lexer::Get(){
 
 void Lexer::Check(const TokenType TT){
 	if (TK.Type != TT){
-		throw UnexpectedSymbol(Tokens_str[TT], TK.Source);
+		throw UnexpectedSymbol(Tokens_str[TT], TK.Source, TK.Pos);
 	}
 }
 
@@ -249,7 +249,7 @@ void Lexer::FindNext(){
 
 void Lexer::Print(){
 	if (TK.Type != NOT_TOKEN)
-		cout << TK.Pos.Line << "\t" << TK.Pos.Column << "\t" << Tokens_str[TK.Type] << "\t" << TK.Source.c_str() << endl;
+		cout << TK.Pos.Line + 1 << "\t" << TK.Pos.Column + 1 << "\t" << Tokens_str[TK.Type] << "\t" << TK.Source.c_str() << endl;
 }
 
 void Lexer::NewString(){

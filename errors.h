@@ -11,7 +11,7 @@ typedef struct Position{
 
 using namespace std;
 
-static string CheckSymbol(string Str){
+static string CheckSymbol(const string Str){
 	if (Str.length() == 1){
 		if (Str[0] < 0 || Str[0] > 127){
 			return "EOF";
@@ -20,80 +20,89 @@ static string CheckSymbol(string Str){
 	return Str;
 }
 
+static string StrPos(const Position Pos) {
+	return "Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1);
+}
+
 class Error{
 public:
+	Position Pos;
 	string err_msg;
-	Error(string err_msg): err_msg(err_msg){}
+	Error(const string err_msg, const Position Pos): err_msg(err_msg){}
 };
 
 class BadType : public Error {
 public:
-	BadType(string TypeExpected) : Error("Error: Incompatible types: expected \"" + TypeExpected + "\"") {};
+	BadType(const string TypeExpected, const Position Pos) : Error("Error: Incompatible types: expected \"" + TypeExpected + "\"" + StrPos(Pos), Pos) {};
 };
 
 class BadChar: public Error{
 public: 
-	BadChar(const Position Pos) : Error("Unknown Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
+	BadChar(const Position Pos) : 
+		Error("Unknown Symbol in " + StrPos(Pos), Pos){}
 };
 
 class BadExp: public Error{
 public: 
-	BadExp(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1) + ". There is no +/- after e"){}
+	BadExp(const Position Pos) : 
+		Error("Incorrect Float Number in " + StrPos(Pos) + ". There is no +/- after e", Pos){}
 };
 
 class NoFract: public Error{
 public: 
-	NoFract(const Position Pos) : Error("Incorrect Float Number in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1) + ". There is no number after point"){}
+	NoFract(const Position Pos) : 
+		Error("Incorrect Float Number in " + StrPos(Pos) + ". There is no number after point", Pos){}
 };
 
 class BadCC: public Error{
 public: 
-	BadCC(const Position Pos) : Error("Incorrect Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
+	BadCC(const Position Pos) : Error("Incorrect Symbol in " + StrPos(Pos), Pos){}
 };
 
 class BadNL: public Error{
 public: 
-	BadNL(const Position Pos) : Error("Incorrect Symbol in Line " + to_string(Pos.Line + 1) + " Column " + to_string(Pos.Column + 1)){}
+	BadNL(const Position Pos) : Error("Incorrect Symbol in " + StrPos(Pos), Pos){}
 };
 
 class BadEOF: public Error{
 public: 
-	BadEOF(int Line) : Error("Unexpected EOF in Line " + to_string(Line + 1)){};
+	BadEOF(const Position Pos) : Error("Unexpected EOF in " + StrPos(Pos), Pos){};
 };
 
 class UnexpectedSymbol: public Error{
 public: 
-	UnexpectedSymbol(string Symbol, string Str_Found) : Error("Fatal: Syntax error, \"" + Symbol + "\" expected but \"" + CheckSymbol(Str_Found) + "\" found"){}
+	UnexpectedSymbol(const string Symbol, const string Str_Found, const Position Pos) : 
+		Error("Fatal: Syntax error, \"" + Symbol + "\" expected but \"" + CheckSymbol(Str_Found) + "\" found in " + StrPos(Pos), Pos){}
 };
 
 class IllegalExpr: public Error{
 public:	
-	IllegalExpr() : Error("Error: Illegal Expression"){}
+	IllegalExpr(const Position Pos) : Error("Error: Illegal Expression. " + StrPos(Pos), Pos){}
 };
 
 class ExpectedVariable : public Error{
 public:
-	ExpectedVariable() : Error("Error: Variable identifier expected"){}
+	ExpectedVariable(const Position Pos) : Error("Error: Variable identifier expected. " + StrPos(Pos), Pos){}
 };
 
 class ExpectedConstExp : public Error{
 public:
-	ExpectedConstExp() : Error("Error: Const Expression expected"){}
+	ExpectedConstExp(const Position Pos) : Error("Error: Const Expression expected. " + StrPos(Pos), Pos){}
 };
 
 class UnknownType : public Error{
 public:
-	UnknownType(string TypeName) : Error("Error: Unknown TypeName \"" + CheckSymbol(TypeName) + "\""){};
+	UnknownType(string TypeName, Position Pos) : Error("Error: Unknown TypeName \"" + CheckSymbol(TypeName) + "\". " + StrPos(Pos), Pos){};
 };
 
 class NotAllowedStmt : public Error {
 public:
-	NotAllowedStmt(string StmtName) : Error("Error: " + StmtName + " not allowed") {};
+	NotAllowedStmt(const string StmtName, const Position Pos) : Error("Error: " + StmtName + " not allowed. " + StrPos(Pos), Pos) {};
 };
 
 class IdentifierNotFound : public Error {
 public:
-	IdentifierNotFound(string IdName) : Error("Error: Identifier \"" + IdName + "\" not found") {};
+	IdentifierNotFound(const string IdName, const Position Pos) : Error("Error: Identifier \"" + IdName + "\" not found. " + StrPos(Pos), Pos) {};
 };
 
 #endif 

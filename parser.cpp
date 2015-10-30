@@ -87,13 +87,13 @@ Statement* Parser::ParseStatement(int State){
 		break;
 	case TK_BREAK:
 		if (State & 2 != 0) {
-			throw NotAllowedStmt("BREAK");
+			throw NotAllowedStmt("BREAK", Lex.Get().Pos);
 		}
 		Lex.Next();
 		return new Stmt_BREAK();
 	case TK_CONTINUE:
 		if (State & 2 != 0) {
-			throw NotAllowedStmt("CONTINUE");
+			throw NotAllowedStmt("CONTINUE", Lex.Get().Pos);
 		}
 		Lex.Next();
 		return new Stmt_Continue();
@@ -115,7 +115,7 @@ Statement* Parser::ParseStatement(int State){
 		CheckSemicolon();
 		return new Stmt_Assign(Exp);
 	default:
-		throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
+		throw UnexpectedSymbol("BEGIN", Lex.Get().Source, Lex.Get().Pos);
 	}
 }
 
@@ -130,7 +130,7 @@ Statement* Parser::ParseCompoundStmt(int State){
 
 Statement* Parser::ParseGOTOStmt(int State){
 	Lex.NextAndCheck(TK_IDENTIFIER);
-	auto Sym = Table.GetSymbol(Lex.Get().Source);
+	auto Sym = Table.GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 	Lex.Next();
 	CheckSemicolon();
 	return new Stmt_GOTO(Sym);
@@ -154,7 +154,7 @@ Statement* Parser::ParseCase(int State){
 	auto Stmt_CASE = new Stmt_Case(ParseExpr());
 	Lex.CheckAndNext(TK_OF);
 	if (Lex.Get().Type == TK_ELSE || Lex.Get().Type == TK_END) {
-		throw IllegalExpr();
+		throw IllegalExpr(Lex.Get().Pos);
 	}
 	while (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
 		Expr* Exp_1 = ParseExpr();
@@ -234,7 +234,7 @@ Statement* Parser::ParseTryStmt(int State){
 		return new Stmt_Try_Finally(Stmt_1, Stmt_2);
 		break;
 	default:
-		throw UnexpectedSymbol("EXCEPT", Lex.Get().Source);
+		throw UnexpectedSymbol("EXCEPT", Lex.Get().Source, Lex.Get().Pos);
 	}
 }
 
@@ -284,7 +284,7 @@ void Parser::ParseDeclSection(){
 		case TK_BEGIN:
 			return;
 		default:
-			throw UnexpectedSymbol("BEGIN", Lex.Get().Source);
+			throw UnexpectedSymbol("BEGIN", Lex.Get().Source, Lex.Get().Pos);
 		}
 	}
 }
@@ -331,7 +331,7 @@ void Parser::ParseVarDecl(){
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType();
 		if (Names.size() > 1 && Lex.Get().Type == TK_EQUAL) {
-			throw UnexpectedSymbol(";", "=");
+			throw UnexpectedSymbol(";", "=", Lex.Get().Pos);
 		}
 		for (int i = 0; i < Names.size(); ++i) {
 			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : nullptr, Type));
@@ -358,22 +358,22 @@ Symbol* Parser::ParseArray(){
 		Lex.Next();
 		Expr* Exp_Left = ParseExpr(); 
 		CheckConstExpr(Exp_Left);
-		int A = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Left);
+		int A = CalculateConstExpr<int>(&Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Left);
 		Lex.CheckAndNext(TK_DOUBLE_POINT);
 		Expr* Exp_Right = ParseExpr();
 		CheckConstExpr(Exp_Right);
-		int B = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Right);
+		int B = CalculateConstExpr<int>(&Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Right);
 		SymArray* Sym = new SymArray(nullptr, A, B);
 		Symbol** Sym_TypeInit = &Sym->Type;
 		while (Lex.Get().Type == TK_COMMA){
 			Lex.Next();
 			Exp_Left = ParseExpr();
 			CheckConstExpr(Exp_Left);
-			A = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Left);
+			A = CalculateConstExpr<int>(&Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Left);
 			Lex.CheckAndNext(TK_DOUBLE_POINT);
 			Exp_Right = ParseExpr();
 			CheckConstExpr(Exp_Right);
-			B = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Right);
+			B = CalculateConstExpr<int>(&Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Right);
 			*Sym_TypeInit = new SymArray(nullptr, A, B);
 			Sym_TypeInit = &((SymArray*)*Sym_TypeInit)->Type;
 		}
@@ -391,9 +391,10 @@ Symbol* Parser::ParseString(){
 	int Length = -1;
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
+		Position Pos = Lex.Get().Pos;
 		auto Exp_Length = ParseExpr();
 		CheckConstExpr(Exp_Length);
-		Length = CalculateConstExpr<int>(&Table, "INTEGER").Calculate(Exp_Length);
+		Length = CalculateConstExpr<int>(&Table, "INTEGER", Pos).Calculate(Exp_Length);
 		Lex.Check(TK_CLOSE_SQUARE_BRACKET);
 		Lex.Next();
 	}
@@ -440,9 +441,9 @@ Symbol* Parser::ParseType(){
 		return ParseArray();
 	default:
 		if (Table.Find(Lex.Get().Source) == -1) {
-			throw UnknownType(Lex.Get().Source);
+			throw UnknownType(Lex.Get().Source, Lex.Get().Pos);
 		}
-		auto Sym = Table.GetSymbol(Lex.Get().Source);
+		auto Sym = Table.GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 		Lex.Next();
 		return Sym;
 	}
@@ -452,11 +453,11 @@ void Parser::CheckConstExpr(Expr* Exp) {
 	auto List = new ExpArgList();
 	Exp->GetIdentStr(List);
 	if (List->Flag == false) {
-		throw ExpectedConstExp();
+		throw ExpectedConstExp(Lex.Get().Pos);
 	}
 	for (int i = 0; i < List->Vec.size(); ++i) {
-		if (Table.Find(List->Vec[i]) != -1 && Table.GetSymbol(List->Vec[i])->GetSection() != DeclConst) {
-			throw ExpectedConstExp();
+		if (Table.Find(List->Vec[i]) != -1 && Table.GetSymbol(List->Vec[i], Lex.Get().Pos)->GetSection() != DeclConst) {
+			throw ExpectedConstExp(Lex.Get().Pos);
 		}
 	}
 }
@@ -470,7 +471,7 @@ Expr* Parser::ParseExpr(){
 		Lex.Next();
 		auto Right = ParseLevel(0);
 		if (Left_Op_Assign.find(Left->TypeExp) == Left_Op_Assign.cend()){
-			throw ExpectedVariable();
+			throw ExpectedVariable(Lex.Get().Pos);
 		}
 		return new Assign(Left, Right);
 	}
@@ -493,7 +494,7 @@ Expr* Parser::ParseLevel(const int level){
 Expr* Parser::ParseFactor(){
 	auto TK = Lex.Get();
 	if (TK.Type == NOT_TOKEN){
-		throw IllegalExpr();
+		throw IllegalExpr(TK.Pos);
 	}
 	if (TK.Type == TK_IDENTIFIER){
 		return ParseDesignator();
@@ -505,7 +506,7 @@ Expr* Parser::ParseFactor(){
 	if (TK.Type == TK_OPEN_BRACKET){
 		auto ExpNow = ParseLevel(0);
 		if (Lex.Get().Type != TK_CLOSE_BRACKET){
-			throw UnexpectedSymbol(")", Lex.Get().Source);
+			throw UnexpectedSymbol(")", Lex.Get().Source, TK.Pos);
 		}
 		Lex.Next();
 		return ExpNow;
@@ -525,7 +526,7 @@ Expr* Parser::ParseFactor(){
 	if (TK.Type == TK_NOT){
 		return new ExprUnarOp(TK, ParseLevel(0));
 	}
-	throw IllegalExpr();
+	throw IllegalExpr(TK.Pos);
 }
 
 Expr* Parser::ParseDesignator(){
@@ -539,7 +540,7 @@ Expr* Parser::ParseDesignator(){
 				ExpNow = new ArrayIndex(ExpNow, ParseLevel(0));
 			} while (Lex.Get().Type == TK_COMMA);
 			if (Lex.Get().Type != TK_CLOSE_SQUARE_BRACKET){
-				throw UnexpectedSymbol("]", Lex.Get().Source);
+				throw UnexpectedSymbol("]", Lex.Get().Source, Lex.Get().Pos);
 			}
 			Lex.Next();
 		}
@@ -554,7 +555,7 @@ Expr* Parser::ParseDesignator(){
 				} 
 			}
 			if (Lex.Get().Type != TK_CLOSE_BRACKET){
-				throw UnexpectedSymbol(")", Lex.Get().Source);
+				throw UnexpectedSymbol(")", Lex.Get().Source, Lex.Get().Pos);
 			}
 			Lex.Next();
 			ExpNow = new Function(ExpNow, Arguments);
@@ -562,7 +563,7 @@ Expr* Parser::ParseDesignator(){
 		if (Lex.Get().Type == TK_POINT){
 			Lex.Next();
 			if (Lex.Get().Type != TK_IDENTIFIER){
-				throw UnexpectedSymbol("identifier", Lex.Get().Source);
+				throw UnexpectedSymbol("identifier", Lex.Get().Source, Lex.Get().Pos);
 			}
 			auto Right = new ExprVar(Lex.Get());
 			Lex.Next();

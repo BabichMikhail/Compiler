@@ -26,10 +26,10 @@ int SymTable::Find(string Value){
 	return -1;
 }
 
-Symbol* SymTable::GetSymbol(string Name){
+Symbol* SymTable::GetSymbol(string Name, Position Pos){
 	int idx = Find(Name);
 	if (idx == -1) {
-		throw IdentifierNotFound(Name);
+		throw IdentifierNotFound(Name, Pos);
 	}
 	return Table[idx];
 }

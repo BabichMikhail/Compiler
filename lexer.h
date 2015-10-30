@@ -35,9 +35,9 @@ enum TokenType{
 
 class Token{
 private:
-	Position Pos;
 	void Set(const Position Pos, const std::string Source, const TokenType Type);
 public:
+	Position Pos;
 	friend class Lexer;
 	TokenType Type;
 	std::string Source;

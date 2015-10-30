@@ -8,6 +8,7 @@ class SymTable;
 template <class T> 
 class CalculateConstExpr {
 private:
+	Position Pos;
 	SymTable* Table;
 	string TypeName;
 	T CalculateUnarConstExpr(ExprUnarOp* Exp);
@@ -17,15 +18,15 @@ private:
 public:
 	T Ans;
 	T Calculate(Expr* Exp);
-	CalculateConstExpr(SymTable* Table, string TypeName);
+	CalculateConstExpr(SymTable* Table, string TypeName, Position Pos);
 };
 
-template <class T> CalculateConstExpr<T>::CalculateConstExpr(SymTable* Table, string TypeName) : Table(Table), TypeName(TypeName) {}
+template <class T> CalculateConstExpr<T>::CalculateConstExpr(SymTable* Table, string TypeName, Position Pos) : Table(Table), TypeName(TypeName), Pos(Pos){}
 
 template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 	switch (Exp->TypeExp) {
 	case VarExp:
-		return Calculate(((SymVar*)Table->GetSymbol(((ExprVar*)Exp)->Var.Source.c_str()))->InitExp);
+		return Calculate(((SymVar*)Table->GetSymbol(((ExprVar*)Exp)->Var.Source.c_str(), Pos))->InitExp);
 	
 	case ConstIntExp:
 		CheckType<int>();
@@ -40,7 +41,7 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 		return _strnicmp(((ExprBoolConst*)Exp)->Value.Source.c_str(), "true", 4) == 0 ? true : false;
 
 	case ConstStringExp:
-		throw BadType("DOUBLE\" || \"INTEGER\" || \"BOOL");
+		throw BadType("DOUBLE\" || \"INTEGER\" || \"BOOL", Pos);
 
 	case BinExp:
 		return CalculateBinConstExpr((ExprBinOp*)Exp);
@@ -109,7 +110,7 @@ template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ArrayIndex* Exp)
 		idxs.push_back(Calculate(((ArrayIndex*)IdentExp)->Right));
 		IdentExp = ((ArrayIndex*)IdentExp)->Left;
 	}
-	InitList* ExpList = (InitList*)((SymConst*)Table->GetSymbol(((ExprVar*)IdentExp)->Var.Source.c_str()))->InitExp;
+	InitList* ExpList = (InitList*)((SymConst*)Table->GetSymbol(((ExprVar*)IdentExp)->Var.Source.c_str(), Pos))->InitExp;
 	IdentExp = Exp;
 	for (int i = idxs.size() - 1; i >= 0; --i) {
 		ExpList = (InitList*)ExpList->List[idxs[i]];
@@ -119,7 +120,7 @@ template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ArrayIndex* Exp)
 
 template <class T> template <class X_1, class X_2 = T> void CalculateConstExpr<T>::CheckType() {
 	if (!is_same<X_1, T>::value && !is_same<X_2, T>::value) {
-		throw BadType(TypeName);
+		throw BadType(TypeName, Pos);
 	}
 }
 
