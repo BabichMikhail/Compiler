@@ -13,7 +13,7 @@ private:
 	T CalculateUnarConstExpr(ExprUnarOp* Exp);
 	T CalculateBinConstExpr(ExprBinOp* Exp);
 	T CalculateArrayIndex(ArrayIndex* Exp);
-	template <class X> void CheckType();
+	template <class X_1, class X_2 = T> void CheckType();
 public:
 	T Ans;
 	T Calculate(Expr* Exp);
@@ -32,9 +32,7 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 		return atoi(((ExprIntConst*)Exp)->Value.Source.c_str());
 
 	case ConstRealExp:
-		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType(TypeName);
-		}
+		CheckType<int, double>();
 		return atof(((ExprRealConst*)Exp)->Value.Source.c_str());
 
 	case ConstBoolExp:
@@ -58,14 +56,10 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 template <class T> T CalculateConstExpr<T>::CalculateUnarConstExpr(ExprUnarOp* Exp) {
 	switch (Exp->Op.Type) {
 	case TK_MINUS:
-		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType(TypeName);
-		}
+		CheckType<int, double>();
 		return - Calculate(Exp->Exp);
 	case TK_PLUS:
-		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType(TypeName);
-		}
+		CheckType<int, double>();
 		return + Calculate(Exp->Exp);
 	case TK_NOT: 
 		return ! Calculate(Exp->Exp);
@@ -75,19 +69,13 @@ template <class T> T CalculateConstExpr<T>::CalculateUnarConstExpr(ExprUnarOp* E
 template <class T> T CalculateConstExpr<T>::CalculateBinConstExpr(ExprBinOp* Exp) {
 	switch (Exp->Op.Type) {
 	case TK_PLUS: 
-		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType(TypeName);
-		}
+		CheckType<int, double>();
 		return Calculate(Exp->Left) + Calculate(Exp->Right);
 	case TK_MINUS: 
-		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType(TypeName);
-		}
+		CheckType<int, double>();
 		return Calculate(Exp->Left) - Calculate(Exp->Right);
 	case TK_MUL: 
-		if (!is_same<T, int>::value && !is_same<T, double>::value) {
-			throw BadType(TypeName);
-		}
+		CheckType<int, double>();
 		return Calculate(Exp->Left) * Calculate(Exp->Right);
 	case TK_DIV_INT:
 		CheckType<int>();
@@ -129,8 +117,8 @@ template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ArrayIndex* Exp)
 	return Calculate(ExpList);
 }
 
-template <class T> template <class X> void CalculateConstExpr<T>::CheckType() {
-	if (!is_same<X, T>::value) {
+template <class T> template <class X_1, class X_2 = T> void CalculateConstExpr<T>::CheckType() {
+	if (!is_same<X_1, T>::value && !is_same<X_2, T>::value) {
 		throw BadType(TypeName);
 	}
 }
