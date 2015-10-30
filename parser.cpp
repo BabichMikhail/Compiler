@@ -63,40 +63,34 @@ Statement* Parser::ParseStatement(int State){
 	switch (Lex.Get().Type) {
 	case TK_BEGIN:
 		return ParseCompoundStmt(State);
-		break;
 	case TK_IF:
 		return ParseIfStmt(State);
-		break;
 	case TK_CASE:
 		return ParseCase(State);
-		break;
 	case TK_FOR:
 		return ParseForStmt(State);
-		break;
 	case TK_WHILE:
 		return ParseWhileStmt(State);
-		break;
 	case TK_REPEAT:
 		return ParseRepeatStmt(State);
-		break;
 	case TK_TRY:
 		return ParseTryStmt(State);
-		break;
 	case TK_GOTO:
 		return ParseGOTOStmt(State);
-		break;
 	case TK_BREAK:
-		if (State & 2 != 0) {
-			throw NotAllowedStmt("BREAK", Lex.Get().Pos);
+		if (State & 2) {
+			Lex.Next();
+			CheckSemicolon();
+			return new Stmt_BREAK();
 		}
-		Lex.Next();
-		return new Stmt_BREAK();
+		throw NotAllowedStmt("BREAK", Lex.Get().Pos);
 	case TK_CONTINUE:
-		if (State & 2 != 0) {
-			throw NotAllowedStmt("CONTINUE", Lex.Get().Pos);
+		if (State & 2) {
+			Lex.Next();
+			CheckSemicolon();
+			return new Stmt_Continue();
 		}
-		Lex.Next();
-		return new Stmt_Continue();
+		throw NotAllowedStmt("CONTINUE", Lex.Get().Pos);
 	case TK_RAISE:
 		Lex.Next();
 		return new Stmt_Raise(ParseExpr());
@@ -109,7 +103,6 @@ Statement* Parser::ParseStatement(int State){
 	case TK_SEMICOLON:
 		Lex.Next();
 		return nullptr;
-		break;
 	case TK_IDENTIFIER:
 		Exp = ParseExpr();
 		CheckSemicolon();
