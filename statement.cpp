@@ -8,7 +8,7 @@ Stmt_FOR::Stmt_FOR(Expr* Exp_1, Expr* Exp_2, bool isTO, Statement* Stmt) : Exp_1
 Stmt_WHILE::Stmt_WHILE(Expr* Cond, Statement* Stmt) : Cond(Cond), Stmt(Stmt) {};
 Stmt_REPEAT::Stmt_REPEAT(Expr* Cond, vector<Statement*> Stmt_List) : Cond(Cond), Stmt_List(Stmt_List) {};
 
-Case_Selector::Case_Selector(Expr* Exp_1, Expr* Exp_2, Statement* Stmt0) : Exp_1(Exp_1), Exp_2(Exp_2), Stmt(Stmt) {};
+Case_Selector::Case_Selector(Expr* Exp_1, Expr* Exp_2, Statement* Stmt) : Exp_1(Exp_1), Exp_2(Exp_2), Stmt(Stmt) {};
 Stmt_Case::Stmt_Case(Expr* Exp) : Stmt_Conditional(Exp), Stmt_Else(nullptr) {};
 
 Stmt_Try_Except::Stmt_Try_Except(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Except) : Stmt_List_Try(Stmt_Try), Stmt_List_Except(Stmt_Except){}
