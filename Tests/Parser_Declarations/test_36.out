@@ -3,5 +3,6 @@ Type   MyArr
    Type   integer
 
 Var   arr
-   Type   MyArr
+   DynArray   
+   Type   integer
 

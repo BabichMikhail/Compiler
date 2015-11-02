@@ -1,1 +1,1 @@
-begin while 1 do else end.
+begin while true do else end.

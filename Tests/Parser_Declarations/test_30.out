@@ -1,4 +1,6 @@
 Const   a
+   Array   1   3
+   Type   integer
    0
    1
    2
@@ -13,6 +15,8 @@ Var   e
    Type   integer
 
 Const   d
+   Array   2   4
+   Type   integer
    0
    1
    c

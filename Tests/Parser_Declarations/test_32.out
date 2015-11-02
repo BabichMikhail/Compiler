@@ -1,6 +1,6 @@
 Var   a
    Array   1   2
-   DynArray   
+   Array   1   1
    string   
    Hello
    World

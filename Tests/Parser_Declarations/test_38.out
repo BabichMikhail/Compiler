@@ -2,21 +2,23 @@ Type   MyType_1
    Type   integer
 
 Type   MyType_2
-   Type   MyType_1
+   Type   integer
 
 Type   MyType_3
    DynArray   
-   Type   MyType_2
+   Type   integer
 
 Type   MyType_4
-   DynArray   
+   Array   1   6
    string   50
 
 Var   Arr
-   Type   MyType_3
+   DynArray   
+   Type   integer
 
 Var   Arr_2
-   Type   MyType_4
+   Array   1   6
+   string   50
    qwe
    rty
    asd

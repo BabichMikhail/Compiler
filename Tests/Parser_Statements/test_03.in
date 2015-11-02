@@ -1,3 +1,5 @@
+var a : integer;
+var b: integer = 5;
 begin
 	a := b; 
 end.

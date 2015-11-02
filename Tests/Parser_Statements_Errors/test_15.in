@@ -1,3 +1,4 @@
+var a, b : double;
 begin 
 	a := 100
 	b := 50	

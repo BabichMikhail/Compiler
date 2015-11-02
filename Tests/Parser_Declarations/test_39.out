@@ -8,14 +8,15 @@ Type   MyType_1
    Type   integer
 
 Type   MyType_2
-   Type   MyType_1
+   Type   integer
 
 Type   MyType_3
    DynArray   
-   Type   MyType_2
+   Type   integer
 
 Type   MyType_4
    DynArray   
    Array   10   20
-   Type   MyType_3
+   DynArray   
+   Type   integer
 

@@ -1,3 +1,5 @@
+type MyType = integer;
+var a, b : MyType;
 begin 
    	repeat
 		
