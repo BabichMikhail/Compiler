@@ -26,12 +26,18 @@ int SymTable::Find(string Value){
 	return -1;
 }
 
-Symbol* SymTable::GetSymbol(string Name, Position Pos) {
+Symbol* SymTable::GetSymbol(string Name, const Position Pos) {
 	int idx = Find(Name);
 	if (idx == -1) {
 		throw IdentifierNotFound(Name, Pos);
 	}
 	return Table[idx];
+}
+
+void SymTable::CheckSymbol(string Name, const Position Pos) {
+	if (Find(Name) != -1) {
+		throw DuplicateIdentifier(Name, Pos);
+	}
 }
 
 void SymTable::Print(){

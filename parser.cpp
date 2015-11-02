@@ -299,6 +299,7 @@ void Parser::ParseDeclSection(){
 void Parser::ParseLabelDecl(){
 	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
+		Table.CheckSymbol(Lex.Get().Source, Lex.Get().Pos);
 		Table.Add(new SymLabel(Lex.Get().Source));
 		Lex.Next();
 		Lex.CheckAndNext(TK_SEMICOLON);
@@ -309,6 +310,7 @@ void Parser::ParseConstDecl(){
 	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		auto Name = Lex.Get().Source;
+		auto Name_Pos = Lex.Get().Pos;
 		Lex.Next(); 
 		Symbol* Type = nullptr;
 		if (Lex.Get().Type == TK_COLON) {
@@ -330,6 +332,7 @@ void Parser::ParseConstDecl(){
 		else {
 			Type = new SymType("", CheckType(&Table, Pos).GetTypeID(Exp));
 		}
+		Table.CheckSymbol(Name, Name_Pos);
 		Table.Add(new SymConst(Name, Exp, Type));
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
@@ -343,10 +346,13 @@ void Parser::ParseVarDecl(){
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		vector<string> Names;
 		Names.push_back(Lex.Get().Source);
+		vector<Position> Names_Pos;
+		Names_Pos.push_back(Lex.Get().Pos);
 		Lex.Next();
 		while (Lex.Get().Type == TK_COMMA) {
 			Lex.NextAndCheck(TK_IDENTIFIER);
 			Names.push_back(Lex.Get().Source);
+			Names_Pos.push_back(Lex.Get().Pos);
 			Lex.Next();
 		}
 		Lex.CheckAndNext(TK_COLON);
@@ -364,6 +370,7 @@ void Parser::ParseVarDecl(){
 			CheckType(&Table, Type, Exp, Pos);
 		}
 		for (int i = 0; i < Names.size(); ++i) {
+			Table.CheckSymbol(Names[i], Names_Pos[i]);
 			Table.Add(new SymVar(Names[i], Exp, Type));
 		}
 		Lex.CheckAndNext(TK_SEMICOLON);
@@ -374,8 +381,10 @@ void Parser::ParseTypeDecl(){
 	Lex.NextAndCheck(TK_IDENTIFIER);
 	while (Lex.Get().Type == TK_IDENTIFIER){
 		string NameNew = Lex.Get().Source;
+		Position NameNew_Pos = Lex.Get().Pos;
 		Lex.NextAndCheck(TK_EQUAL);
 		Lex.Next();
+		Table.CheckSymbol(NameNew, NameNew_Pos);
 		Table.Add(new SymType(NameNew, ParseType()));
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}

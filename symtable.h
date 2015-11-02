@@ -19,7 +19,8 @@ private:
 public:
 	SymTable();
 	int Find(string Value);
-	Symbol* GetSymbol(string TypeName, Position Pos);
+	Symbol* GetSymbol(string Name, const Position Pos);
+	void CheckSymbol(string Name, const Position Pos);
 	void Print();
 	void Add(Symbol* NewElem);
 };

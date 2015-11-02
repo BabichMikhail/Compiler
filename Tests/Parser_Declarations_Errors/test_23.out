@@ -1,5 +1,1 @@
-Label	a
-
-Type   a
-   Type   integer
-
+Error: Duplicate Identifier "a". Line 2 Column 6
