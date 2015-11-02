@@ -1,1 +1,1 @@
-Error: Incompatible Types. Line 4 Column 22
+Error: Incompatible Types. Expected "String" but "Integer" found. Line 4 Column 22

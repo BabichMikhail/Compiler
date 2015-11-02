@@ -1,1 +1,1 @@
-Error: Incompatible Types. Line 5 Column 8
+Error: Incompatible Types. Expected "Integer" but "Boolean" found. Line 5 Column 8
