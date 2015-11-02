@@ -1,0 +1,6 @@
+var 
+	a : double= 10;
+	b : integer;
+begin 
+	b := a;	 
+end.

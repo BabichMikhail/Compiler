@@ -1,0 +1,6 @@
+var a : integer = 10;
+	b : double = 10 ;
+begin
+	if a = b then 
+		b := a; 
+end.

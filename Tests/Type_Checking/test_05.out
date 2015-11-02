@@ -1,0 +1,9 @@
+begin
+   while
+         b
+      =
+         a
+   do
+      begin
+      end
+end

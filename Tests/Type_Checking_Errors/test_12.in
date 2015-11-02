@@ -1,0 +1,9 @@
+var 
+	a : boolean = true; 
+	b : integer = 10;
+begin 
+   	repeat
+		b := b - 1;
+		a := false;
+	until (b > 10.0) and a or b;	 
+end.

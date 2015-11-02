@@ -1,0 +1,5 @@
+const 
+	a : array[2..5] of string = ('123', '123', '123', '123');  
+
+begin
+end.

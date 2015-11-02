@@ -1,0 +1,7 @@
+var 
+	a : integer = 10;
+	b : double = 10.0000;
+begin  
+	while a or b do begin
+	end;
+end.

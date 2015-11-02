@@ -1,0 +1,8 @@
+type
+ MyType_1 = integer;
+ MyType_2 = array[1..3] of MyType_1;
+var
+ a : MyType_2; 
+begin
+ a[0] := 1.0;
+end.

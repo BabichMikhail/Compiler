@@ -1,0 +1,7 @@
+const 
+	a : integer = 5;
+var
+	b : integer = a;
+begin
+	a := b / a;
+end.

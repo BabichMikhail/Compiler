@@ -1,0 +1,6 @@
+const 
+	a : integer = 5;
+var
+	b : integer = a;
+begin
+end.

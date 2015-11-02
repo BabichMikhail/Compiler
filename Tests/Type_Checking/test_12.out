@@ -1,0 +1,17 @@
+begin
+   until
+         a
+      and
+            10
+         >
+            b
+   repeat
+            1
+         -
+            b
+      :=
+         b
+         false
+      :=
+         a
+end

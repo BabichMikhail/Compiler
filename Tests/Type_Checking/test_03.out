@@ -1,0 +1,10 @@
+begin
+   if
+         b
+      =
+         a
+   then
+         a
+      :=
+         b
+end

@@ -1,0 +1,10 @@
+const 
+	a = 10;
+	b = 15;	
+	c = a / b;
+	d = a div b / c;	
+var 
+	e : integer;
+begin
+	e := d;
+end.

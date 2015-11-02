@@ -1,0 +1,7 @@
+var 
+	a : integer = 10;
+	b : double = 10 ;
+begin
+	if a = true then 
+		b := a; 
+end.
