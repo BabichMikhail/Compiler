@@ -2,7 +2,7 @@
 
 static MyTypeID CastTable[7][7] = {
 	{ TypeID_Integer, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
-	{ TypeID_Double,  TypeID_Double,  TypeID_Double,  TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
+	{ TypeID_Double,  TypeID_Double,  TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
 	{ TypeID_BadType, TypeID_BadType, TypeID_Char,    TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
 	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Boolean, TypeID_BadType, TypeID_BadType, TypeID_BadType },
 	{ TypeID_BadType, TypeID_BadType, TypeID_String,  TypeID_BadType, TypeID_String , TypeID_BadType, TypeID_BadType },
@@ -43,6 +43,8 @@ void CheckType::Check(MyTypeID TypeID_1, MyTypeID TypeID_2) {
 		throw IncompatibleTypes(Pos);
 	}
 }
+
+CheckType::CheckType(SymTable* Table, const Position Pos): Table(Table), Pos(Pos){}
 
 CheckType::CheckType(SymTable* Table, Expr* Exp_Left, Expr* Exp_Right, const Position Pos): Table(Table), Pos(Pos) {
 	Check(GetTypeID(Exp_Left), GetTypeID(Exp_Right));
@@ -148,6 +150,19 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 	if (Exp->TypeExp == BinExp) {
 		return GetTypeID_BinExp(GetTypeID(((ExprBinOp*)Exp)->Left), GetTypeID(((ExprBinOp*)Exp)->Right), ((ExprBinOp*)Exp)->Op.Type);
 	}
+	if (Exp->TypeExp == ArrayExp) {
+		auto AIExp = Exp;
+		while (((ArrayIndex*)AIExp)->Left->TypeExp != VarExp) {
+			AIExp = ((ArrayIndex*)AIExp)->Left;
+		}
+		auto _Sym = ((SymVar*)Table->GetSymbol(((ExprVar*)((ArrayIndex*)AIExp)->Left)->Var.Source, Pos))->Type;
+		AIExp = Exp;
+		while (((ArrayIndex*)AIExp)->TypeExp != VarExp) {
+			AIExp = ((ArrayIndex*)AIExp)->Left;
+			_Sym = ((SymArray*)_Sym)->Type;
+		}
+		return ((SymType*)_Sym)->TypeID;
+	}
 	if (Exp->TypeExp == UnarExp) {
 		return GetTypeID(((ExprUnarOp*)Exp)->Exp);
 	}
@@ -177,6 +192,7 @@ MyTypeID CheckType::GetTypeID_BinExp(MyTypeID TypeID_Left, MyTypeID TypeID_Right
 			return TypeTable[TypeID_Left][i].TypeID;
 		}
 	}
+	return TypeID_BadType;
 }
 
 bool CheckType::CanCast(MyTypeID TypeID_1, MyTypeID TypeID_2) {

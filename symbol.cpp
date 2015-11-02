@@ -23,6 +23,9 @@ void SymLabel::Print(int Spaces){
 }
 
 void SymType::Print(int Spaces){
+	if (Name.size() == 0) { /* identifier is const and identifier have no TypeName but identifier has auto detect type */
+		return;
+	}
 	if (Spaces > 1) return;
 	print_indent(Spaces);
 	cout << "Type" << indent << Name << endl;

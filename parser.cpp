@@ -327,6 +327,9 @@ void Parser::ParseConstDecl(){
 		if (Type != nullptr) {
 			CheckType(&Table, Type, Exp, Pos);
 		}
+		else {
+			Type = new SymType("", CheckType(&Table, Pos).GetTypeID(Exp));
+		}
 		Table.Add(new SymConst(Name, Exp, Type));
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
@@ -406,7 +409,12 @@ Symbol* Parser::ParseArray(){
 		}
 		Lex.CheckAndNext(TK_CLOSE_SQUARE_BRACKET);
 		Lex.CheckAndNext(TK_OF);
+		auto Pos = Lex.Get().Pos;
 		*Sym_TypeInit = ParseType();
+		while (((SymType*)*Sym_TypeInit)->TypeID == TypeID_BadType) {
+			auto Sym = Table.GetSymbol((*Sym_TypeInit)->Name, Pos);
+			*Sym_TypeInit = ((SymType*)Sym)->Type;
+		}
 		return Sym;
 	}
 	Lex.CheckAndNext(TK_OF);
@@ -467,10 +475,15 @@ Symbol* Parser::ParseType(){
 	case TK_ARRAY:
 		return ParseArray();
 	default:
+		auto Pos = Lex.Get().Pos;
 		if (Table.Find(Lex.Get().Source) == -1) {
 			throw UnknownType(Lex.Get().Source, Lex.Get().Pos);
 		}
 		auto Sym = Table.GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+		while (((SymType*)Sym)->TypeID == TypeID_BadType) { 
+			auto _Sym = Table.GetSymbol(Sym->Name, Pos);
+			Sym = ((SymType*)_Sym)->Type;
+		}
 		Lex.Next();
 		return Sym;
 	}
