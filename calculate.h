@@ -32,16 +32,21 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 		CheckType<int>();
 		return atoi(((ExprIntConst*)Exp)->Value.Source.c_str());
 
-	case ConstRealExp:
+	case ConstDoubleExp:
 		CheckType<int, double>();
-		return atof(((ExprRealConst*)Exp)->Value.Source.c_str());
+		return atof(((ExprDoubleConst*)Exp)->Value.Source.c_str());
 
 	case ConstBoolExp:
 		CheckType<bool>();
 		return _strnicmp(((ExprBoolConst*)Exp)->Value.Source.c_str(), "true", 4) == 0 ? true : false;
 
 	case ConstStringExp:
-		throw BadType("DOUBLE\" || \"INTEGER\" || \"BOOL", Pos);
+		if (((ExprStringConst*)Exp)->Value.Source.size() > 1) {
+			throw BadType("DOUBLE\" || \"INTEGER\" || \"BOOL", Pos);
+		}
+		else {
+			return atoi(((ExprStringConst*)Exp)->Value.Source.c_str());
+		}
 
 	case BinExp:
 		return CalculateBinConstExpr((ExprBinOp*)Exp);

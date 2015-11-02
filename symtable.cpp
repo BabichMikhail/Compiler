@@ -4,12 +4,12 @@
 using namespace std;
 
 SymTable::SymTable(){
-	Table.push_back(new SymType("integer", nullptr));
-	Table.push_back(new SymType("real", nullptr));
-	Table.push_back(new SymType("char", nullptr));
-	Table.push_back(new SymType("boolean", nullptr));
-	Table.push_back(new SymType("string", nullptr));
-	Table.push_back(new SymType("array", nullptr));
+	Table.push_back(new SymType("integer", TypeID_Integer));
+	Table.push_back(new SymType("double", TypeID_Double));
+	Table.push_back(new SymType("char", TypeID_Char));
+	Table.push_back(new SymType("boolean", TypeID_Boolean));
+	Table.push_back(new SymType("string", TypeID_String));
+	Table.push_back(new SymType("array", TypeID_Array));
 	DeclTypeCount = Table.size();
 }
 
@@ -26,7 +26,7 @@ int SymTable::Find(string Value){
 	return -1;
 }
 
-Symbol* SymTable::GetSymbol(string Name, Position Pos){
+Symbol* SymTable::GetSymbol(string Name, Position Pos) {
 	int idx = Find(Name);
 	if (idx == -1) {
 		throw IdentifierNotFound(Name, Pos);

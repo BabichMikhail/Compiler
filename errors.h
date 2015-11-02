@@ -110,4 +110,9 @@ public:
 	DuplicateIdentifier(const string IdName, const Position Pos) : Error("Error: Duplicate Identifier \"" + IdName + "\". " + StrPos(Pos), Pos) {};
 };
 
+class IncompatibleTypes : public Error {
+public:
+	IncompatibleTypes(const Position Pos): Error("Error: Incompatible Types. " + StrPos(Pos), Pos) {};
+};
+
 #endif 

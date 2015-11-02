@@ -7,6 +7,7 @@
 #include <vector>
 #include <set>
 #include "statement.h"
+#include "checktype.h"
 
 using namespace std;
 

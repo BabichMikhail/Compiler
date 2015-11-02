@@ -10,7 +10,7 @@
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
-enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstRealExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp };
+enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstDoubleExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp };
 
 class Expr{
 public:
@@ -57,9 +57,9 @@ public:
 	ExprIntConst(Token Value);
 };
 
-class ExprRealConst : public ExprConst{
+class ExprDoubleConst : public ExprConst{
 public:
-	ExprRealConst(Token Value);
+	ExprDoubleConst(Token Value);
 };
 
 class ExprStringConst : public ExprConst{

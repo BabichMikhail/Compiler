@@ -105,6 +105,7 @@ Statement* Parser::ParseStatement(int State){
 		return nullptr;
 	case TK_IDENTIFIER:
 		Exp = ParseExpr();
+		CheckType(&Table, Exp, Lex.Get().Pos);
 		CheckSemicolon();
 		return new Stmt_Assign(Exp);
 	default:
@@ -131,7 +132,9 @@ Statement* Parser::ParseGOTOStmt(int State){
 
 Statement* Parser::ParseIfStmt(int State){
 	Lex.Next();
+	auto Pos = Lex.Get().Pos;
 	auto Exp = ParseExpr();
+	CheckType(&Table, TypeID_Boolean, Exp, Pos);
 	Lex.CheckAndNext(TK_THEN);
 	auto Stmt_1 = ParseStatement(State);
 	Statement* Stmt_2 = nullptr;
@@ -144,38 +147,43 @@ Statement* Parser::ParseIfStmt(int State){
 
 Statement* Parser::ParseCase(int State){
 	Lex.Next();
-	auto Stmt_CASE = new Stmt_Case(ParseExpr());
+	auto Exp = ParseExpr();
+	auto Stmt_CASE = new Stmt_Case(Exp);
 	Lex.CheckAndNext(TK_OF);
 	if (Lex.Get().Type == TK_ELSE || Lex.Get().Type == TK_END) {
 		throw IllegalExpr(Lex.Get().Pos);
 	}
 	while (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
+		auto Pos = Lex.Get().Pos;
 		Expr* Exp_1 = ParseExpr();
+		CheckType(&Table, Exp, Exp_1, Pos);
 		CheckConstExpr(Exp_1);
 		Expr* Exp_2 = nullptr;
 		if (Lex.Get().Type == TK_DOUBLE_POINT) {
 			Lex.Next();
+			Pos = Lex.Get().Pos;
 			Exp_2 = ParseExpr();
+			CheckType(&Table, Exp, Exp_2, Pos);
 			CheckConstExpr(Exp_2);
 		}
 		Lex.CheckAndNext(TK_COLON);
 		auto Stmt = ParseStatement(State | 4);
-		if (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
-			Lex.CheckAndNext(TK_SEMICOLON);
-		}
 		Stmt_CASE->Add(Case_Selector(Exp_1, Exp_2, Stmt));
 	}
 	if (Lex.Get().Type == TK_ELSE) {
 		Lex.Next();
 		Stmt_CASE->Stmt_Else = ParseStatement(State);
 	}
+	Lex.CheckAndNext(TK_END);
 	CheckSemicolon();
 	return Stmt_CASE;
 }
 
 Statement* Parser::ParseForStmt(int State){
 	Lex.Next();
+	auto Pos = Lex.Get().Pos;
 	auto Exp_1 = ParseExpr();
+	CheckType(&Table, Exp_1, Pos);
 	bool isTO;
 	if (Lex.Get().Type == TK_DOWNTO){
 		Lex.Next();
@@ -185,7 +193,9 @@ Statement* Parser::ParseForStmt(int State){
 		Lex.CheckAndNext(TK_TO);
 		isTO = true;
 	}
+	Pos = Lex.Get().Pos;
 	auto Exp_2 = ParseExpr();
+	CheckType(&Table, TypeID_Integer, Exp_2, Pos);
 	Lex.CheckAndNext(TK_DO);
 	auto Stmt = ParseStatement(State | 2);
 	if (Stmt != nullptr) {
@@ -196,7 +206,9 @@ Statement* Parser::ParseForStmt(int State){
 
 Statement* Parser::ParseWhileStmt(int State){
 	Lex.Next();
+	auto Pos = Lex.Get().Pos;
 	auto Cond = ParseExpr();
+	CheckType(&Table, TypeID_Boolean, Cond, Pos);
 	Lex.CheckAndNext(TK_DO);
 	return new Stmt_WHILE(Cond, ParseStatement(State | 2));
 }
@@ -205,7 +217,9 @@ Statement* Parser::ParseRepeatStmt(int State){
 	Lex.Next();
 	auto Stmt_List = ParseStmtList(State);
 	Lex.CheckAndNext(TK_UNTIL);
+	auto Pos = Lex.Get().Pos;
 	auto Exp = ParseExpr();
+	CheckType(&Table, TypeID_Boolean, Exp, Pos);
 	return new Stmt_REPEAT(Exp, Stmt_List);
 }
 
@@ -300,9 +314,20 @@ void Parser::ParseConstDecl(){
 		if (Lex.Get().Type == TK_COLON) {
 			Lex.Next();
 			Type = ParseType();
+			while (((SymType*)Type)->TypeID == TypeID_BadType) {
+				Type = ((SymType*)Type)->Type;
+			}
 		}
 		Lex.Check(TK_EQUAL);
-		Table.Add(new SymConst(Name, ParseEqual(), Type));
+		auto Pos = Lex.Get().Pos;
+		auto Exp = ParseEqual();
+		if (Exp->TypeExp == InitExp && Type == nullptr) {
+			throw IllegalExpr(Pos);
+		}
+		if (Type != nullptr) {
+			CheckType(&Table, Type, Exp, Pos);
+		}
+		Table.Add(new SymConst(Name, Exp, Type));
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
@@ -323,11 +348,20 @@ void Parser::ParseVarDecl(){
 		}
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType();
+		while (((SymType*)Type)->TypeID == TypeID_BadType) {
+			Type = ((SymType*)Type)->Type;
+		}
 		if (Names.size() > 1 && Lex.Get().Type == TK_EQUAL) {
 			throw UnexpectedSymbol(";", "=", Lex.Get().Pos);
 		}
+		Expr* Exp = nullptr;
+		if (Lex.Get().Type == TK_EQUAL) {
+			auto Pos = Lex.Get().Pos;
+			Exp = ParseEqual();
+			CheckType(&Table, Type, Exp, Pos);
+		}
 		for (int i = 0; i < Names.size(); ++i) {
-			Table.Add(new SymVar(Names[i], Lex.Get().Type == TK_EQUAL ? ParseEqual() : nullptr, Type));
+			Table.Add(new SymVar(Names[i], Exp, Type));
 		}
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
@@ -449,7 +483,7 @@ void Parser::CheckConstExpr(Expr* Exp) {
 		throw ExpectedConstExp(Lex.Get().Pos);
 	}
 	for (int i = 0; i < List->Vec.size(); ++i) {
-		if (Table.Find(List->Vec[i]) != -1 && Table.GetSymbol(List->Vec[i], Lex.Get().Pos)->GetSection() != DeclConst) {
+		if (Table.Find(List->Vec[i]) != -1 && Table.GetSymbol(List->Vec[i], Lex.Get().Pos)->Section != DeclConst) {
 			throw ExpectedConstExp(Lex.Get().Pos);
 		}
 	}
@@ -508,7 +542,7 @@ Expr* Parser::ParseFactor(){
 		return new ExprIntConst(TK);
 	}
 	if (TK.Type == TK_REAL_VALUE){
-		return new ExprRealConst(TK);
+		return new ExprDoubleConst(TK);
 	}
 	if (TK.Type == TK_TRUE || TK.Type == TK_FALSE){
 		return new ExprBoolConst(TK);

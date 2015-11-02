@@ -4,20 +4,17 @@
 Symbol::Symbol(DeclSection Section, string Name) : Name(Name), Section(Section){}
 
 SymLabel::SymLabel(string Name) : Symbol(DeclLabel, Name){}
-SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type){}
+SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type), TypeID(TypeID_BadType){}
+SymType::SymType(string Name, MyTypeID TypeID) : Symbol(DeclType, Name), Type(nullptr), TypeID(TypeID){}
 SymVar::SymVar(string Name, Expr* InitExp, Symbol* Type) : Symbol(DeclVar, Name), InitExp(InitExp), Type(Type){}
 SymConst::SymConst(string Name, Expr* InitExp, Symbol* Type) : Symbol(DeclConst, Name), InitExp(InitExp), Type(Type){}
 
-SymDynArray::SymDynArray(Symbol* Type) : Type(Type){}
-SymArray::SymArray(Symbol* Type, int Left, int Right) : SymDynArray(Type), Left(Left), Right(Right){}
-SymStringType::SymStringType(int Length) : Length(Length){}
+SymDynArray::SymDynArray(Symbol* Type) : Type(Type), TypeID(TypeID_DynArray){}
+SymArray::SymArray(Symbol* Type, int Left, int Right) : SymDynArray(Type), Left(Left), Right(Right) { TypeID = TypeID_Array; }
+SymStringType::SymStringType(int Length) : Length(Length), TypeID(TypeID_String){}
 
 bool Symbol::isSame(string Value){
 	return Name.length() == Value.length() && _strnicmp(Name.c_str(), Value.c_str(), Name.length()) == 0;
-}
-
-DeclSection Symbol::GetSection(){
-	return Section;
 }
 
 void SymLabel::Print(int Spaces){

@@ -11,7 +11,7 @@ ExprUnarOp::ExprUnarOp(Token Op, Expr* Exp) : Op(Op), Exp(Exp), Expr(UnarExp){}
 ExprConst::ExprConst(Token Value, TypeExpr TypeExp) : Value(Value), Expr(TypeExp){}
 ExprBoolConst::ExprBoolConst(Token Value) : ExprConst(Value, ConstBoolExp){}
 ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value, ConstIntExp){}
-ExprRealConst::ExprRealConst(Token Value) : ExprConst(Value, ConstRealExp){}
+ExprDoubleConst::ExprDoubleConst(Token Value) : ExprConst(Value, ConstDoubleExp){}
 ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value, ConstStringExp){}
 
 ExprVar::ExprVar(Token Var) : Var(Var), Expr(VarExp){}
