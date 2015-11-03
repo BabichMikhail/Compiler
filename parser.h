@@ -16,7 +16,7 @@ enum PMod { Test_Exp, Test_Decl, Test_Statement };
 class Parser{
 private:
 	Lexer Lex;
-	SymTable Table;
+	SymTable* Table;
 	Expr* Exp;
 	Statement* Stmt;
 	PMod State;
@@ -27,33 +27,34 @@ public:
 	Expr* ParseExpr();
 	Expr* ParseDesignator();
 
-	void ParseDeclSection();
-	void ParseLabelDecl();
-	void ParseConstDecl();
-	void ParseVarDecl();
-	void ParseTypeDecl();
-	//void ParseFunction();
-	//void ParseProcedure();
+	void ParseDeclSection(SymTable* Table);
+	void ParseLabelDecl(SymTable* Table);
+	void ParseConstDecl(SymTable* Table);
+	void ParseVarDecl(SymTable* Table);
+	void ParseTypeDecl(SymTable* Table);
+	void ParseCallDecl(SymTable* Table, DeclSection Section);
+	
+	Symbol* ParseRecord(SymTable* Table);
+	Symbol* ParseArray(SymTable* Table);
+	Symbol* ParseString(SymTable* Table);
+	Symbol* ParseType(SymTable* Table);
+	int ParseArguments(SymTable* Table);
 
-	Symbol* ParseArray();
-	Symbol* ParseString();
-	Symbol* ParseType();
+	Expr* ParseEqual(SymTable* Table);
+	Expr* ParseInitList(SymTable* Table);
+	void CheckConstExpr(SymTable* Table, Expr* Exp);
 
-	Expr* ParseEqual();
-	Expr* ParseInitList();
-	void CheckConstExpr(Expr* Exp);
+	Statement* ParseStatement(SymTable* Table, int State);
+	Statement* ParseGOTOStmt(SymTable* Table, int State);
+	Statement* ParseCompoundStmt(SymTable* Table, int State);
+	Statement* ParseIfStmt(SymTable* Table, int State);
+	Statement* ParseCase(SymTable* Table, int State);
+	Statement* ParseForStmt(SymTable* Table, int State);
+	Statement* ParseWhileStmt(SymTable* Table, int State);
+	Statement* ParseRepeatStmt(SymTable* Table, int State);
+	Statement* ParseTryStmt(SymTable* Table, int State);
 
-	Statement* ParseStatement(int State);
-	Statement* ParseGOTOStmt(int State);
-	Statement* ParseCompoundStmt(int State);
-	Statement* ParseIfStmt(int State);
-	Statement* ParseCase(int State);
-	Statement* ParseForStmt(int State);
-	Statement* ParseWhileStmt(int State);
-	Statement* ParseRepeatStmt(int State);
-	Statement* ParseTryStmt(int State);
-
-	vector<Statement*> ParseStmtList(int State);
+	vector<Statement*> ParseStmtList(SymTable* Table, int State);
 	void CheckSemicolon();
 
 	void Print();

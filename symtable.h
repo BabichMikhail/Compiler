@@ -15,14 +15,22 @@ typedef struct {
 class SymTable{
 private:
 	int DeclTypeCount;
-	vector<Symbol*> Table;
 public:
-	SymTable();
+	SymTable* Parent;
+	vector<Symbol*> Symbols;
+	SymTable(SymTable* ParentTable);
+
 	int Find(string Value);
+	int FindLocal(string Value);
+	vector<int> FindAll(string Value);
+	
 	Symbol* GetSymbol(string Name, const Position Pos);
+	vector<Symbol*> GetAllSymbols(string Name, const Position Pos);
+
 	void CheckSymbol(string Name, const Position Pos);
-	void Print();
 	void Add(Symbol* NewElem);
+	void Print(int Spaces);
+
 };
 
 #endif

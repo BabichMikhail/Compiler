@@ -3,23 +3,51 @@
 
 using namespace std;
 
-SymTable::SymTable(){
-	Table.push_back(new SymType("integer", TypeID_Integer));
-	Table.push_back(new SymType("double", TypeID_Double));
-	Table.push_back(new SymType("char", TypeID_Char));
-	Table.push_back(new SymType("boolean", TypeID_Boolean));
-	Table.push_back(new SymType("string", TypeID_String));
-	Table.push_back(new SymType("array", TypeID_Array));
-	DeclTypeCount = Table.size();
+SymTable::SymTable(SymTable* ParentTable): Parent(ParentTable){
+	Symbols.push_back(new SymType("integer", TypeID_Integer));
+	Symbols.push_back(new SymType("double", TypeID_Double));
+	Symbols.push_back(new SymType("char", TypeID_Char));
+	Symbols.push_back(new SymType("boolean", TypeID_Boolean));
+	Symbols.push_back(new SymType("string", TypeID_String));
+	Symbols.push_back(new SymType("array", TypeID_Array));
+	Symbols.push_back(new SymType("record", TypeID_Record));
+	DeclTypeCount = Symbols.size();
 }
 
 void SymTable::Add(Symbol* NewElem){
-	Table.push_back(NewElem);
+	Symbols.push_back(NewElem);
 }
 
 int SymTable::Find(string Value){
-	for (int i = 0; i < Table.size(); ++i){
-		if (Table[i]->isSame(Value)){
+	auto TableNow = this;
+	do {
+		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
+			if (TableNow->Symbols[i]->isSame(Value)) {
+				return i;
+			}
+		}
+		TableNow = TableNow->Parent;
+	} while (TableNow != nullptr);
+	return -1;
+}
+
+vector<int> SymTable::FindAll(string Value) {
+	vector<int> Ans;
+	auto TableNow = this;
+	do {
+		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
+			if (TableNow->Symbols[i]->isSame(Value)) {
+				Ans.push_back(i);
+			}
+		}
+		TableNow = TableNow->Parent;
+	} while (TableNow != nullptr);
+	return Ans;
+}
+
+int SymTable::FindLocal(string Value) {
+	for (int i = 0; i < Symbols.size(); ++i) {
+		if (Symbols[i]->isSame(Value)) {
 			return i;
 		}
 	}
@@ -27,22 +55,36 @@ int SymTable::Find(string Value){
 }
 
 Symbol* SymTable::GetSymbol(string Name, const Position Pos) {
-	int idx = Find(Name);
-	if (idx == -1) {
-		throw IdentifierNotFound(Name, Pos);
+	int idx = -1;
+	auto TableNow = this;
+	do {
+		idx = TableNow->FindLocal(Name);
+		if (idx != -1) {
+			break;
+		}
+		TableNow = TableNow->Parent;
+	} while (TableNow != nullptr);
+	return TableNow->Symbols[idx];
+}
+
+vector<Symbol*> SymTable::GetAllSymbols(string Name, const Position Pos) {
+	auto list_idx = FindAll(Name);
+	vector<Symbol*> Ans;
+	for (int i = 0; i < list_idx.size(); ++i) {
+		Ans.push_back(Symbols[i]);
 	}
-	return Table[idx];
+	return Ans;
 }
 
 void SymTable::CheckSymbol(string Name, const Position Pos) {
-	if (Find(Name) != -1) {
+	if (FindLocal(Name) != -1) {
 		throw DuplicateIdentifier(Name, Pos);
 	}
 }
 
-void SymTable::Print(){
-	for (int i = DeclTypeCount; i < Table.size(); ++i){ /* No Print STD Type */
-		Table[i]->Print(0);
+void SymTable::Print(int Spaces){
+	for (int i = DeclTypeCount; i < Symbols.size(); ++i){ /* No Print STD Type */
+		Symbols[i]->Print(Spaces);
 		cout << endl;
 	}
 }

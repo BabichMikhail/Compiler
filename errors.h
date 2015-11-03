@@ -112,7 +112,8 @@ public:
 
 class IncompatibleTypes : public Error {
 public:
-	IncompatibleTypes(const Position Pos): Error("Error: Incompatible Types. " + StrPos(Pos), Pos) {};
+	IncompatibleTypes(const string Type_Expected, const string Type_Found, const Position Pos):
+		Error("Error: Incompatible Types. Expected \"" + Type_Expected + "\" but \"" + Type_Found + "\" found. " + StrPos(Pos), Pos) {};
 };
 
 #endif 
