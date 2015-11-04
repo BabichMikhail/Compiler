@@ -1,0 +1,9 @@
+var 
+	a : record
+		a : integer;
+		b : double; 
+	end;
+	b : double;
+begin 
+	a.a := b;
+end.
