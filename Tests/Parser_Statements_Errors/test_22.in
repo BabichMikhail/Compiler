@@ -1,0 +1,8 @@
+function a(a: boolean): integer;
+begin
+	result := integer(a);
+end;
+var b : char;
+begin
+	b := char(a(10));
+end.

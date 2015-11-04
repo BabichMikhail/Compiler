@@ -124,4 +124,11 @@ public:
 	void Print(int Spaces);
 };
 
+class Stmt_Call : public Statement {
+public:
+	Expr* Exp;
+	Stmt_Call(Expr* Exp);
+	void Print(int Spaces);
+};
+
 #endif

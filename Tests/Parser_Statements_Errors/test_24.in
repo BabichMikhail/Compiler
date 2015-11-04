@@ -1,0 +1,7 @@
+function a(): char;
+begin
+end;
+var b : integer;
+begin
+	b := a(10);
+end.

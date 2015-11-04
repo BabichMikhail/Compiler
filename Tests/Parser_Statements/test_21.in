@@ -1,0 +1,6 @@
+procedure a();
+begin 
+end;
+begin
+	a();
+end.

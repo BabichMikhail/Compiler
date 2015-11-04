@@ -17,6 +17,7 @@ Stmt_Try_Finally::Stmt_Try_Finally(vector<Statement*> Stmt_Try, vector<Statement
 Stmt_Raise::Stmt_Raise(Expr* Exp) : Exp(Exp) {};
 
 Stmt_Assign::Stmt_Assign(Expr* Exp) : Exp(Exp) {};
+Stmt_Call::Stmt_Call(Expr* Exp) : Exp(Exp) {}
 
 void Stmt_Compound::Add(Statement* Stmt){
 	StmtList.push_back(Stmt);
@@ -152,4 +153,10 @@ void Stmt_Raise::Print(int Spaces) {
 
 void Stmt_Assign::Print(int Spaces) {
 	Exp->Print(Spaces);
+}
+
+void Stmt_Call::Print(int Spaces) {
+	print_indent(Spaces);
+	cout << "Call" << endl;
+	Exp->Print(Spaces + 1);
 }

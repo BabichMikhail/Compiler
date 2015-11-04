@@ -196,16 +196,32 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
 					continue;
 				}
+			}
+			if (Symbols[i]->Section == DeclProcedure) {
+				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {
+					continue;
+				}
+			}
+			bool flag = false;
+			if (Symbols[i]->Section == DeclFunction || Symbols[i]->Section == DeclProcedure) {
+				int offset = ((SymFunction*)Symbols[i])->Table->DeclTypeCount;
 				for (int j = 0; j < ((Function*)Exp)->Rights.size(); ++j) {
-					if (GetTypeID(((Function*)Exp)->Rights[j]) != ((SymType*)((SymFunction*)Symbols[i])->Type)->TypeID) {
-						continue;
+					if (GetTypeID(((Function*)Exp)->Rights[j]) != ((SymType*)((SymVar*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
+						flag = true;
 					}
 				}
+			}
+			if (flag) {
+				continue;
+			}
+			if (Symbols[i]->Section == DeclFunction) {
 				return ((SymType*)((SymFunction*)Symbols[i])->Type)->TypeID;
+			}
+			if (Symbols[i]->Section == DeclProcedure) {
+				return TypeID_BadType;
 			}
 		}
 		throw IllegalExpr(Pos);
-
 	}
 	return GetTypeID(Exp->TypeExp);
 }

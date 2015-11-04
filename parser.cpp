@@ -38,7 +38,8 @@ void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2)
 	NewTable->Add(new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position())));
 	auto Stmt = new Stmt_Compound();
 	Stmt->Add(new Stmt_Assign(new Assign(new ExprVar(Token(Position(), "Result", TK_IDENTIFIER)), new ExprVar(Token(Position(), "Arg_0", TK_IDENTIFIER)))));
-	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_2, Position()));
+	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_1, Position()));
+	//new SymFunction()
 	Table->Add(SymFunc);
 	++Table->DeclTypeCount;
 }
@@ -46,6 +47,7 @@ void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2)
 void Parser::ReservedFunctions(SymTable* Table) {
 	ReservedCastFunction(Table, "double", "integer");
 	ReservedCastFunction(Table, "integer", "char");
+	ReservedCastFunction(Table, "char", "integer");
 }
 
 Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State), Table(new SymTable(nullptr)){
@@ -123,10 +125,11 @@ Statement* Parser::ParseStatement(SymTable* Table, int State){
 		Lex.Next();
 		return nullptr;
 	case TK_IDENTIFIER:
-		Exp = ParseExpr();
+		return ParseIdentifier(Table, State);
+		/*Exp = ParseExpr();
 		CheckType(Table, Exp, Lex.Get().Pos);
 		CheckSemicolon();
-		return new Stmt_Assign(Exp);
+		return new Stmt_Assign(Exp);*/
 	default:
 		throw UnexpectedSymbol("BEGIN", Lex.Get().Source, Lex.Get().Pos);
 	}
@@ -264,6 +267,21 @@ Statement* Parser::ParseTryStmt(SymTable* Table, int State){
 	}
 }
 
+Statement* Parser::ParseIdentifier(SymTable* Table, int State) {
+	auto Pos = Lex.Get().Pos;
+	Exp = ParseExpr();
+	if (Exp->TypeExp == FunctionExp) {
+		CheckType(Table, TypeID_BadType, Exp, Pos);
+		return new Stmt_Call(Exp);
+	}
+	if (Exp->TypeExp == AssignExp) {
+		CheckType(Table, Exp, Pos);
+		CheckSemicolon();
+		return new Stmt_Assign(Exp);
+	}
+	throw IllegalExpr(Pos);
+}
+
 set<TokenType> end_block_tk = { TK_END, TK_EXCEPT, TK_FINALLY, TK_ELSE, TK_UNTIL, TK_POINT };
 
 vector<Statement*> Parser::ParseStmtList(SymTable* Table, int State) {
@@ -340,7 +358,7 @@ void Parser::ParseConstDecl(SymTable* Table){
 		}
 		Lex.Check(TK_EQUAL);
 		auto Pos = Lex.Get().Pos;
-		auto Exp = ParseEqual(Table);
+		auto Exp = ParseInit(Table);
 		if (Exp->TypeExp == InitExp && Type == nullptr) {
 			throw IllegalExpr(Pos);
 		}
@@ -381,7 +399,7 @@ void Parser::ParseVarDecl(SymTable* Table){
 		Expr* Exp = nullptr;
 		if (Lex.Get().Type == TK_EQUAL) {
 			auto Pos = Lex.Get().Pos;
-			Exp = ParseEqual(Table);
+			Exp = ParseInit(Table);
 			CheckType(Table, Type, Exp, Pos);
 		}
 		for (int i = 0; i < Names.size(); ++i) {
@@ -481,7 +499,6 @@ int Parser::ParseArguments(SymTable* Table) {
 
 Symbol* Parser::ParseArray(SymTable* Table){
 	Lex.Next();
-	Symbol* Sym;
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
 		Expr* Exp_Left = ParseExpr(); 
@@ -553,7 +570,7 @@ Expr* Parser::ParseInitList(SymTable* Table){
 	return Ans;
 }
 
-Expr* Parser::ParseEqual(SymTable* Table){
+Expr* Parser::ParseInit(SymTable* Table){
 	Lex.Next();
 	int count = 0;
 	if (Lex.Get().Type == TK_OPEN_BRACKET){
