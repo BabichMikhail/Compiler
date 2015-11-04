@@ -1,0 +1,50 @@
+Type   TPoint
+   Record
+      Var   x
+         Type   double
+
+      Var   y
+         Type   double
+
+   End
+
+Function   P   4
+   Var   a
+      Type   integer
+
+   Var   b
+      Type   integer
+
+   Var   Point
+      Record
+         Var   x
+            Type   double
+
+         Var   y
+            Type   double
+
+      End
+
+   Var   Result
+      Record
+         Var   x
+            Type   double
+
+         Var   y
+            Type   double
+
+      End
+
+   Var   NewPoint
+      Record
+         Var   x
+            Type   double
+
+         Var   y
+            Type   double
+
+      End
+
+   begin
+   end
+

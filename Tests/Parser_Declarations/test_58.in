@@ -1,0 +1,18 @@
+type
+	TPoint = Record 
+		x: double;
+		y: double;
+	end;
+procedure P(a: integer; b: integer; Point: TPoint);
+	function F(x: double; y: double): TPoint;
+	begin
+		Result.x := x;
+		Result.y := y;
+	end;
+var
+	NewPoint: TPoint;
+begin
+   NewPoint := F(double(a), double(b));
+   Point.x := NewPoint.x;
+   Point.y := NewPoint.y;
+end;

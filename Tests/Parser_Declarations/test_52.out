@@ -1,0 +1,10 @@
+Var   a
+   Record
+      Var   a
+         Type   integer
+
+      Var   b
+         Type   double
+
+   End
+

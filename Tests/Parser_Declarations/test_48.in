@@ -1,0 +1,3 @@
+var
+	a: record 
+	end;

@@ -1,0 +1,20 @@
+Var   a
+   Record
+      Var   a
+         Record
+            Var   a
+               Record
+               End
+
+         End
+
+      Var   b
+         Record
+            Var   a
+               Record
+               End
+
+         End
+
+   End
+

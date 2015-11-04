@@ -1,0 +1,11 @@
+var
+	a: record
+		a: record 
+			a: record
+			end;
+		end;
+		b: record 
+			a : record
+			end;
+		end 
+	end;

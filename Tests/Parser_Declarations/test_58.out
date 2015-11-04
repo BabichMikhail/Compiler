@@ -1,0 +1,94 @@
+Type   TPoint
+   Record
+      Var   x
+         Type   double
+
+      Var   y
+         Type   double
+
+   End
+
+Procedure   P   3
+   Var   a
+      Type   integer
+
+   Var   b
+      Type   integer
+
+   Var   Point
+      Record
+         Var   x
+            Type   double
+
+         Var   y
+            Type   double
+
+      End
+
+   Function   F   3
+      Var   x
+         Type   double
+
+      Var   y
+         Type   double
+
+      Var   Result
+         Record
+            Var   x
+               Type   double
+
+            Var   y
+               Type   double
+
+         End
+
+      begin
+            x
+         :=
+               x
+            .
+               Result
+            y
+         :=
+               y
+            .
+               Result
+      end
+
+   Var   NewPoint
+      Record
+         Var   x
+            Type   double
+
+         Var   y
+            Type   double
+
+      End
+
+   begin
+               a
+            ()
+               double
+               b
+            ()
+               double
+         ()
+            F
+      :=
+         NewPoint
+            x
+         .
+            NewPoint
+      :=
+            x
+         .
+            Point
+            y
+         .
+            NewPoint
+      :=
+            y
+         .
+            Point
+   end
+

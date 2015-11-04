@@ -1,0 +1,14 @@
+type
+	Rec = Record 
+		a: integer;
+		b: integer;
+		c: record
+			a: integer; 
+			b: integer;
+		end;
+	end;
+var
+	a: record
+		a: integer;
+		b: double; 
+	end;

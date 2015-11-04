@@ -1,0 +1,10 @@
+type
+	TPoint = Record 
+		x: double;
+		y: double;
+	end;
+function P(a: integer; b: integer; Point: TPoint): TPoint;
+var
+	NewPoint: TPoint;
+begin
+end;
