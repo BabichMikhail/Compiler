@@ -32,7 +32,24 @@ void Parser::Print(){
 	}
 }
 
+void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2) {
+	auto NewTable = new SymTable(Table);
+	NewTable->Add(new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position())));
+	NewTable->Add(new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position())));
+	auto Stmt = new Stmt_Compound();
+	Stmt->Add(new Stmt_Assign(new Assign(new ExprVar(Token(Position(), "Result", TK_IDENTIFIER)), new ExprVar(Token(Position(), "Arg_0", TK_IDENTIFIER)))));
+	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_2, Position()));
+	Table->Add(SymFunc);
+	++Table->DeclTypeCount;
+}
+
+void Parser::ReservedFunctions(SymTable* Table) {
+	ReservedCastFunction(Table, "double", "integer");
+	ReservedCastFunction(Table, "integer", "char");
+}
+
 Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State), Table(new SymTable(nullptr)){
+	ReservedFunctions(Table);
 	switch (State) {
 	case Test_Exp:
 		while (Lex.isToken()) {

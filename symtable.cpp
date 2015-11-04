@@ -68,11 +68,16 @@ Symbol* SymTable::GetSymbol(string Name, const Position Pos) {
 }
 
 vector<Symbol*> SymTable::GetAllSymbols(string Name, const Position Pos) {
-	auto list_idx = FindAll(Name);
 	vector<Symbol*> Ans;
-	for (int i = 0; i < list_idx.size(); ++i) {
-		Ans.push_back(Symbols[i]);
-	}
+	auto TableNow = this;
+	do {
+		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
+			if (TableNow->Symbols[i]->isSame(Name)) {
+				Ans.push_back(TableNow->Symbols[i]);
+			}
+		}
+		TableNow = TableNow->Parent;
+	} while (TableNow != nullptr);
 	return Ans;
 }
 

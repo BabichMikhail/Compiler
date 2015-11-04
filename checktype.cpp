@@ -193,14 +193,15 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		auto Symbols = Table->GetAllSymbols(((ExprVar*)((Function*)Exp)->Left)->Var.Source, Pos);
 		for (int i = 0; i < Symbols.size(); ++i) {
 			if (Symbols[i]->Section == DeclFunction) {
-				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {
+				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
 					continue;
 				}
 				for (int j = 0; j < ((Function*)Exp)->Rights.size(); ++j) {
-					if (GetTypeID(((Function*)Exp)->Rights[j]) != ((SymType*)((SymVar*)((SymFunction*)Symbols[i])->Table->Symbols[i])->Type)->TypeID) {
+					if (GetTypeID(((Function*)Exp)->Rights[j]) != ((SymType*)((SymFunction*)Symbols[i])->Type)->TypeID) {
 						continue;
 					}
 				}
+				return ((SymType*)((SymFunction*)Symbols[i])->Type)->TypeID;
 			}
 		}
 		throw IllegalExpr(Pos);
