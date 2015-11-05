@@ -40,6 +40,14 @@ public:
 	void Print(int Spaces);
 };
 
+class SymPointer : public Symbol {
+public:
+	Symbol* Type;
+	MyTypeID TypeID;
+	SymPointer(string Name, Symbol* Type);
+	void Print(int Spaces);
+};
+
 class SymVar : public Symbol{
 public:
 	Expr* InitExp;

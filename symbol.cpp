@@ -6,6 +6,7 @@ Symbol::Symbol(DeclSection Section, string Name) : Name(Name), Section(Section){
 SymLabel::SymLabel(string Name) : Symbol(DeclLabel, Name){}
 SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type), TypeID(TypeID_BadType){}
 SymType::SymType(string Name, MyTypeID TypeID) : Symbol(DeclType, Name), Type(nullptr), TypeID(TypeID){}
+SymPointer::SymPointer(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type), TypeID(TypeID_Pointer){}
 SymVar::SymVar(string Name, Expr* InitExp, Symbol* Type) : Symbol(DeclVar, Name), InitExp(InitExp), Type(Type){}
 SymConst::SymConst(string Name, Expr* InitExp, Symbol* Type) : Symbol(DeclConst, Name), InitExp(InitExp), Type(Type){}
 
@@ -39,6 +40,12 @@ void SymType::Print(int Spaces){
 	cout << "Type" << indent << Name << endl;
 	if (Type != nullptr)
 		Type->Print(Spaces + 1);
+}
+
+void SymPointer::Print(int Spaces) {
+	print_indent(Spaces);
+	cout << "Type" << indent << Name << endl;
+	Type->Print(Spaces + 1);
 }
 
 void SymDynArray::Print(int Spaces){

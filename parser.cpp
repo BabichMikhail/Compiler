@@ -592,6 +592,11 @@ Symbol* Parser::ParseType(SymTable* Table){
 	case TK_RECORD:
 		return ParseRecord(Table);
 	default:
+		bool flag = false;
+		if (Lex.Get().Type == TK_CAP) {
+			flag = true;
+			Lex.Next();
+		}
 		auto Pos = Lex.Get().Pos;
 		if (Table->Find(Lex.Get().Source) == -1) {
 			throw UnknownType(Lex.Get().Source, Lex.Get().Pos);
@@ -602,6 +607,9 @@ Symbol* Parser::ParseType(SymTable* Table){
 			Sym = ((SymType*)_Sym)->Type;
 		}
 		Lex.Next();
+		if (flag) {
+			return new SymPointer("pointer", Sym);
+		}
 		return Sym;
 	}
 }
