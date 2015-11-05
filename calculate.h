@@ -95,10 +95,10 @@ template <class T> T CalculateConstExpr<T>::CalculateBinConstExpr(ExprBinOp* Exp
 		return (int)Calculate(Exp->Left) ^ (int)Calculate(Exp->Right);
 	case TK_AND:
 		CheckType<int>();
-		return (int)Calculate(Exp->Left) ^ (int)Calculate(Exp->Right);
+		return (int)Calculate(Exp->Left) & (int)Calculate(Exp->Right);
 	case TK_OR:
 		CheckType<int>();
-		return (int)Calculate(Exp->Left) ^ (int)Calculate(Exp->Right);
+		return (int)Calculate(Exp->Left) | (int)Calculate(Exp->Right);
 	case TK_SHL:
 		CheckType<int>();
 		return (int)Calculate(Exp->Left) << (int)Calculate(Exp->Right);
