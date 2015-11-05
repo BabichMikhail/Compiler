@@ -4,14 +4,6 @@
 using namespace std;
 
 SymTable::SymTable(SymTable* ParentTable): Parent(ParentTable){
-	Symbols.push_back(new SymType("integer", TypeID_Integer));
-	Symbols.push_back(new SymType("double", TypeID_Double));
-	Symbols.push_back(new SymType("char", TypeID_Char));
-	Symbols.push_back(new SymType("boolean", TypeID_Boolean));
-	Symbols.push_back(new SymType("string", TypeID_String));
-	Symbols.push_back(new SymType("array", TypeID_Array));
-	Symbols.push_back(new SymType("record", TypeID_Record));
-	Symbols.push_back(new SymType("pointer", TypeID_Pointer));
 	DeclTypeCount = Symbols.size();
 }
 

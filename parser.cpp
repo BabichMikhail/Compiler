@@ -49,7 +49,20 @@ void Parser::ReservedFunctions(SymTable* Table) {
 	ReservedCastFunction(Table, "char", "integer");
 }
 
+void Parser::ReservedTypes(SymTable* Table) {
+	Table->Symbols.push_back(new SymType("integer", TypeID_Integer));
+	Table->Symbols.push_back(new SymType("double", TypeID_Double));
+	Table->Symbols.push_back(new SymType("char", TypeID_Char));
+	Table->Symbols.push_back(new SymType("boolean", TypeID_Boolean));
+	Table->Symbols.push_back(new SymType("string", TypeID_String));
+	Table->Symbols.push_back(new SymType("array", TypeID_Array));
+	Table->Symbols.push_back(new SymType("record", TypeID_Record));
+	Table->Symbols.push_back(new SymType("pointer", TypeID_Pointer));
+	Table->DeclTypeCount = Table->Symbols.size();
+}
+
 Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State), Table(new SymTable(nullptr)){
+	ReservedTypes(Table);
 	ReservedFunctions(Table);
 	switch (State) {
 	case Test_Exp:

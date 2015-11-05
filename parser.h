@@ -63,6 +63,7 @@ public:
 
 	void ReservedCastFunction(SymTable* Table, string Type_1, string Type_2);
 	void ReservedFunctions(SymTable* Table);
+	void ReservedTypes(SymTable* Table);
 
 	vector<Statement*> ParseStmtList(SymTable* Table, int State);
 	void CheckSemicolon();
