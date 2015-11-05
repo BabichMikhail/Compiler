@@ -503,7 +503,17 @@ Symbol* Parser::ParseRecord(SymTable* Table) {
 
 int Parser::ParseArguments(SymTable* Table) {
 	int argc = 0;
-	while (Lex.Get().Type == TK_IDENTIFIER) {
+	while (Lex.Get().Type == TK_IDENTIFIER || Lex.Get().Type == TK_CONST || Lex.Get().Type == TK_VAR) {
+		auto isConst = false;
+		if (Lex.Get().Type == TK_CONST) {
+			isConst = true;
+			Lex.Next();
+		}
+		auto isVar = false;
+		if (Lex.Get().Type == TK_VAR) {
+			isVar = true;
+			Lex.Next();
+		}
 		++argc;
 		auto Pos = Lex.Get().Pos;
 		auto Name = Lex.Get().Source;
