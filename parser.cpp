@@ -39,7 +39,6 @@ void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2)
 	auto Stmt = new Stmt_Compound();
 	Stmt->Add(new Stmt_Assign(new Assign(new ExprVar(Token(Position(), "Result", TK_IDENTIFIER)), new ExprVar(Token(Position(), "Arg_0", TK_IDENTIFIER)))));
 	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_1, Position()));
-	//new SymFunction()
 	Table->Add(SymFunc);
 	++Table->DeclTypeCount;
 }
@@ -126,10 +125,6 @@ Statement* Parser::ParseStatement(SymTable* Table, int State){
 		return nullptr;
 	case TK_IDENTIFIER:
 		return ParseIdentifier(Table, State);
-		/*Exp = ParseExpr();
-		CheckType(Table, Exp, Lex.Get().Pos);
-		CheckSemicolon();
-		return new Stmt_Assign(Exp);*/
 	default:
 		throw UnexpectedSymbol("BEGIN", Lex.Get().Source, Lex.Get().Pos);
 	}
@@ -330,6 +325,11 @@ void Parser::ParseDeclSection(SymTable* Table){
 			throw UnexpectedSymbol("BEGIN", Lex.Get().Source, Lex.Get().Pos);
 		}
 	}
+	for (auto i = 0; i < DeclForwardCall.size(); ++i) {
+		if (((SymCall*)DeclForwardCall[i].Sym)->Stmt == nullptr) {
+			throw ForwardDeclNotSolved(DeclForwardCall[i].Sym->Name, DeclForwardCall[i].Pos);
+		}
+	}
 }
 
 void Parser::ParseLabelDecl(SymTable* Table){
@@ -442,33 +442,42 @@ void Parser::ParseCallDecl(SymTable* Table, DeclSection Section) {
 		LocTable->Add(new SymVar("Result", nullptr, Type));
 		Lex.CheckAndNext(TK_SEMICOLON);
 		NewSym = new SymFunction(Name, LocTable, nullptr, argc + 1, Type);
-		auto Symbols = Table->GetAllSymbols(Name, Pos);
-		for (int i = 0; i < Symbols.size(); ++i) {
-			if (CmpArguments().Compare(NewSym, Symbols[i])) {
-				throw DuplicateIdentifier(Name, Pos);
-			}
-		}
 	}
 	if (Section == DeclProcedure) {
 		Lex.CheckAndNext(TK_SEMICOLON);
 		NewSym = new SymProcedure(Name, LocTable, nullptr, argc);
-		auto Symbols = Table->GetAllSymbols(Name, Pos);
-		for (int i = 0; i < Symbols.size(); ++i) {
-			if (CmpArguments().Compare(NewSym, Symbols[i])) {
+	}
+	auto Symbols = Table->GetAllSymbols(Name, Pos);
+	SymCall* FirstDeclSym = nullptr;
+	for (int i = 0; i < Symbols.size(); ++i) {
+		if (CmpArguments().Compare(NewSym, Symbols[i])) {
+			if (Symbols[i]->Section == Section && ((SymCall*)Symbols[i])->Stmt == nullptr) {
+				FirstDeclSym = (SymCall*)Symbols[i];
+			}
+			else {
 				throw DuplicateIdentifier(Name, Pos);
 			}
 		}
 	}
 	if (Lex.Get().Type == TK_FORWARD) {
+		if (FirstDeclSym != nullptr) {
+			throw DuplicateIdentifier(Name, Pos);
+		}
 		Lex.Next();
 		Lex.CheckAndNext(TK_SEMICOLON);
+		DeclForwardCall.push_back({ NewSym, Pos });
 		Table->Add(NewSym);
 		return;
 	}
 	ParseDeclSection(LocTable);
 	Lex.Check(TK_BEGIN);
-	((SymCall*)NewSym)->Stmt = ParseStatement(LocTable, 0);
-	Table->Add(NewSym);
+	if (FirstDeclSym != nullptr) {
+		FirstDeclSym->Stmt = ParseStatement(LocTable, 0);
+	}
+	else {
+		((SymCall*)NewSym)->Stmt = ParseStatement(LocTable, 0);
+		Table->Add(NewSym);
+	}
 }
 
 Symbol* Parser::ParseRecord(SymTable* Table) {

@@ -116,4 +116,9 @@ public:
 		Error("Error: Incompatible Types. Expected \"" + Type_Expected + "\" but \"" + Type_Found + "\" found. " + StrPos(Pos), Pos) {};
 };
 
+class ForwardDeclNotSolved : public Error {
+public:
+	ForwardDeclNotSolved(const string Name, const Position Pos) : Error("Error: Forward Declarations not solved \"" + Name + "\". " + StrPos(Pos), Pos) {};
+};
+
 #endif 

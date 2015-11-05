@@ -13,6 +13,11 @@ using namespace std;
 
 enum PMod { Test_Exp, Test_Decl, Test_Statement };
 
+typedef struct DeclCall {
+	Symbol* Sym; 
+	Position Pos;
+} DeclCall;
+
 class Parser{
 private:
 	Lexer Lex;
@@ -20,6 +25,7 @@ private:
 	Expr* Exp;
 	Statement* Stmt;
 	PMod State;
+	vector <DeclCall> DeclForwardCall;
 public:
 	Parser(const char* filename, PMod State);
 	Expr* ParseLevel(const int level);
