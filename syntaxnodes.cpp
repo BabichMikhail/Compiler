@@ -23,6 +23,9 @@ Record::Record(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(RecordE
 
 InitList::InitList(vector<Expr*> List) : Expr(InitExp), List(List) {}
 
+ExprPointer::ExprPointer(Expr* Exp) : Exp(Exp), Expr(PointerExp) {}
+ExprDereference::ExprDereference(Expr* Exp) : Exp(Exp), Expr(DereferenceExp) {}
+
 void ExprUnarOp::Print(int Spaces){
 	Exp->Print(Spaces + 1);
 	for (int i = 0; i < Spaces; ++i){
@@ -96,6 +99,18 @@ void InitList::Print(const int Spaces) {
 	for (int i = 0; i < List.size(); ++i) {
 		List[i]->Print(Spaces);
 	}
+}
+
+void ExprPointer::Print(const int Spaces) {
+	Exp->Print(Spaces + 1);
+	print_indent(Spaces);
+	cout << "@" << endl;
+} 
+
+void ExprDereference::Print(const int Spaces) {
+	print_indent(Spaces);
+	cout << "^" << endl;
+	Exp->Print(Spaces + 1);
 }
 
 void Expr::GetIdentStr(ExpArgList* List){}

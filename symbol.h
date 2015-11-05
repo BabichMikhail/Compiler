@@ -10,7 +10,7 @@ enum DeclSection { DeclNull, DeclConst, DeclVar, DeclLabel, DeclType, DeclFuncti
 
 enum MyTypeID {
 	TypeID_BadType = -1, TypeID_Integer = 0, TypeID_Double = 1, TypeID_Char = 2, TypeID_Boolean = 3, TypeID_String = 4, TypeID_Array = 5, 
-	TypeID_DynArray = 6, TypeID_Record = 7, TypeID_Function = 8, TypeID_Procedure = 9
+	TypeID_DynArray = 6, TypeID_Record = 7, TypeID_Pointer = 8, TypeID_Function = 9
 };
 
 using namespace std;

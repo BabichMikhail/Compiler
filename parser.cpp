@@ -623,12 +623,20 @@ void Parser::CheckConstExpr(SymTable* Table, Expr* Exp) {
 
 Expr* Parser::ParseExpr(){
 	auto Left = ParseLevel(0);
+	if (Lex.Get().Type == TK_CAP) {
+		Left = new ExprDereference(Left);
+		Lex.Next();
+	}
 	auto TK = Lex.Get();
 	if (TK.Type == TK_ASSIGNED){
 		Lex.Next();
 		auto Right = ParseLevel(0);
 		if (Left_Op_Assign.find(Left->TypeExp) == Left_Op_Assign.cend()){
 			throw ExpectedVariable(Lex.Get().Pos);
+		}
+		if (Lex.Get().Type == TK_CAP) {
+			Right = new ExprDereference(Right);
+			Lex.Next();
 		}
 		return new Assign(Left, Right);
 	}
@@ -682,6 +690,13 @@ Expr* Parser::ParseFactor(){
 	}
 	if (TK.Type == TK_NOT){
 		return new ExprUnarOp(TK, ParseLevel(0));
+	}
+	if (TK.Type == TK_DOG) {
+		auto Exp = ParseLevel(0);
+		if (Left_Op_Assign.find(Exp->TypeExp) == Left_Op_Assign.cend()) {
+			throw ExpectedVariable(TK.Pos);
+		}
+		return new ExprPointer(Exp);
 	}
 	throw IllegalExpr(TK.Pos);
 }

@@ -11,6 +11,7 @@ SymTable::SymTable(SymTable* ParentTable): Parent(ParentTable){
 	Symbols.push_back(new SymType("string", TypeID_String));
 	Symbols.push_back(new SymType("array", TypeID_Array));
 	Symbols.push_back(new SymType("record", TypeID_Record));
+	Symbols.push_back(new SymType("pointer", TypeID_Pointer));
 	DeclTypeCount = Symbols.size();
 }
 

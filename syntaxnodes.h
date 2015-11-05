@@ -10,7 +10,8 @@
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
-enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstDoubleExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp };
+enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstDoubleExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp, 
+	PointerExp, DereferenceExp };
 
 class Expr{
 public:
@@ -115,6 +116,20 @@ class InitList : public Expr {
 public:
 	vector<Expr*> List;
 	InitList(vector<Expr*> List = vector<Expr*>());
+	void Print(const int Spaces);
+};
+
+class ExprPointer : public Expr {
+public:
+	Expr* Exp;
+	ExprPointer(Expr* Exp);
+	void Print(const int Spaces);
+};
+
+class ExprDereference : public Expr {
+public:
+	Expr* Exp;
+	ExprDereference(Expr* Exp);
 	void Print(const int Spaces);
 };
 

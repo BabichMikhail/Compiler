@@ -1,16 +1,17 @@
 #include "checktype.h"
 
-#define N 8
+#define N 9
 
 static MyTypeID CastTable[N][N] = {
-	{ TypeID_Integer, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType },
-	{ TypeID_Double,  TypeID_Double,  TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_Char,    TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Boolean, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_String,  TypeID_BadType, TypeID_String , TypeID_BadType, TypeID_BadType,  TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Array,   TypeID_BadType,  TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_DynArray, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_Record }
+	{ TypeID_Integer, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
+	{ TypeID_Double,  TypeID_Double,  TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_Char,    TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Boolean, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_String,  TypeID_BadType, TypeID_String , TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Array,   TypeID_BadType,  TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_DynArray, TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_Record,  TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_Pointer }
 };
 
 typedef struct Cell {
@@ -37,11 +38,14 @@ static vector<Cell> TypeTable[] = {
 	},
 	{ /* String */ },
 	{ /* Array */ },
-	{ /* Record */ }
+	{ /* Record */ },
+	{ /* Pointer */
+		{ TK_MINUS, TypeID_Integer }
+	}
 };
 
 const string StrTypes[] = {
-	"Untyped", "Integer", "Double", "Char", "Boolean", "String", "Array", "Record", "Function", "Procedure"
+	"Untyped", "Integer", "Double", "Char", "Boolean", "String", "Array", "Record", "Pointer", "Function"
 };
 
 /* TypeID_1 - тип, к которому приводится TypeID_2 */
@@ -105,6 +109,8 @@ MyTypeID CheckType::GetTypeID(TypeExpr TypeExp) {
 		return TypeID_Integer;
 	case ConstStringExp:
 		return TypeID_String;
+	case PointerExp:
+		return TypeID_Pointer;
 	}
 	throw IllegalExpr(Pos);
 }
@@ -172,6 +178,9 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 	}
 	if (Exp->TypeExp == UnarExp) {
 		return GetTypeID(((ExprUnarOp*)Exp)->Exp);
+	}
+	if (Exp->TypeExp == DereferenceExp) {
+		Check(TypeID_Pointer, GetTypeID(((ExprDereference*)Exp)->Exp));
 	}
 	if (Exp->TypeExp == VarExp) {
 		return GetTypeID(((ExprVar*)Exp)->Var);
