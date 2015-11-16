@@ -21,6 +21,7 @@ public:
 	DeclSection Section;
 	virtual bool Compare(Symbol* Sym);
 	Symbol(DeclSection Section = DeclNull, string Name = "");
+	Symbol(Symbol* Sym);
 	bool isSame(string Value);
 	virtual void Print(int Spaces){};
 };

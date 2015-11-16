@@ -2,6 +2,7 @@
 #include "statement.h"
 
 Symbol::Symbol(DeclSection Section, string Name) : Name(Name), Section(Section){}
+Symbol::Symbol(Symbol* Sym) : Name(Sym->Name), Section(Sym->Section){}
 
 SymLabel::SymLabel(string Name) : Symbol(DeclLabel, Name){}
 SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type), TypeID(TypeID_BadType){}

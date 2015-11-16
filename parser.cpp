@@ -34,10 +34,13 @@ void Parser::Print(){
 
 void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2) {
 	auto NewTable = new SymTable(Table);
-	NewTable->Add(new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position())));
-	NewTable->Add(new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position())));
+	Symbol* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position()));
+	NewTable->Add(SymArg);
+	Symbol* SymResult = new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position()));
+	NewTable->Add(SymResult);
 	auto Stmt = new Stmt_Compound();
-	Stmt->Add(new Stmt_Assign(new Assign(new ExprVar(Token(Position(), "Result", TK_IDENTIFIER)), new ExprVar(Token(Position(), "Arg_0", TK_IDENTIFIER)))));
+	Stmt->Add(new Stmt_Assign(new Assign(new ExprVar(NewTable->GetSymbol("Result", Position())), new ExprVar(NewTable->GetSymbol("Arg_0", Position())))));
+	
 	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_1, Position()));
 	Table->Add(SymFunc);
 	++Table->DeclTypeCount;
@@ -69,7 +72,7 @@ Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State), 
 		while (Lex.isToken()) {
 			Lex.Next();
 			if (start_expr_tk.find(Lex.Get().Type) != start_expr_tk.end()) {
-				Exp = ParseExpr();
+				Exp = ParseExpr(Table);
 			}
 		}
 		break;
@@ -126,7 +129,7 @@ Statement* Parser::ParseStatement(SymTable* Table, int State){
 		throw NotAllowedStmt("CONTINUE", Lex.Get().Pos);
 	case TK_RAISE:
 		Lex.Next();
-		return new Stmt_Raise(ParseExpr());
+		return new Stmt_Raise(ParseExpr(Table));
 	case TK_ELSE:
 	case TK_END:
 	case TK_EXCEPT:
@@ -163,7 +166,7 @@ Statement* Parser::ParseGOTOStmt(SymTable* Table, int State){
 Statement* Parser::ParseIfStmt(SymTable* Table, int State){
 	Lex.Next();
 	auto Pos = Lex.Get().Pos;
-	auto Exp = ParseExpr();
+	auto Exp = ParseExpr(Table);
 	CheckType(Table, TypeID_Boolean, Exp, Pos);
 	Lex.CheckAndNext(TK_THEN);
 	auto Stmt_1 = ParseStatement(Table, State);
@@ -177,7 +180,7 @@ Statement* Parser::ParseIfStmt(SymTable* Table, int State){
 
 Statement* Parser::ParseCase(SymTable* Table, int State){
 	Lex.Next();
-	auto Exp = ParseExpr();
+	auto Exp = ParseExpr(Table);
 	auto Stmt_CASE = new Stmt_Case(Exp);
 	Lex.CheckAndNext(TK_OF);
 	if (Lex.Get().Type == TK_ELSE || Lex.Get().Type == TK_END) {
@@ -185,14 +188,14 @@ Statement* Parser::ParseCase(SymTable* Table, int State){
 	}
 	while (Lex.Get().Type != TK_ELSE && Lex.Get().Type != TK_END) {
 		auto Pos = Lex.Get().Pos;
-		Expr* Exp_1 = ParseExpr();
+		Expr* Exp_1 = ParseExpr(Table);
 		CheckType(Table, Exp, Exp_1, Pos);
 		CheckConstExpr(Table, Exp_1);
 		Expr* Exp_2 = nullptr;
 		if (Lex.Get().Type == TK_DOUBLE_POINT) {
 			Lex.Next();
 			Pos = Lex.Get().Pos;
-			Exp_2 = ParseExpr();
+			Exp_2 = ParseExpr(Table);
 			CheckType(Table, Exp, Exp_2, Pos);
 			CheckConstExpr(Table, Exp_2);
 		}
@@ -212,7 +215,7 @@ Statement* Parser::ParseCase(SymTable* Table, int State){
 Statement* Parser::ParseForStmt(SymTable* Table, int State){
 	Lex.Next();
 	auto Pos = Lex.Get().Pos;
-	auto Exp_1 = ParseExpr();
+	auto Exp_1 = ParseExpr(Table);
 	CheckType(Table, Exp_1, Pos);
 	bool isTO;
 	if (Lex.Get().Type == TK_DOWNTO){
@@ -224,7 +227,7 @@ Statement* Parser::ParseForStmt(SymTable* Table, int State){
 		isTO = true;
 	}
 	Pos = Lex.Get().Pos;
-	auto Exp_2 = ParseExpr();
+	auto Exp_2 = ParseExpr(Table);
 	CheckType(Table, TypeID_Integer, Exp_2, Pos);
 	Lex.CheckAndNext(TK_DO);
 	auto Stmt = ParseStatement(Table, State | 2);
@@ -237,7 +240,7 @@ Statement* Parser::ParseForStmt(SymTable* Table, int State){
 Statement* Parser::ParseWhileStmt(SymTable* Table, int State){
 	Lex.Next();
 	auto Pos = Lex.Get().Pos;
-	auto Cond = ParseExpr();
+	auto Cond = ParseExpr(Table);
 	CheckType(Table, TypeID_Boolean, Cond, Pos);
 	Lex.CheckAndNext(TK_DO);
 	return new Stmt_WHILE(Cond, ParseStatement(Table, State | 2));
@@ -248,7 +251,7 @@ Statement* Parser::ParseRepeatStmt(SymTable* Table, int State){
 	auto Stmt_List = ParseStmtList(Table, State);
 	Lex.CheckAndNext(TK_UNTIL);
 	auto Pos = Lex.Get().Pos;
-	auto Exp = ParseExpr();
+	auto Exp = ParseExpr(Table);
 	CheckType(Table, TypeID_Boolean, Exp, Pos);
 	return new Stmt_REPEAT(Exp, Stmt_List);
 }
@@ -277,7 +280,7 @@ Statement* Parser::ParseTryStmt(SymTable* Table, int State){
 
 Statement* Parser::ParseIdentifier(SymTable* Table, int State) {
 	auto Pos = Lex.Get().Pos;
-	Exp = ParseExpr();
+	Exp = ParseExpr(Table);
 	if (Exp->TypeExp == FunctionExp) {
 		CheckType(Table, TypeID_BadType, Exp, Pos);
 		return new Stmt_Call(Exp);
@@ -533,22 +536,22 @@ Symbol* Parser::ParseArray(SymTable* Table){
 	Lex.Next();
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
-		Expr* Exp_Left = ParseExpr(); 
+		Expr* Exp_Left = ParseExpr(Table); 
 		CheckConstExpr(Table, Exp_Left);
 		int A = CalculateConstExpr<int>(Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Left);
 		Lex.CheckAndNext(TK_DOUBLE_POINT);
-		Expr* Exp_Right = ParseExpr();
+		Expr* Exp_Right = ParseExpr(Table);
 		CheckConstExpr(Table, Exp_Right);
 		int B = CalculateConstExpr<int>(Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Right);
 		SymArray* Sym = new SymArray(nullptr, A, B);
 		Symbol** Sym_TypeInit = &Sym->Type;
 		while (Lex.Get().Type == TK_COMMA){
 			Lex.Next();
-			Exp_Left = ParseExpr();
+			Exp_Left = ParseExpr(Table);
 			CheckConstExpr(Table, Exp_Left);
 			A = CalculateConstExpr<int>(Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Left);
 			Lex.CheckAndNext(TK_DOUBLE_POINT);
-			Exp_Right = ParseExpr();
+			Exp_Right = ParseExpr(Table);
 			CheckConstExpr(Table, Exp_Right);
 			B = CalculateConstExpr<int>(Table, "INTEGER", Lex.Get().Pos).Calculate(Exp_Right);
 			*Sym_TypeInit = new SymArray(nullptr, A, B);
@@ -574,7 +577,7 @@ Symbol* Parser::ParseString(SymTable* Table){
 	if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 		Lex.Next();
 		Position Pos = Lex.Get().Pos;
-		auto Exp_Length = ParseExpr();
+		auto Exp_Length = ParseExpr(Table);
 		CheckConstExpr(Table, Exp_Length);
 		Length = CalculateConstExpr<int>(Table, "INTEGER", Pos).Calculate(Exp_Length);
 		Lex.Check(TK_CLOSE_SQUARE_BRACKET);
@@ -595,7 +598,7 @@ Expr* Parser::ParseInitList(SymTable* Table){
 			}
 			continue;
 		}
-		auto Exp = ParseExpr();
+		auto Exp = ParseExpr(Table);
 		CheckConstExpr(Table, Exp);
 		Ans->List.push_back(Exp);
 	} while (Lex.Get().Type == TK_COMMA);
@@ -610,7 +613,7 @@ Expr* Parser::ParseInit(SymTable* Table){
 		Lex.CheckAndNext(TK_CLOSE_BRACKET);
 		return Exp;
 	}
-	auto Exp = ParseExpr();
+	auto Exp = ParseExpr(Table);
 	CheckConstExpr(Table, Exp);
 	return Exp;
 }
@@ -661,8 +664,8 @@ void Parser::CheckConstExpr(SymTable* Table, Expr* Exp) {
 
 /* Parse Expr */
 
-Expr* Parser::ParseExpr(){
-	auto Left = ParseLevel(0);
+Expr* Parser::ParseExpr(SymTable* Table){
+	auto Left = ParseLevel(Table, 0);
 	if (Lex.Get().Type == TK_CAP) {
 		Left = new ExprDereference(Left);
 		Lex.Next();
@@ -670,7 +673,7 @@ Expr* Parser::ParseExpr(){
 	auto TK = Lex.Get();
 	if (TK.Type == TK_ASSIGNED){
 		Lex.Next();
-		auto Right = ParseLevel(0);
+		auto Right = ParseLevel(Table, 0);
 		if (Left_Op_Assign.find(Left->TypeExp) == Left_Op_Assign.cend()){
 			throw ExpectedVariable(Lex.Get().Pos);
 		}
@@ -683,33 +686,33 @@ Expr* Parser::ParseExpr(){
 	return Left;
 }
 
-Expr* Parser::ParseLevel(const int level){
+Expr* Parser::ParseLevel(SymTable* Table, const int level){
 	if (level == parse_factor_level){
-		return ParseFactor();
+		return ParseFactor(Table);
 	}
-	auto Left = ParseLevel(level + 1);
+	auto Left = ParseLevel(Table, level + 1);
 	while (level_list[level].find(Lex.Get().Type) != level_list[level].cend()){
 		Token Op = Lex.Get();
 		Lex.Next();
-		Left = new ExprBinOp(Left, Op, ParseLevel(level + 1));
+		Left = new ExprBinOp(Left, Op, ParseLevel(Table, level + 1));
 	}
 	return Left;
 }
 
-Expr* Parser::ParseFactor(){
+Expr* Parser::ParseFactor(SymTable* Table){
 	auto TK = Lex.Get();
 	if (TK.Type == NOT_TOKEN){
 		throw IllegalExpr(TK.Pos);
 	}
 	if (TK.Type == TK_IDENTIFIER){
-		return ParseDesignator();
+		return ParseDesignator(Table);
 	}
 	Lex.Next();
 	if (TK.Type == TK_MINUS || TK.Type == TK_PLUS){
-		return new ExprUnarOp(TK, ParseLevel(0));
+		return new ExprUnarOp(TK, ParseLevel(Table, 0));
 	}
 	if (TK.Type == TK_OPEN_BRACKET){
-		auto ExpNow = ParseLevel(0);
+		auto ExpNow = ParseLevel(Table, 0);
 		if (Lex.Get().Type != TK_CLOSE_BRACKET){
 			throw UnexpectedSymbol(")", Lex.Get().Source, TK.Pos);
 		}
@@ -729,10 +732,10 @@ Expr* Parser::ParseFactor(){
 		return new ExprStringConst(TK);
 	}
 	if (TK.Type == TK_NOT){
-		return new ExprUnarOp(TK, ParseLevel(0));
+		return new ExprUnarOp(TK, ParseLevel(Table, 0));
 	}
 	if (TK.Type == TK_DOG) {
-		auto Exp = ParseLevel(0);
+		auto Exp = ParseLevel(Table, 0);
 		if (Left_Op_Assign.find(Exp->TypeExp) == Left_Op_Assign.cend()) {
 			throw ExpectedVariable(TK.Pos);
 		}
@@ -741,15 +744,19 @@ Expr* Parser::ParseFactor(){
 	throw IllegalExpr(TK.Pos);
 }
 
-Expr* Parser::ParseDesignator(){
+Expr* Parser::ParseDesignator(SymTable* Table){
 	auto TK = Lex.Get();
 	Lex.Next();
-	Expr* ExpNow = new ExprVar(TK);
+	if (State == Test_Exp) {
+		Table->Add(new SymVar(TK.Source, nullptr, nullptr));// Table->GetSymbol("integer", TK.Pos)));
+	}
+	auto Sym = Table->GetSymbol(TK.Source, TK.Pos);
+	Expr* ExpNow = new ExprVar(Sym);
 	while (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET || Lex.Get().Type == TK_OPEN_BRACKET || Lex.Get().Type == TK_POINT){
 		if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 			do {
 				Lex.Next();
-				ExpNow = new ArrayIndex(ExpNow, ParseLevel(0));
+				ExpNow = new ArrayIndex(ExpNow, ParseLevel(Table, 0));
 			} while (Lex.Get().Type == TK_COMMA);
 			if (Lex.Get().Type != TK_CLOSE_SQUARE_BRACKET){
 				throw UnexpectedSymbol("]", Lex.Get().Source, Lex.Get().Pos);
@@ -760,10 +767,10 @@ Expr* Parser::ParseDesignator(){
 			vector<Expr*> Arguments;
 			Lex.Next();
 			if (Lex.Get().Type != TK_CLOSE_BRACKET){ /* ")" == no argument */
-				Arguments.push_back(ParseLevel(0));
+				Arguments.push_back(ParseLevel(Table, 0));
 				while (Lex.Get().Type == TK_COMMA){
 					Lex.Next();
-					Arguments.push_back(ParseLevel(0));
+					Arguments.push_back(ParseLevel(Table, 0));
 				} 
 			}
 			if (Lex.Get().Type != TK_CLOSE_BRACKET){
@@ -777,7 +784,13 @@ Expr* Parser::ParseDesignator(){
 			if (Lex.Get().Type != TK_IDENTIFIER){
 				throw UnexpectedSymbol("identifier", Lex.Get().Source, Lex.Get().Pos);
 			}
-			auto Right = new ExprVar(Lex.Get());
+			Symbol* Right = nullptr;
+			if (State == Test_Exp) {
+				Right = new SymVar(Lex.Get().Source, nullptr, nullptr);
+			}
+			else {
+				Right = ((SymRecord*)((SymVar*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+			}
 			Lex.Next();
 			ExpNow = new Record(ExpNow, Right);
 		}

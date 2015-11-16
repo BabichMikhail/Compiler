@@ -2,6 +2,15 @@
 #include <vector>
 #include <set>
 
+enum DeclSection;
+
+class Symbol {
+public:
+	DeclSection Section;
+	Symbol(Symbol* Sym) : Name(Sym->Name), Section(Sym->Section) {};
+	string Name;
+};
+
 Expr::Expr(TypeExpr TypeExp) : TypeExp(TypeExp){}
 
 ExprBinOp::ExprBinOp(Expr* Left, Token Op, Expr* Right) : Left(Left), Op(Op), Right(Right), Expr(BinExp){}
@@ -14,12 +23,12 @@ ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value, ConstIntExp){}
 ExprDoubleConst::ExprDoubleConst(Token Value) : ExprConst(Value, ConstDoubleExp){}
 ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value, ConstStringExp){}
 
-ExprVar::ExprVar(Token Var) : Var(Var), Expr(VarExp){}
+ExprVar::ExprVar(Symbol* Sym) : Sym(Sym), Expr(VarExp){}
 
 ArrayIndex::ArrayIndex(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(ArrayExp){}
 Assign::Assign(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(AssignExp){}
 Function::Function(Expr* Left, vector<Expr*> Rights) : Left(Left), Rights(Rights), Expr(FunctionExp){}
-Record::Record(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(RecordExp){}
+Record::Record(Expr* Left, Symbol* Right) : Left(Left), Right(Right), Expr(RecordExp){}
 
 InitList::InitList(vector<Expr*> List) : Expr(InitExp), List(List) {}
 
@@ -28,33 +37,25 @@ ExprDereference::ExprDereference(Expr* Exp) : Exp(Exp), Expr(DereferenceExp) {}
 
 void ExprUnarOp::Print(int Spaces){
 	Exp->Print(Spaces + 1);
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces);
 	cout << Op.Source.c_str() << endl;
 }
 
 void ExprBinOp::Print(int Spaces){
 	Right->Print(Spaces + 1);
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces);
 	cout << Op.Source.c_str() << endl;
 	Left->Print(Spaces + 1);
 }
 
 void ExprConst::Print(int Spaces){
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces);
 	cout << Value.Source.c_str() << endl;
 }
 
 void ExprVar::Print(int Spaces){
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
-	cout << Var.Source.c_str() << endl;
+	print_indent(Spaces);
+	cout << Sym->Name << endl;
 }
 
 void Assign::Print(int Spaces){
@@ -70,27 +71,22 @@ void Function::Print(int Spaces){
 	for (int i = 0; i < Rights.size(); ++i){
 		Rights[i]->Print(Spaces + 1);
 	}
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces);
 	cout << "()" << endl;
 	Left->Print(Spaces + 1);
 }
 
 void Record::Print(int Spaces){
-	Right->Print(Spaces + 1);
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces + 1);
+	cout << Right->Name << endl;
+	print_indent(Spaces);
 	cout << "." << endl;
 	Left->Print(Spaces + 1);
 }
 
 void ArrayIndex::Print(int Spaces){
 	Right->Print(Spaces + 1);
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces);
 	cout << "[]" << endl;
 	Left->Print(Spaces + 1);
 }
@@ -127,7 +123,7 @@ void ExprUnarOp::GetIdentStr(ExpArgList* List){
 void ExprConst::GetIdentStr(ExpArgList* List){}
 
 void ExprVar::GetIdentStr(ExpArgList* List){
-	List->Vec.push_back(Var.Source);
+	List->Vec.push_back(Sym->Name);
 }
 
 void Assign::GetIdentStr(ExpArgList* List){

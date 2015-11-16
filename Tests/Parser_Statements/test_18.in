@@ -1,6 +1,6 @@
 begin   
 	try                   
-		raise abc;
+		raise 'abc';
 	except
 		raise 123;
 	end;

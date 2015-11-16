@@ -57,6 +57,9 @@ Symbol* SymTable::GetSymbol(string Name, const Position Pos) {
 		}
 		TableNow = TableNow->Parent;
 	} while (TableNow != nullptr);
+	if (idx == -1) {
+		throw IdentifierNotFound(Name, Pos);
+	}
 	return TableNow->Symbols[idx];
 }
 

@@ -1,0 +1,10 @@
+Function   a   2
+   Var   a
+      Type   integer
+
+   Var   Result
+      Type   integer
+
+   begin
+   end
+

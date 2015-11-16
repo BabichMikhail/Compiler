@@ -168,7 +168,7 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		while (((ArrayIndex*)AIExp)->Left->TypeExp != VarExp) {
 			AIExp = ((ArrayIndex*)AIExp)->Left;
 		}
-		auto _Sym = ((SymVar*)Table->GetSymbol(((ExprVar*)((ArrayIndex*)AIExp)->Left)->Var.Source, Pos))->Type;
+		auto _Sym = ((SymVar*)((ExprVar*)((ArrayIndex*)AIExp)->Left)->Sym)->Type;
 		AIExp = Exp;
 		while (((ArrayIndex*)AIExp)->TypeExp != VarExp) {
 			AIExp = ((ArrayIndex*)AIExp)->Left;
@@ -183,7 +183,7 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		Check(TypeID_Pointer, GetTypeID(((ExprDereference*)Exp)->Exp));
 	}
 	if (Exp->TypeExp == VarExp) {
-		return GetTypeID(((ExprVar*)Exp)->Var);
+		return ((SymType*)((SymVar*)(((ExprVar*)Exp)->Sym))->Type)->TypeID;
 	}
 	if (Exp->TypeExp == ConstStringExp) {
 		if (((ExprStringConst*)Exp)->Value.Source.size() == 1) {
@@ -191,15 +191,16 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		}
 	}
 	if (Exp->TypeExp == RecordExp) {
-		auto Sym = (SymRecord*)((SymVar*)Table->GetSymbol(((ExprVar*)((Record*)Exp)->Left)->Var.Source, Pos))->Type;
-		auto OldTable = Table;
-		Table = Sym->Table;
-		auto TypeID = GetTypeID(((Record*)Exp)->Right);
-		Table = OldTable;
+		//auto Sym = (SymRecord*)((SymVar*)((ExprVar*)((Record*)Exp)->Left)->Sym)->Type;
+		//auto Sym = (SymRecord*)((SymVar*)Table->GetSymbol(((ExprVar*)((Record*)Exp)->Left)->Sym->Name, Pos))->Type;
+		//auto OldTable = Table;
+		//Table = Sym->Table;
+		auto TypeID = ((SymType*)((SymVar*)((Record*)Exp)->Right)->Type)->TypeID;
+		//Table = OldTable;
 		return TypeID;
 	}
 	if (Exp->TypeExp == FunctionExp) {
-		auto Symbols = Table->GetAllSymbols(((ExprVar*)((Function*)Exp)->Left)->Var.Source, Pos);
+		auto Symbols = Table->GetAllSymbols(((ExprVar*)((Function*)Exp)->Left)->Sym->Name, Pos);
 		for (int i = 0; i < Symbols.size(); ++i) {
 			if (Symbols[i]->Section == DeclFunction) {
 				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {

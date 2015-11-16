@@ -1,1 +1,4 @@
 procedure a(); forward;
+procedure a(b: integer);
+begin
+end ;

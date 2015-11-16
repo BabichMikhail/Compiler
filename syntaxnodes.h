@@ -7,6 +7,8 @@
 #include <set>
 #include "utils.h"
 
+class Symbol;
+
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
@@ -70,8 +72,8 @@ public:
 
 class ExprVar : public Expr{
 public:
-	Token Var;
-	ExprVar(Token Var);
+	Symbol* Sym;
+	ExprVar(Symbol* Sym);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
@@ -106,8 +108,8 @@ public:
 class Record : public Expr{
 public:
 	Expr* Left;
-	Expr* Right;
-	Record(Expr* Left, Expr* Right);
+	Symbol* Right;
+	Record(Expr* Left, Symbol* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };

@@ -28,10 +28,10 @@ private:
 	vector <DeclCall> DeclForwardCall;
 public:
 	Parser(const char* filename, PMod State);
-	Expr* ParseLevel(const int level);
-	Expr* ParseFactor();
-	Expr* ParseExpr();
-	Expr* ParseDesignator();
+	Expr* ParseLevel(SymTable* Table, const int level);
+	Expr* ParseFactor(SymTable* Table);
+	Expr* ParseExpr(SymTable* Table);
+	Expr* ParseDesignator(SymTable* Table);
 
 	void ParseDeclSection(SymTable* Table);
 	void ParseLabelDecl(SymTable* Table);
