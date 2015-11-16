@@ -13,7 +13,7 @@ private:
 	string TypeName;
 	T CalculateUnarConstExpr(ExprUnarOp* Exp);
 	T CalculateBinConstExpr(ExprBinOp* Exp);
-	T CalculateArrayIndex(ArrayIndex* Exp);
+	T CalculateArrayIndex(ExprArrayIndex* Exp);
 	template <class X_1, class X_2 = T> void CheckType();
 public:
 	T Ans;
@@ -55,7 +55,7 @@ template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 		return CalculateUnarConstExpr((ExprUnarOp*)Exp);
 
 	case ArrayExp:
-		return CalculateArrayIndex((ArrayIndex*)Exp);
+		return CalculateArrayIndex((ExprArrayIndex*)Exp);
 	}
 }
 
@@ -108,17 +108,17 @@ template <class T> T CalculateConstExpr<T>::CalculateBinConstExpr(ExprBinOp* Exp
 	}
 }
 
-template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ArrayIndex* Exp) {
+template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ExprArrayIndex* Exp) {
 	Expr* IdentExp = Exp;
 	vector<int> idxs;
 	while (IdentExp->TypeExp != VarExp) {
-		idxs.push_back(Calculate(((ArrayIndex*)IdentExp)->Right));
-		IdentExp = ((ArrayIndex*)IdentExp)->Left;
+		idxs.push_back(Calculate(((ExprArrayIndex*)IdentExp)->Right));
+		IdentExp = ((ExprArrayIndex*)IdentExp)->Left;
 	}
-	InitList* ExpList = (InitList*)((SymConst*)Table->GetSymbol(((ExprVar*)IdentExp)->Sym->Name.c_str(), Pos))->InitExp;
+	ExprInitList* ExpList = (ExprInitList*)((SymConst*)Table->GetSymbol(((ExprVar*)IdentExp)->Sym->Name.c_str(), Pos))->InitExp;
 	IdentExp = Exp;
 	for (int i = idxs.size() - 1; i >= 0; --i) {
-		ExpList = (InitList*)ExpList->List[idxs[i]];
+		ExpList = (ExprInitList*)ExpList->List[idxs[i]];
 	}
 	return Calculate(ExpList);
 }

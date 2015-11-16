@@ -39,7 +39,7 @@ void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2)
 	Symbol* SymResult = new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position()));
 	NewTable->Add(SymResult);
 	auto Stmt = new Stmt_Compound();
-	Stmt->Add(new Stmt_Assign(new Assign(new ExprVar(NewTable->GetSymbol("Result", Position())), new ExprVar(NewTable->GetSymbol("Arg_0", Position())))));
+	Stmt->Add(new Stmt_Assign(new ExprAssign(new ExprVar(NewTable->GetSymbol("Result", Position())), new ExprVar(NewTable->GetSymbol("Arg_0", Position())))));
 	
 	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_1, Position()));
 	Table->Add(SymFunc);
@@ -587,7 +587,7 @@ Symbol* Parser::ParseString(SymTable* Table){
 }
 
 Expr* Parser::ParseInitList(SymTable* Table){
-	InitList* Ans = new InitList();
+	ExprInitList* Ans = new ExprInitList();
 	do {
 		Lex.Next();
 		if (Lex.Get().Type == TK_OPEN_BRACKET) {
@@ -681,7 +681,7 @@ Expr* Parser::ParseExpr(SymTable* Table){
 			Right = new ExprDereference(Right);
 			Lex.Next();
 		}
-		return new Assign(Left, Right);
+		return new ExprAssign(Left, Right);
 	}
 	return Left;
 }
@@ -756,7 +756,7 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 		if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 			do {
 				Lex.Next();
-				ExpNow = new ArrayIndex(ExpNow, ParseLevel(Table, 0));
+				ExpNow = new ExprArrayIndex(ExpNow, ParseLevel(Table, 0));
 			} while (Lex.Get().Type == TK_COMMA);
 			if (Lex.Get().Type != TK_CLOSE_SQUARE_BRACKET){
 				throw UnexpectedSymbol("]", Lex.Get().Source, Lex.Get().Pos);
@@ -777,7 +777,7 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 				throw UnexpectedSymbol(")", Lex.Get().Source, Lex.Get().Pos);
 			}
 			Lex.Next();
-			ExpNow = new Function(ExpNow, Arguments);
+			ExpNow = new ExprFunction(ExpNow, Arguments);
 		}
 		if (Lex.Get().Type == TK_POINT){
 			Lex.Next();
@@ -792,7 +792,7 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 				Right = ((SymRecord*)((SymVar*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 			}
 			Lex.Next();
-			ExpNow = new Record(ExpNow, Right);
+			ExpNow = new ExprRecord(ExpNow, Right);
 		}
 	}
 	return ExpNow;

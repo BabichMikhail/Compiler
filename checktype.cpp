@@ -66,7 +66,7 @@ CheckType::CheckType(SymTable* Table, Expr* ExpAssign, const Position Pos) : Tab
 	if (ExpAssign->TypeExp != AssignExp){ 
 		throw IllegalExpr(Pos);
 	}
-	Check(GetTypeID(((Assign*)ExpAssign)->Left), GetTypeID(((Assign*)ExpAssign)->Right));
+	Check(GetTypeID(((ExprAssign*)ExpAssign)->Left), GetTypeID(((ExprAssign*)ExpAssign)->Right));
 }
 
 CheckType::CheckType(SymTable* Table, Symbol* Sym, Expr* Exp, const Position Pos) : Table(Table), Pos(Pos) {
@@ -81,11 +81,11 @@ CheckType::CheckType(SymTable* Table, Symbol* Sym, Expr* Exp, const Position Pos
 	case TypeID_Record:
 		throw IncompatibleTypes(StrTypes[TypeID_Record + 1], StrTypes[GetTypeID(Exp->TypeExp) + 1], Pos);
 	case TypeID_Array:
-		if (Exp->TypeExp != InitExp || ((InitList*)Exp)->List.size() != ((SymArray*)Sym)->Right - ((SymArray*)Sym)->Left + 1) {
+		if (Exp->TypeExp != InitExp || ((ExprInitList*)Exp)->List.size() != ((SymArray*)Sym)->Right - ((SymArray*)Sym)->Left + 1) {
 			throw IncompatibleTypes(StrTypes[TypeID_Array + 1], StrTypes[GetTypeID(Exp->TypeExp) + 1], Pos);
 		}
-		for (int i = 0; i < ((InitList*)Exp)->List.size(); ++i) {
-			CheckType(Table, ((SymArray*)Sym)->Type, ((InitList*)Exp)->List[i], Pos);
+		for (int i = 0; i < ((ExprInitList*)Exp)->List.size(); ++i) {
+			CheckType(Table, ((SymArray*)Sym)->Type, ((ExprInitList*)Exp)->List[i], Pos);
 		}
 		return;
 	case TypeID_DynArray:
@@ -165,13 +165,13 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 	}
 	if (Exp->TypeExp == ArrayExp) {
 		auto AIExp = Exp;
-		while (((ArrayIndex*)AIExp)->Left->TypeExp != VarExp) {
-			AIExp = ((ArrayIndex*)AIExp)->Left;
+		while (((ExprArrayIndex*)AIExp)->Left->TypeExp != VarExp) {
+			AIExp = ((ExprArrayIndex*)AIExp)->Left;
 		}
-		auto _Sym = ((SymVar*)((ExprVar*)((ArrayIndex*)AIExp)->Left)->Sym)->Type;
+		auto _Sym = ((SymVar*)((ExprVar*)((ExprArrayIndex*)AIExp)->Left)->Sym)->Type;
 		AIExp = Exp;
-		while (((ArrayIndex*)AIExp)->TypeExp != VarExp) {
-			AIExp = ((ArrayIndex*)AIExp)->Left;
+		while (((ExprArrayIndex*)AIExp)->TypeExp != VarExp) {
+			AIExp = ((ExprArrayIndex*)AIExp)->Left;
 			_Sym = ((SymArray*)_Sym)->Type;
 		}
 		return ((SymType*)_Sym)->TypeID;
@@ -191,32 +191,27 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		}
 	}
 	if (Exp->TypeExp == RecordExp) {
-		//auto Sym = (SymRecord*)((SymVar*)((ExprVar*)((Record*)Exp)->Left)->Sym)->Type;
-		//auto Sym = (SymRecord*)((SymVar*)Table->GetSymbol(((ExprVar*)((Record*)Exp)->Left)->Sym->Name, Pos))->Type;
-		//auto OldTable = Table;
-		//Table = Sym->Table;
-		auto TypeID = ((SymType*)((SymVar*)((Record*)Exp)->Right)->Type)->TypeID;
-		//Table = OldTable;
+		auto TypeID = ((SymType*)((SymVar*)((ExprRecord*)Exp)->Right)->Type)->TypeID;
 		return TypeID;
 	}
 	if (Exp->TypeExp == FunctionExp) {
-		auto Symbols = Table->GetAllSymbols(((ExprVar*)((Function*)Exp)->Left)->Sym->Name, Pos);
+		auto Symbols = Table->GetAllSymbols(((ExprVar*)((ExprFunction*)Exp)->Left)->Sym->Name, Pos);
 		for (int i = 0; i < Symbols.size(); ++i) {
 			if (Symbols[i]->Section == DeclFunction) {
-				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
+				if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
 					continue;
 				}
 			}
 			if (Symbols[i]->Section == DeclProcedure) {
-				if (((Function*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {
+				if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {
 					continue;
 				}
 			}
 			bool flag = false;
 			if (Symbols[i]->Section == DeclFunction || Symbols[i]->Section == DeclProcedure) {
 				int offset = ((SymFunction*)Symbols[i])->Table->DeclTypeCount;
-				for (int j = 0; j < ((Function*)Exp)->Rights.size(); ++j) {
-					if (GetTypeID(((Function*)Exp)->Rights[j]) != ((SymType*)((SymVar*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
+				for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
+					if (GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)((SymVar*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
 						flag = true;
 					}
 				}

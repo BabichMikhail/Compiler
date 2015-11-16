@@ -78,46 +78,46 @@ public:
 	void Print(const int Spaces);
 };
 
-class Assign : public Expr{
+class ExprAssign : public Expr{
 public:
 	Expr* Left;
 	Expr* Right;
-	Assign(Expr* Left, Expr* Right);
+	ExprAssign(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
-class ArrayIndex : public Expr{
+class ExprArrayIndex : public Expr{
 public:
 	Expr* Left;
 	Expr* Right;
-	ArrayIndex(Expr* Left, Expr* Right);
+	ExprArrayIndex(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
-class Function : public Expr{
+class ExprFunction : public Expr{
 public:
 	Expr* Left;
 	vector<Expr*> Rights;
-	Function(Expr* Left, vector<Expr*> Rights);
+	ExprFunction(Expr* Left, vector<Expr*> Rights);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
-class Record : public Expr{
+class ExprRecord : public Expr{
 public:
 	Expr* Left;
 	Symbol* Right;
-	Record(Expr* Left, Symbol* Right);
+	ExprRecord(Expr* Left, Symbol* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 };
 
-class InitList : public Expr {
+class ExprInitList : public Expr {
 public:
 	vector<Expr*> List;
-	InitList(vector<Expr*> List = vector<Expr*>());
+	ExprInitList(vector<Expr*> List = vector<Expr*>());
 	void Print(const int Spaces);
 };
 
