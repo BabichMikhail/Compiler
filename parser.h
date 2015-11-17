@@ -21,13 +21,15 @@ typedef struct DeclCall {
 class Parser{
 private:
 	Lexer Lex;
-	SymTable* Table;
+	
 	Expr* Exp;
-	Statement* Stmt;
 	PMod State;
 	vector <DeclCall> DeclForwardCall;
 public:
+	SymTable* Table;
+	Statement* Stmt;
 	Parser(const char* filename, PMod State);
+	
 	Expr* ParseLevel(SymTable* Table, const int level);
 	Expr* ParseFactor(SymTable* Table);
 	Expr* ParseExpr(SymTable* Table);

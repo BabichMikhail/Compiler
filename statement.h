@@ -6,11 +6,10 @@ using namespace std;
 #include <vector>
 #include "symbol.h"
 
-//enum Stmt_State { Stmt_State_Default = 0, Stmt_State_Try = 1, Stmt_State_Loop = 2, Stmt_State_Case = 4 };
-
 class Statement{
 public:
 	virtual void Print(int Spaces);
+	virtual vector<Asm_Code*> GetAsmCode() { return vector<Asm_Code*>(); };
 };
 
 class Stmt_GOTO : public Statement{
@@ -25,6 +24,7 @@ public:
 	vector<Statement*> StmtList;
 	void Add(Statement* Stmt);
 	void Print(int Spaces);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 class Stmt_Conditional : public Statement{
@@ -129,6 +129,7 @@ public:
 	Expr* Exp;
 	Stmt_Call(Expr* Exp);
 	void Print(int Spaces);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 #endif

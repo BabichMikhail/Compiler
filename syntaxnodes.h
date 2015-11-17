@@ -6,12 +6,18 @@
 #include <vector>
 #include <set>
 #include "utils.h"
+#include <string>
+
+using namespace std;
 
 class Symbol;
+class Asm_Code;
 
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
+enum AsmOp { AsmPush = 0, AsmPop, AsmIMul, AsmDiv, AsmAdd, AsmSub, AsmNeg, AsmNot, AsmOr, AsmAnd, AsmXor, AsmShl, AsmShr, AsmCall };
+enum AsmRegistr { AsmEAX = 0, AsmEBX, AsmECX, AsmEDX, AsmEBP, AsmESP };
 enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstDoubleExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp, 
 	PointerExp, DereferenceExp };
 
@@ -21,6 +27,7 @@ public:
 	Expr(TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces){};
+	virtual vector<Asm_Code*> GetAsmCode() { return vector<Asm_Code*>(); }
 };
 
 class ExprBinOp : public Expr{
@@ -31,6 +38,7 @@ public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 class ExprUnarOp : public Expr{
@@ -40,6 +48,7 @@ public:
 	ExprUnarOp(Token Op, Expr* Exp);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 class ExprConst : public Expr{
@@ -58,6 +67,7 @@ public:
 class ExprIntConst : public ExprConst{
 public:
 	ExprIntConst(Token Value);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 class ExprDoubleConst : public ExprConst{
@@ -103,6 +113,7 @@ public:
 	ExprFunction(Expr* Left, vector<Expr*> Rights);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 class ExprRecord : public Expr{

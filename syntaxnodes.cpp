@@ -1,15 +1,7 @@
 #include "syntaxnodes.h"
 #include <vector>
 #include <set>
-
-enum DeclSection;
-
-class Symbol {
-public:
-	DeclSection Section;
-	Symbol(Symbol* Sym) : Name(Sym->Name), Section(Sym->Section) {};
-	string Name;
-};
+#include "asmgenerator.h"
 
 Expr::Expr(TypeExpr TypeExp) : TypeExp(TypeExp){}
 
@@ -142,3 +134,88 @@ void ExprFunction::GetIdentStr(ExpArgList* List){
 void ExprRecord::GetIdentStr(ExpArgList* List){
 	List->Flag = false;
 }
+
+vector<Asm_Code*> ExprBinOp::GetAsmCode(){
+	vector<Asm_Code*> Ans(Left->GetAsmCode());
+	auto _Right(Right->GetAsmCode());
+	for (int i = 0; i < _Right.size(); ++i) {
+		Ans.push_back(_Right[i]);
+	}
+	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEBX)));
+	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
+	switch (Op.Type) {
+	case TK_PLUS:
+		Ans.push_back(new Asm_Bin_Cmd(AsmAdd, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_MINUS:
+		Ans.push_back(new Asm_Bin_Cmd(AsmSub, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_XOR:
+		Ans.push_back(new Asm_Bin_Cmd(AsmXor, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_OR:
+		Ans.push_back(new Asm_Bin_Cmd(AsmOr, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_MUL:
+		Ans.push_back(new Asm_Bin_Cmd(AsmIMul, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_DIV_INT:
+		Ans.push_back(new Asm_Bin_Cmd(AsmDiv, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_MOD:
+		Ans.push_back(new Asm_Bin_Cmd(AsmDiv, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEDX)));
+		return Ans;
+	case TK_AND:
+		Ans.push_back(new Asm_Bin_Cmd(AsmAnd, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+	case TK_SHL:
+		Ans.push_back(new Asm_Bin_Cmd(AsmShl, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	case TK_SHR:
+		Ans.push_back(new Asm_Bin_Cmd(AsmShr, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+		break;
+	}
+	Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+	return Ans;
+}
+
+vector<Asm_Code*> ExprUnarOp::GetAsmCode() {
+	vector<Asm_Code*> Ans(Exp->GetAsmCode());
+	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
+	switch (Op.Type) {
+	case TK_PLUS: 
+		break;
+	case TK_MINUS:	
+		Ans.push_back(new Asm_Unar_Cmd(AsmNeg, new Asm_Registr(AsmEAX)));
+		break;
+	case TK_NOT: 
+		Ans.push_back(new Asm_Unar_Cmd(AsmNot, new Asm_Registr(AsmEAX)));
+		break;
+	}
+	Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+	return Ans;
+}
+
+vector<Asm_Code*> ExprIntConst::GetAsmCode() {
+	vector<Asm_Code*> Ans;
+	Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_IntConst(Value.Source)));
+	return Ans;
+}
+
+vector<Asm_Code*> ExprFunction::GetAsmCode() {
+	vector<Asm_Code*> Ans;
+	for (int i = 0; i < Rights.size(); ++i) {
+		vector<Asm_Code*> Ret;
+		Ret = Rights[i]->GetAsmCode();
+		for (int j = 0; j < Ret.size(); ++j) {
+			Ans.push_back(Ret[j]);
+		}
+	}
+	if (_stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "write") == 0) {
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("fmt"))); /* to do auto format detect and find size of arguments 'universal _printf for const integer numbers' */
+		Ans.push_back(new Asm_Unar_Cmd(AsmCall, new Asm_Variable("_printf")));
+		Ans.push_back(new Asm_Bin_Cmd(AsmAdd, new Asm_Registr(AsmESP), new Asm_IntConst("8"))); 
+	}
+	return Ans;
+}
+

@@ -203,6 +203,9 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 				}
 			}
 			if (Symbols[i]->Section == DeclProcedure) {
+				if (((SymFunction*)Symbols[i])->argc == -1) {
+					return TypeID_BadType;
+				}
 				if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {
 					continue;
 				}

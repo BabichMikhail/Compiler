@@ -160,3 +160,19 @@ void Stmt_Call::Print(int Spaces) {
 	cout << "Call" << endl;
 	Exp->Print(Spaces + 1);
 }
+
+vector<Asm_Code*> Stmt_Compound::GetAsmCode() {
+	vector<Asm_Code*> Ans;
+	for (int i = 0; i < StmtList.size(); ++i) {
+		vector<Asm_Code*> ret = StmtList[i]->GetAsmCode();
+		for (int j = 0; j < ret.size(); ++j) {
+			Ans.push_back(ret[j]);
+		}
+
+	}
+	return Ans;
+}
+
+vector<Asm_Code*> Stmt_Call::GetAsmCode() {
+	return Exp->GetAsmCode();
+}

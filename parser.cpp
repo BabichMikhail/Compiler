@@ -46,10 +46,20 @@ void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2)
 	++Table->DeclTypeCount;
 }
 
+void AddPrintf(SymTable* Table) {
+	auto NewTable = new SymTable(Table);
+	SymVar* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol("integer", Position()));
+	vector<Expr*> List;
+	List.push_back(SymArg->InitExp);
+	auto Stmt = new Stmt_Compound();
+}
+
 void Parser::ReservedFunctions(SymTable* Table) {
 	ReservedCastFunction(Table, "double", "integer");
 	ReservedCastFunction(Table, "integer", "char");
 	ReservedCastFunction(Table, "char", "integer");
+	Table->Add(new SymProcedure("write", nullptr, nullptr, -1));
+	++Table->DeclTypeCount;
 }
 
 void Parser::ReservedTypes(SymTable* Table) {

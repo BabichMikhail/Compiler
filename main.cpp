@@ -8,6 +8,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "errors.h"
+#include "AsmGenerator.h"
 
 using namespace std;
 
@@ -66,6 +67,12 @@ int main(int argc, char **argv){
 			if (strcmp(argv[1], "-s") == 0) {
 				Parser P(argv[2], Test_Statement);
 				P.Print();
+			}
+
+			if (strcmp(argv[1], "-g") == 0) {
+				Asm_Generator AsmGenerator(argv[2], Test_Statement);
+				AsmGenerator.SetCode();
+				AsmGenerator.CodeToStdout();
 			}
 		}
 	}
