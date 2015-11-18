@@ -1,6 +1,6 @@
 #include "asmgenerator.h"
 
-static const string AsmOp_str[] = { "push", "pop", "imul", "div", "add", "sub", "neg", "not", "or", "and", "xor", "shl", "shr", "call" };
+static const string AsmOp_str[] = { "push", "pop", "imul", "div", "add", "sub", "neg", "not", "or", "and", "xor", "shl", "shr", "call", "mov" };
 static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp" };
 
 Asm_Cmd::Asm_Cmd(AsmOp Cmd) : Cmd(Cmd) {}
@@ -9,6 +9,7 @@ Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOp Cmd, Asm_Code* Oper1) : Asm_Cmd(Cmd), Oper1(Ope
 Asm_Registr::Asm_Registr(AsmRegistr Reg) : Reg(Reg) {}; 
 Asm_IntConst::Asm_IntConst(string Val) : Val(Val) {};
 Asm_Variable::Asm_Variable(string Val) : Val(Val) {};
+Asm_Address::Asm_Address(string Val, int offset) : Val(Val), offset(offset) {};
 
 string Asm_Unar_Cmd::GetCode() {
 	return AsmOp_str[Cmd] + " " + Oper1->GetCode() + "\n";
@@ -28,6 +29,10 @@ string Asm_IntConst::GetCode() {
 
 string Asm_Variable::GetCode() {
 	return Val;
+}
+
+string Asm_Address::GetCode() {
+	return "[" + Val + " + " + to_string(offset) + "]";
 }
 
 void Asm_Generator::SetCode() {

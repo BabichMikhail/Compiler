@@ -52,6 +52,14 @@ public:
 	Asm_Variable(string Val);
 };
 
+class Asm_Address : public Asm_Operand {
+public:
+	string Val;
+	int offset;
+	string GetCode();
+	Asm_Address(string Val, int offset);
+};
+
 class Asm_Generator {
 private:
 	vector<Asm_Code*> Code;

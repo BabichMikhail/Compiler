@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "syntaxnodes.h"
 #include <vector>
 #include <set>
@@ -204,7 +206,7 @@ vector<Asm_Code*> ExprIntConst::GetAsmCode() {
 
 vector<Asm_Code*> ExprFunction::GetAsmCode() {
 	vector<Asm_Code*> Ans;
-	for (int i = 0; i < Rights.size(); ++i) {
+	for (int i = Rights.size() - 1; i >= 0; --i) {
 		vector<Asm_Code*> Ret;
 		Ret = Rights[i]->GetAsmCode();
 		for (int j = 0; j < Ret.size(); ++j) {
@@ -212,9 +214,15 @@ vector<Asm_Code*> ExprFunction::GetAsmCode() {
 		}
 	}
 	if (_stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "write") == 0) {
-		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("fmt"))); /* to do auto format detect and find size of arguments 'universal _printf for const integer numbers' */
+		Ans.push_back(new Asm_Bin_Cmd((AsmMov), new Asm_Registr(AsmEAX), new Asm_IntConst("\'%d\'")));
+		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 0), new Asm_Registr(AsmEAX)));
+		for (int i = 1; i < Rights.size(); ++i) {
+			Ans.push_back(new Asm_Bin_Cmd((AsmMov), new Asm_Registr(AsmEAX), new Asm_IntConst("\' %d\'")));
+			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 2 + (i - 1)*3), new Asm_Registr(AsmEAX)));
+		}
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("fmt"))); 
 		Ans.push_back(new Asm_Unar_Cmd(AsmCall, new Asm_Variable("_printf")));
-		Ans.push_back(new Asm_Bin_Cmd(AsmAdd, new Asm_Registr(AsmESP), new Asm_IntConst("8"))); 
+		Ans.push_back(new Asm_Bin_Cmd(AsmAdd, new Asm_Registr(AsmESP), new Asm_IntConst(to_string(4 * Rights.size() + 4))));
 	}
 	return Ans;
 }

@@ -16,7 +16,7 @@ class Asm_Code;
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
-enum AsmOp { AsmPush = 0, AsmPop, AsmIMul, AsmDiv, AsmAdd, AsmSub, AsmNeg, AsmNot, AsmOr, AsmAnd, AsmXor, AsmShl, AsmShr, AsmCall };
+enum AsmOp { AsmPush = 0, AsmPop, AsmIMul, AsmDiv, AsmAdd, AsmSub, AsmNeg, AsmNot, AsmOr, AsmAnd, AsmXor, AsmShl, AsmShr, AsmCall, AsmMov };
 enum AsmRegistr { AsmEAX = 0, AsmEBX, AsmECX, AsmEDX, AsmEBP, AsmESP };
 enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstDoubleExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp, 
 	PointerExp, DereferenceExp };
