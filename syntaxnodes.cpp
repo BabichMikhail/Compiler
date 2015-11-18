@@ -137,16 +137,9 @@ void ExprRecord::GetIdentStr(ExpArgList* List){
 	List->Flag = false;
 }
 
-#define MakeTriple(First, Second, Third) make_pair(First, make_pair(Second, Third))
-#define Triple(First, Second, Third) pair<First, pair<Second, Third>>
-#define First(A) (A).first
-#define Second(A) (A).second.first
-#define Third(A) (A).second.second
-
-set<Triple(TokenType, AsmOp, AsmRegistr)> BinOperations = {
-	MakeTriple(TK_PLUS, AsmAdd, AsmEAX), MakeTriple(TK_MINUS, AsmSub, AsmEAX), MakeTriple(TK_XOR, AsmXor, AsmEAX), MakeTriple(TK_OR, AsmOr, AsmEAX),
-	MakeTriple(TK_MUL, AsmIMul, AsmEAX), MakeTriple(TK_DIV_INT, AsmDiv, AsmEAX), MakeTriple(TK_MOD, AsmDiv, AsmEDX), MakeTriple(TK_AND, AsmAnd, AsmEAX),
-	MakeTriple(TK_SHL, AsmShl, AsmEAX), MakeTriple(TK_SHR, AsmShr, AsmEAX)
+set<pair<TokenType, AsmOp>> BinOperations = {
+	make_pair(TK_PLUS, AsmAdd), make_pair(TK_MINUS, AsmSub), make_pair(TK_XOR, AsmXor), make_pair(TK_OR, AsmOr),
+	make_pair(TK_MUL, AsmIMul), make_pair(TK_AND, AsmAnd), make_pair(TK_SHL, AsmShl), make_pair(TK_SHR, AsmShr)
 };
 
 vector<Asm_Code*> ExprBinOp::GetAsmCode(){
@@ -157,30 +150,44 @@ vector<Asm_Code*> ExprBinOp::GetAsmCode(){
 	}
 	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEBX)));
 	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
-	for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
-		if (First(*it) == Op.Type) {
-			Ans.push_back(new Asm_Bin_Cmd(Second(*it), new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
-			Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(Third(*it))));
-			return Ans;
+	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
+		Ans.push_back(new Asm_Bin_Cmd(AsmXor, new Asm_Registr(AsmEDX), new Asm_Registr(AsmEDX)));
+		Ans.push_back(new Asm_Unar_Cmd(AsmDiv, new Asm_Registr(AsmEBX)));
+		if (Op.Type == TK_DIV_INT) {
+			Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+		}
+		else {
+			Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEDX)));
+		}
+		return Ans;
+	}
+	else {
+		for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
+			if ((*it).first == Op.Type) {
+				Ans.push_back(new Asm_Bin_Cmd((*it).second, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
+				Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+				return Ans;
+			}
 		}
 	}
 }
 
 vector<Asm_Code*> ExprUnarOp::GetAsmCode() {
 	vector<Asm_Code*> Ans(Exp->GetAsmCode());
-	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
 	switch (Op.Type) {
 	case TK_PLUS: 
-		break;
+		return Ans;
 	case TK_MINUS:	
+		Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
 		Ans.push_back(new Asm_Unar_Cmd(AsmNeg, new Asm_Registr(AsmEAX)));
-		break;
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+		return Ans;
 	case TK_NOT: 
+		Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
 		Ans.push_back(new Asm_Unar_Cmd(AsmNot, new Asm_Registr(AsmEAX)));
-		break;
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+		return Ans;
 	}
-	Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
-	return Ans;
 }
 
 vector<Asm_Code*> ExprIntConst::GetAsmCode() {
