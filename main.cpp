@@ -13,7 +13,7 @@
 using namespace std;
 
 #define print_format \
-	cout << "Usage: Compiler [-h] [-help] [-p] [-l] [-d] [-s]" << endl << endl; \
+	cout << "Usage: Compiler [-h] [-help] [-p] [-l] [-d] [-s] [-g]" << endl << endl; \
 	cout << "The most commontly used input and output filenames" << endl << endl
 
 

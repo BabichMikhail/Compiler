@@ -138,12 +138,12 @@ void ExprRecord::GetIdentStr(ExpArgList* List){
 }
 
 #define MakeTriple(First, Second, Third) make_pair(First, make_pair(Second, Third))
-#define MyPair(First, Second, Third) pair<First, pair<Second, Third>>
+#define Triple(First, Second, Third) pair<First, pair<Second, Third>>
 #define First(A) (A).first
 #define Second(A) (A).second.first
 #define Third(A) (A).second.second
 
-set<MyPair(TokenType, AsmOp, AsmRegistr)> Operations = { 
+set<Triple(TokenType, AsmOp, AsmRegistr)> BinOperations = {
 	MakeTriple(TK_PLUS, AsmAdd, AsmEAX), MakeTriple(TK_MINUS, AsmSub, AsmEAX), MakeTriple(TK_XOR, AsmXor, AsmEAX), MakeTriple(TK_OR, AsmOr, AsmEAX),
 	MakeTriple(TK_MUL, AsmIMul, AsmEAX), MakeTriple(TK_DIV_INT, AsmDiv, AsmEAX), MakeTriple(TK_MOD, AsmDiv, AsmEDX), MakeTriple(TK_AND, AsmAnd, AsmEAX),
 	MakeTriple(TK_SHL, AsmShl, AsmEAX), MakeTriple(TK_SHR, AsmShr, AsmEAX)
@@ -157,7 +157,7 @@ vector<Asm_Code*> ExprBinOp::GetAsmCode(){
 	}
 	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEBX)));
 	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
-	for (auto it = Operations.cbegin(); it != Operations.cend(); ++it) {
+	for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
 		if (First(*it) == Op.Type) {
 			Ans.push_back(new Asm_Bin_Cmd(Second(*it), new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
 			Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(Third(*it))));
@@ -198,12 +198,19 @@ vector<Asm_Code*> ExprFunction::GetAsmCode() {
 			Ans.push_back(Ret[j]);
 		}
 	}
-	if (_stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "write") == 0) {
+	if (_stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "write") == 0 || _stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "writeln") == 0) {
+		if (Rights.size() == 0) {
+			return Ans;
+		}
 		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("\'%d\'")));
 		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 0), new Asm_Registr(AsmEAX)));
 		for (int i = 1; i < Rights.size(); ++i) {
 			Ans.push_back(new Asm_Bin_Cmd((AsmMov), new Asm_Registr(AsmEAX), new Asm_IntConst("\' %d\'")));
 			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 2 + (i - 1)*3), new Asm_Registr(AsmEAX)));
+		}
+		if (((ExprVar*)Left)->Sym->Name.size() == strlen("writeln")) {
+			Ans.push_back(new Asm_Bin_Cmd((AsmMov), new Asm_Registr(AsmEAX), new Asm_IntConst("\'\\n\'")));
+			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 2 + (Rights.size() - 1)*3), new Asm_Registr(AsmEAX)));
 		}
 		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("fmt"))); 
 		Ans.push_back(new Asm_Unar_Cmd(AsmCall, new Asm_Variable("_printf")));

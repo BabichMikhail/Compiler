@@ -42,7 +42,7 @@ void Asm_Generator::SetCode() {
 void Asm_Generator::CodeToStdout() {
 	cout << "extern _printf" << endl;
 	cout << "section .data" << endl;
-	cout << "	fmt : db '%d', 0xA, 0" << endl;
+	cout << "	fmt : times 128 db 0" << endl;
 	cout << "section .text" << endl;
 	cout << "global _main" << endl;
 	cout << "_main:" << endl;
