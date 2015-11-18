@@ -759,7 +759,7 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 	auto TK = Lex.Get();
 	Lex.Next();
 	if (State == Test_Exp) {
-		Table->Add(new SymVar(TK.Source, nullptr, nullptr));// Table->GetSymbol("integer", TK.Pos)));
+		Table->Add(new SymVar(TK.Source, nullptr, nullptr));
 	}
 	auto Sym = Table->GetSymbol(TK.Source, TK.Pos);
 	Expr* ExpNow = new ExprVar(Sym);
@@ -805,6 +805,9 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 			Lex.Next();
 			ExpNow = new ExprRecord(ExpNow, Right);
 		}
+	}
+	if (ExpNow->TypeExp == VarExp && Sym->Section == DeclProcedure) {
+		ExpNow = new ExprFunction(ExpNow, vector<Expr*>());
 	}
 	return ExpNow;
 }
