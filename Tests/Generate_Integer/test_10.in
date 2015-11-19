@@ -1,0 +1,5 @@
+begin
+	writeln(1, 2, 3);
+	write;
+	write(3, 4, 5);
+end.

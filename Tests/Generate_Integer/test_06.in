@@ -1,0 +1,3 @@
+begin
+	write(10*2 mod 3);
+end.
