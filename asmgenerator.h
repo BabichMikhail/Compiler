@@ -38,6 +38,13 @@ public:
 	Asm_Registr(AsmRegistr Reg);
 };
 
+class Asm_StringConst : public Asm_Operand {
+public:
+	string Str;
+	string GetCode();
+	Asm_StringConst(string Str);
+};
+
 class Asm_IntConst : public Asm_Operand{
 public:
 	string Val;

@@ -6,10 +6,11 @@ static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "es
 Asm_Cmd::Asm_Cmd(AsmOp Cmd) : Cmd(Cmd) {}
 Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOp Cmd, Asm_Code* Oper1, Asm_Code* Oper2): Asm_Cmd(Cmd), Oper1(Oper1), Oper2(Oper2) {}
 Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOp Cmd, Asm_Code* Oper1) : Asm_Cmd(Cmd), Oper1(Oper1) {}
-Asm_Registr::Asm_Registr(AsmRegistr Reg) : Reg(Reg) {}; 
-Asm_IntConst::Asm_IntConst(string Val) : Val(Val) {};
-Asm_Variable::Asm_Variable(string Val) : Val(Val) {};
-Asm_Address::Asm_Address(string Val, int offset) : Val(Val), offset(offset) {};
+Asm_Registr::Asm_Registr(AsmRegistr Reg) : Reg(Reg) {}
+Asm_StringConst::Asm_StringConst(string Str) : Str(Str) {}
+Asm_IntConst::Asm_IntConst(string Val) : Val(Val) {}
+Asm_Variable::Asm_Variable(string Val) : Val(Val) {}
+Asm_Address::Asm_Address(string Val, int offset) : Val(Val), offset(offset) {}
 
 string Asm_Unar_Cmd::GetCode() {
 	return AsmOp_str[Cmd] + " " + Oper1->GetCode() + "\n";
@@ -21,6 +22,10 @@ string Asm_Bin_Cmd::GetCode() {
 
 string Asm_Registr::GetCode() {
 	return AsmRegistr_str[Reg];
+}
+
+string Asm_StringConst::GetCode() {
+	return "\'" + Str + "\'";
 }
 
 string Asm_IntConst::GetCode() {
@@ -42,6 +47,7 @@ void Asm_Generator::SetCode() {
 void Asm_Generator::CodeToStdout() {
 	cout << "extern _printf" << endl;
 	cout << "section .data" << endl;
+	cout << "	base_str : times 256 db 0" << endl;
 	cout << "	fmt : times 128 db 0" << endl;
 	cout << "section .text" << endl;
 	cout << "global _main" << endl;

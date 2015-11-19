@@ -197,23 +197,49 @@ vector<Asm_Code*> ExprIntConst::GetAsmCode() {
 	return Ans;
 }
 
+vector<Asm_Code*> ExprStringConst::GetAsmCode() {
+	vector<Asm_Code*> Ans;
+	int Size = Value.Source.size();
+	if (Size == 1) {
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_StringConst(Value.Source)));
+	}
+	else {
+		for (int i = 0; i < Size; i += 4) {
+			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_StringConst(Value.Source.substr(i, min(4, Size - i)))));
+			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("base_str", i), new Asm_Registr(AsmEAX)));
+		}
+		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("0x0")));
+		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("base_str", Size), new Asm_Registr(AsmEAX)));
+		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("base_str")));
+	}
+	return Ans;
+}
+
 vector<Asm_Code*> ExprFunction::GetAsmCode() {
 	vector<Asm_Code*> Ans;
+	vector<MyTypeID> TypeIDexp;
 	for (int i = Rights.size() - 1; i >= 0; --i) {
 		vector<Asm_Code*> Ret;
 		Ret = Rights[i]->GetAsmCode();
+		TypeIDexp.push_back(CheckType(((SymRecord*)Left)->Table, Position()).GetTypeID(Rights[i]));
 		for (int j = 0; j < Ret.size(); ++j) {
 			Ans.push_back(Ret[j]);
 		}
 	}
 	if (_stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "write") == 0 || _stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "writeln") == 0) {
-		if (Rights.size() != 0) {
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("\'%d\'")));
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 0), new Asm_Registr(AsmEAX)));
-			for (int i = 1; i < Rights.size(); ++i) {
-				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("\' %d\'")));
-				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 2 + (i - 1) * 3), new Asm_Registr(AsmEAX)));
+		for (int i = 0; i < Rights.size(); ++i) {
+			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
+			case TypeID_Integer:
+				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst(i != 0 ? "\' %d\'" : "\'%d\'")));
+				break;
+			case TypeID_Char:
+				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst(i != 0 ? "\' %c\'" : "\'%c\'")));
+				break;
+			case TypeID_String:
+				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst(i != 0 ? "\' %s\'" : "\'%s\'")));
+				break;
 			}
+			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", i != 0 ? 2 + (i - 1) * 3 : 0), new Asm_Registr(AsmEAX)));
 		}
 
 		int offset = 0;

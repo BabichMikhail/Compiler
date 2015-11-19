@@ -78,6 +78,7 @@ public:
 class ExprStringConst : public ExprConst{
 public:
 	ExprStringConst(Token Value);
+	vector<Asm_Code*> GetAsmCode();
 };
 
 class ExprVar : public Expr{
