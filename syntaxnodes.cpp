@@ -211,15 +211,20 @@ vector<Asm_Code*> ExprFunction::GetAsmCode() {
 			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("\'%d\'")));
 			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 0), new Asm_Registr(AsmEAX)));
 			for (int i = 1; i < Rights.size(); ++i) {
-				Ans.push_back(new Asm_Bin_Cmd((AsmMov), new Asm_Registr(AsmEAX), new Asm_IntConst("\' %d\'")));
+				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("\' %d\'")));
 				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", 2 + (i - 1) * 3), new Asm_Registr(AsmEAX)));
 			}
 		}
 
+		int offset = 0;
 		if (((ExprVar*)Left)->Sym->Name.size() == strlen("writeln")) {
-			Ans.push_back(new Asm_Bin_Cmd((AsmMov), new Asm_Registr(AsmEAX), new Asm_IntConst("0xA")));
+			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("0xA")));
 			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", max(0, (2 + ((int)Rights.size() - 1)*3))), new Asm_Registr(AsmEAX)));
+			offset = 1;
 		}
+		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("0x0")));
+		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", max(0, (2 + ((int)Rights.size() - 1) * 3 )) + offset), new Asm_Registr(AsmEAX)));
+
 		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("fmt"))); 
 		Ans.push_back(new Asm_Unar_Cmd(AsmCall, new Asm_Variable("_printf")));
 		Ans.push_back(new Asm_Bin_Cmd(AsmAdd, new Asm_Registr(AsmESP), new Asm_IntConst(to_string(4 * Rights.size() + 4))));
