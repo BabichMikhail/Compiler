@@ -207,15 +207,11 @@ void ExprStringConst::GetAsmCode(Asm_Code* Code) {
 }
 
 void ExprFunction::GetAsmCode(Asm_Code* Code) {
-	vector<Asm_Code*> Ans;
 	vector<MyTypeID> TypeIDexp;
 	for (int i = Rights.size() - 1; i >= 0; --i) {
 		vector<Asm_Code*> Ret;
 		Rights[i]->GetAsmCode(Code);
 		TypeIDexp.push_back(CheckType(((SymRecord*)Left)->Table, Position()).GetTypeID(Rights[i]));
-		for (int j = 0; j < Ret.size(); ++j) {
-			Ans.push_back(Ret[j]);
-		}
 	}
 	if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_write || ((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_writeln){
 		string format = "\'";
