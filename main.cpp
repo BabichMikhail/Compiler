@@ -70,9 +70,10 @@ int main(int argc, char **argv){
 			}
 
 			if (strcmp(argv[1], "-g") == 0) {
-				Asm_Generator AsmGenerator(argv[2], Test_Statement);
-				AsmGenerator.SetCode();
-				AsmGenerator.CodeToStdout();
+				Parser P(argv[2], Test_Statement);
+				Asm_Code *Code = new Asm_Code();
+				P.Stmt->GetAsmCode(Code);
+				Code->Print();
 			}
 		}
 	}

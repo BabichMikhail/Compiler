@@ -3,8 +3,9 @@
 #include "syntaxnodes.h"
 #include <vector>
 #include <set>
-#include "asmgenerator.h"
+#include "symbol.h"
 #include <algorithm>
+#include "checktype.h"
 
 Expr::Expr(TypeExpr TypeExp) : TypeExp(TypeExp){}
 
@@ -55,9 +56,7 @@ void ExprVar::Print(int Spaces){
 
 void ExprAssign::Print(int Spaces){
 	Right->Print(Spaces + 1);
-	for (int i = 0; i < Spaces; ++i){
-		cout << indent;
-	}
+	print_indent(Spaces);
 	cout << ":=" << endl;
 	Left->Print(Spaces + 1);
 }
@@ -143,118 +142,109 @@ set<pair<TokenType, AsmOp>> BinOperations = {
 	make_pair(TK_MUL, AsmIMul), make_pair(TK_AND, AsmAnd), make_pair(TK_SHL, AsmShl), make_pair(TK_SHR, AsmShr)
 };
 
-vector<Asm_Code*> ExprBinOp::GetAsmCode(){
-	vector<Asm_Code*> Ans(Left->GetAsmCode());
-	auto _Right(Right->GetAsmCode());
-	for (int i = 0; i < _Right.size(); ++i) {
-		Ans.push_back(_Right[i]);
-	}
-	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEBX)));
-	Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
+void ExprBinOp::GetAsmCode(Asm_Code* Code){
+	Left->GetAsmCode(Code);
+	Right->GetAsmCode(Code);
+	Code->Add(AsmPop, AsmEBX);
+	Code->Add(AsmPop, AsmEAX);
 	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
-		Ans.push_back(new Asm_Bin_Cmd(AsmXor, new Asm_Registr(AsmEDX), new Asm_Registr(AsmEDX)));
-		Ans.push_back(new Asm_Unar_Cmd(AsmDiv, new Asm_Registr(AsmEBX)));
+		Code->Add(AsmXor, AsmEDX, AsmEDX);
+		Code->Add(AsmDiv, AsmEBX);
 		if (Op.Type == TK_DIV_INT) {
-			Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
+			Code->Add(AsmPush, AsmEAX);
 		}
 		else {
-			Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEDX)));
+			Code->Add(AsmPush, AsmEDX);
 		}
-		return Ans;
+		return;
 	}
 	else {
 		for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
 			if ((*it).first == Op.Type) {
-				Ans.push_back(new Asm_Bin_Cmd((*it).second, new Asm_Registr(AsmEAX), new Asm_Registr(AsmEBX)));
-				Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
-				return Ans;
+				Code->Add((*it).second, AsmEAX, AsmEBX);
+				Code->Add(AsmPush, AsmEAX);
+				return;
 			}
 		}
 	}
 }
 
-vector<Asm_Code*> ExprUnarOp::GetAsmCode() {
-	vector<Asm_Code*> Ans(Exp->GetAsmCode());
+void ExprUnarOp::GetAsmCode(Asm_Code* Code) {
 	switch (Op.Type) {
 	case TK_PLUS: 
-		return Ans;
+		return;
 	case TK_MINUS:	
-		Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
-		Ans.push_back(new Asm_Unar_Cmd(AsmNeg, new Asm_Registr(AsmEAX)));
-		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
-		return Ans;
+		Code->Add(AsmPop, AsmEAX);
+		Code->Add(AsmNeg, AsmEAX);
+		Code->Add(AsmPush, AsmEAX);
+		return;
 	case TK_NOT: 
-		Ans.push_back(new Asm_Unar_Cmd(AsmPop, new Asm_Registr(AsmEAX)));
-		Ans.push_back(new Asm_Unar_Cmd(AsmNot, new Asm_Registr(AsmEAX)));
-		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Registr(AsmEAX)));
-		return Ans;
+		Code->Add(AsmPop, AsmEAX);
+		Code->Add(AsmNot, AsmEAX);
+		Code->Add(AsmPush, AsmEAX);
+		return;
 	}
 }
 
-vector<Asm_Code*> ExprIntConst::GetAsmCode() {
-	vector<Asm_Code*> Ans;
-	Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_IntConst(Value.Source)));
-	return Ans;
+void ExprIntConst::GetAsmCode(Asm_Code* Code) {
+	Code->Add(AsmPush, Value.Source);
 }
 
-vector<Asm_Code*> ExprStringConst::GetAsmCode() {
-	vector<Asm_Code*> Ans;
+void ExprStringConst::GetAsmCode(Asm_Code* Code) {
 	int Size = Value.Source.size();
 	if (Size == 1) {
-		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_StringConst(Value.Source)));
+		Code->Add(AsmPush, '\'' + Value.Source + '\'');
 	}
 	else {
 		for (int i = 0; i < Size; i += 4) {
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_StringConst(Value.Source.substr(i, min(4, Size - i)))));
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("base_str", i), new Asm_Registr(AsmEAX)));
+			Code->Add(AsmMov, AsmEAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
+			Code->Add(AsmMov, "base_str", i, AsmEAX);
 		}
-		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("0x0")));
-		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("base_str", Size), new Asm_Registr(AsmEAX)));
-		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("base_str")));
+		Code->Add(AsmMov, AsmEAX, "0x0");
+		Code->Add(AsmMov, "base_str", Size, AsmEAX);
+		Code->Add(AsmPush, "base_str");
 	}
-	return Ans;
 }
 
-vector<Asm_Code*> ExprFunction::GetAsmCode() {
+void ExprFunction::GetAsmCode(Asm_Code* Code) {
 	vector<Asm_Code*> Ans;
 	vector<MyTypeID> TypeIDexp;
 	for (int i = Rights.size() - 1; i >= 0; --i) {
 		vector<Asm_Code*> Ret;
-		Ret = Rights[i]->GetAsmCode();
+		Rights[i]->GetAsmCode(Code);
 		TypeIDexp.push_back(CheckType(((SymRecord*)Left)->Table, Position()).GetTypeID(Rights[i]));
 		for (int j = 0; j < Ret.size(); ++j) {
 			Ans.push_back(Ret[j]);
 		}
 	}
-	if (_stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "write") == 0 || _stricmp(((ExprVar*)Left)->Sym->Name.c_str(), "writeln") == 0) {
+	if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == -1){
 		for (int i = 0; i < Rights.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
 			case TypeID_Integer:
-				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst(i != 0 ? "\' %d\'" : "\'%d\'")));
+				Code->Add(AsmMov, AsmEAX, i != 0 ? "\' %d\'" : "\'%d\'");
 				break;
 			case TypeID_Char:
-				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst(i != 0 ? "\' %c\'" : "\'%c\'")));
+				Code->Add(AsmMov, AsmEAX, i != 0 ? "\' %c\'" : "\'%c\'");
 				break;
 			case TypeID_String:
-				Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst(i != 0 ? "\' %s\'" : "\'%s\'")));
+				Code->Add(AsmMov, AsmEAX, i != 0 ? "\' %s\'" : "\'%s\'");
 				break;
 			}
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", i != 0 ? 2 + (i - 1) * 3 : 0), new Asm_Registr(AsmEAX)));
+			Code->Add(AsmMov, "fmt", i != 0 ? 2 + (i - 1) * 3 : 0, AsmEAX);
 		}
 
 		int offset = 0;
 		if (((ExprVar*)Left)->Sym->Name.size() == strlen("writeln")) {
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("0xA")));
-			Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", max(0, (2 + ((int)Rights.size() - 1)*3))), new Asm_Registr(AsmEAX)));
+			Code->Add(AsmMov, AsmEAX, "0xA");
+			Code->Add(AsmMov, "fmt", max(0, (2 + ((int)Rights.size() - 1) * 3)), AsmEAX);
 			offset = 1;
 		}
-		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Registr(AsmEAX), new Asm_IntConst("0x0")));
-		Ans.push_back(new Asm_Bin_Cmd(AsmMov, new Asm_Address("fmt", max(0, (2 + ((int)Rights.size() - 1) * 3 )) + offset), new Asm_Registr(AsmEAX)));
+		Code->Add(AsmMov, AsmEAX, "0x0");
+		Code->Add(AsmMov, "fmt", max(0, (2 + ((int)Rights.size() - 1) * 3)) + offset, AsmEAX);
 
-		Ans.push_back(new Asm_Unar_Cmd(AsmPush, new Asm_Variable("fmt"))); 
-		Ans.push_back(new Asm_Unar_Cmd(AsmCall, new Asm_Variable("_printf")));
-		Ans.push_back(new Asm_Bin_Cmd(AsmAdd, new Asm_Registr(AsmESP), new Asm_IntConst(to_string(4 * Rights.size() + 4))));
+		Code->Add(AsmPush, "fmt"); 
+		Code->Add(AsmCall, "_printf");
+		Code->Add(AsmAdd, AsmESP, to_string(4 * Rights.size() + 4));
 	}
-	return Ans;
 }
 

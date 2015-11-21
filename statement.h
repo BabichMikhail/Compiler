@@ -9,7 +9,7 @@ using namespace std;
 class Statement{
 public:
 	virtual void Print(int Spaces);
-	virtual vector<Asm_Code*> GetAsmCode() { return vector<Asm_Code*>(); };
+	virtual void GetAsmCode(Asm_Code* Code) {};
 };
 
 class Stmt_GOTO : public Statement{
@@ -24,7 +24,7 @@ public:
 	vector<Statement*> StmtList;
 	void Add(Statement* Stmt);
 	void Print(int Spaces);
-	vector<Asm_Code*> GetAsmCode();
+	void GetAsmCode(Asm_Code* Code);
 };
 
 class Stmt_Conditional : public Statement{
@@ -129,7 +129,7 @@ public:
 	Expr* Exp;
 	Stmt_Call(Expr* Exp);
 	void Print(int Spaces);
-	vector<Asm_Code*> GetAsmCode();
+	void GetAsmCode(Asm_Code* Code);
 };
 
 #endif
