@@ -40,6 +40,11 @@ string Asm_Address::GetCode() {
 	return "[" + Val + " + " + to_string(offset) + "]";
 }
 
+string Asm_Code::AddFormat(string new_format) {
+	Fmts.push_back("fmt_" + to_string(Fmts.size()) + " : db " + new_format);
+	return "fmt_" + to_string(Fmts.size() - 1);
+}
+
 void Asm_Code::Add(AsmOp Op, AsmRegistr Reg) {
 	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Registr(Reg)));
 }
@@ -91,12 +96,14 @@ void Asm_Code::Print() {
 	cout << "extern _printf" << endl;
 	cout << "section .data" << endl;
 	cout << "	base_str : times 256 db 0" << endl;
-	cout << "	fmt : times 128 db 0" << endl;
+	for (int i = 0; i < Fmts.size(); ++i) {
+		cout << "	" + Fmts[i] << endl;
+	}
 	cout << "section .text" << endl;
 	cout << "global _main" << endl;
 	cout << "_main:" << endl;
 	for (int i = 0; i < Cmds.size(); ++i) {
-		cout << Cmds[i]->GetCode() << endl;
+		cout << "	" + Cmds[i]->GetCode() << endl;
 	}
 	cout << "ret";
 }

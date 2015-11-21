@@ -44,6 +44,8 @@ static vector<Cell> TypeTable[] = {
 	}
 };
 
+set<int> ReservedProc = { argc_write, argc_writeln };
+
 const string StrTypes[] = {
 	"Untyped", "Integer", "Double", "Char", "Boolean", "String", "Array", "Record", "Pointer", "Function"
 };
@@ -203,7 +205,7 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 				}
 			}
 			if (Symbols[i]->Section == DeclProcedure) {
-				if (((SymFunction*)Symbols[i])->argc == -1) {
+				if (ReservedProc.find(((SymFunction*)Symbols[i])->argc) != ReservedProc.end()) {
 					return TypeID_BadType;
 				}
 				if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {

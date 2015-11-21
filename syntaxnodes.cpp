@@ -217,32 +217,30 @@ void ExprFunction::GetAsmCode(Asm_Code* Code) {
 			Ans.push_back(Ret[j]);
 		}
 	}
-	if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == -1){
+	if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_write || ((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_writeln){
+		string format = "\'";
 		for (int i = 0; i < Rights.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
 			case TypeID_Integer:
-				Code->Add(AsmMov, AsmEAX, i != 0 ? "\' %d\'" : "\'%d\'");
+				format += i != 0 ? " %d" : "%d";
 				break;
 			case TypeID_Char:
-				Code->Add(AsmMov, AsmEAX, i != 0 ? "\' %c\'" : "\'%c\'");
+				format += i != 0 ? " %c" : "%c";
 				break;
 			case TypeID_String:
-				Code->Add(AsmMov, AsmEAX, i != 0 ? "\' %s\'" : "\'%s\'");
+				format += i != 0 ? " %s" : "%s";
 				break;
 			}
-			Code->Add(AsmMov, "fmt", i != 0 ? 2 + (i - 1) * 3 : 0, AsmEAX);
 		}
-
-		int offset = 0;
-		if (((ExprVar*)Left)->Sym->Name.size() == strlen("writeln")) {
-			Code->Add(AsmMov, AsmEAX, "0xA");
-			Code->Add(AsmMov, "fmt", max(0, (2 + ((int)Rights.size() - 1) * 3)), AsmEAX);
-			offset = 1;
+		if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_writeln) {
+			format += "\', 0xA, 0x0";
 		}
-		Code->Add(AsmMov, AsmEAX, "0x0");
-		Code->Add(AsmMov, "fmt", max(0, (2 + ((int)Rights.size() - 1) * 3)) + offset, AsmEAX);
+		else {
+			format += "\', 0x0";
+		}
+		string FormatName = Code->AddFormat(format);
 
-		Code->Add(AsmPush, "fmt"); 
+		Code->Add(AsmPush, FormatName); 
 		Code->Add(AsmCall, "_printf");
 		Code->Add(AsmAdd, AsmESP, to_string(4 * Rights.size() + 4));
 	}

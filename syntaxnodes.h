@@ -14,6 +14,9 @@ using namespace std;
 class Symbol;
 class Asm_Code;
 
+#define argc_write -1
+#define argc_writeln -2
+
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 

@@ -102,16 +102,12 @@ void SymFunction::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "Function" << indent << Name << indent << argc << endl;
 	Table->Print(Spaces + 1);
-	if (Stmt != nullptr) { // !!
-		Stmt->Print(Spaces + 1);
-	}
+	Stmt->Print(Spaces + 1);
 }
 
 void SymProcedure::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "Procedure" << indent << Name << indent << argc << endl;
 	Table->Print(Spaces + 1);
-	if (Stmt != nullptr) { // !!
-		Stmt->Print(Spaces + 1);
-	}
+	Stmt->Print(Spaces + 1);
 }

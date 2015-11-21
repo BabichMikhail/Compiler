@@ -75,8 +75,10 @@ public:
 
 class Asm_Code {
 private:
+	vector<string> Fmts;
 	vector<Asm_Cmd*> Cmds;
 public:
+	string AddFormat(string new_format);
 	void Add(AsmOp Op, AsmRegistr Reg);
 	void Add(AsmOp Op, string Str);
 	void Add(AsmOp Op, string Var, int offset);

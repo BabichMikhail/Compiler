@@ -58,8 +58,8 @@ void Parser::ReservedFunctions(SymTable* Table) {
 	ReservedCastFunction(Table, "double", "integer");
 	ReservedCastFunction(Table, "integer", "char");
 	ReservedCastFunction(Table, "char", "integer");
-	Table->Add(new SymProcedure("write", nullptr, nullptr, -1));
-	Table->Add(new SymProcedure("writeln", nullptr, nullptr, -1));
+	Table->Add(new SymProcedure("write", nullptr, nullptr, argc_write));
+	Table->Add(new SymProcedure("writeln", nullptr, nullptr, argc_writeln));
 	++++Table->DeclTypeCount;
 }
 
