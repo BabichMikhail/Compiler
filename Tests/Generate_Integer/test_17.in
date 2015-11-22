@@ -1,0 +1,3 @@
+begin
+	write(64 shr 4);
+end.

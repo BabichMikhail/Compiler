@@ -1,0 +1,3 @@
+begin
+	write(4 shl 3);
+end.
