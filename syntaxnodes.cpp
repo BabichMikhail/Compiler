@@ -220,13 +220,13 @@ void ExprFunction::GetAsmCode(Asm_Code* Code) {
 		for (int i = 0; i < Rights.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
 			case TypeID_Integer:
-				format += i != 0 ? " %d" : "%d";
+				format += "%d";
 				break;
 			case TypeID_Char:
-				format += i != 0 ? " %c" : "%c";
+				format += "%c";
 				break;
 			case TypeID_String:
-				format += i != 0 ? " %s" : "%s";
+				format += "%s";
 				break;
 			}
 		}

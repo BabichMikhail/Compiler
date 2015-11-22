@@ -1,4 +1,4 @@
 begin
-	writeln(10, 20);
-	writeln(15, 25);
+	writeln(10, ' ', 20);
+	writeln(15, ' ', 25);
 end.
