@@ -121,4 +121,9 @@ public:
 	ForwardDeclNotSolved(const string Name, const Position Pos) : Error("Error: Forward Declarations not solved \"" + Name + "\". " + StrPos(Pos), Pos) {};
 };
 
+class ConstIntExpressionExpected : public Error {
+public:
+	ConstIntExpressionExpected(const Position Pos) : Error("Const Integer Expression Expected. " + StrPos(Pos), Pos) {};
+};
+
 #endif 

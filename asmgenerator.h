@@ -7,8 +7,8 @@
 
 using namespace std;
 
-enum AsmOp { AsmPush = 0, AsmPop, AsmIMul, AsmDiv, AsmAdd, AsmSub, AsmNeg, AsmNot, AsmOr, AsmAnd, AsmXor, AsmShl, AsmShr, AsmCall, AsmMov };
-enum AsmRegistr { AsmEAX = 0, AsmEBX, AsmECX, AsmEDX, AsmEBP, AsmESP };
+enum AsmOpType { Push = 0, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov };
+enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP };
 
 class Asm_Operand {
 public:
@@ -17,9 +17,9 @@ public:
 
 class Asm_Registr : public Asm_Operand{
 public:
-	AsmRegistr Reg;
+	AsmRegType Reg;
 	string GetCode();
-	Asm_Registr(AsmRegistr Reg);
+	Asm_Registr(AsmRegType Reg);
 };
 
 class Asm_StringConst : public Asm_Operand {
@@ -53,9 +53,9 @@ public:
 
 class Asm_Cmd {
 public:
-	AsmOp Op;
+	AsmOpType Op;
 	virtual string GetCode() = 0;
-	Asm_Cmd(AsmOp Cmd);
+	Asm_Cmd(AsmOpType Cmd);
 };
 
 class Asm_Bin_Cmd : public Asm_Cmd {
@@ -63,14 +63,14 @@ public:
 	Asm_Operand* Oper1;
 	Asm_Operand* Oper2;
 	string GetCode();
-	Asm_Bin_Cmd(AsmOp Op, Asm_Operand* Oper1, Asm_Operand* Oper2);
+	Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2);
 };
 
 class Asm_Unar_Cmd : public Asm_Cmd {
 public:
 	Asm_Operand* Oper1;
 	string GetCode();
-	Asm_Unar_Cmd(AsmOp Op, Asm_Operand* Oper1);
+	Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1);
 };
 
 class Asm_Code {
@@ -79,14 +79,14 @@ private:
 	vector<Asm_Cmd*> Cmds;
 public:
 	string AddFormat(string new_format);
-	void Add(AsmOp Op, AsmRegistr Reg);
-	void Add(AsmOp Op, string Str);
-	void Add(AsmOp Op, string Var, int offset);
-	void Add(AsmOp Op, AsmRegistr Reg1, AsmRegistr Reg2);
-	void Add(AsmOp Op, AsmRegistr Reg, string Str);
-	void Add(AsmOp Op, AsmRegistr Reg, string Var, int offset);
-	void Add(AsmOp Op, string Str, AsmRegistr Reg);
-	void Add(AsmOp Op, string Str, int offset, AsmRegistr Reg);
+	void Add(AsmOpType Op, AsmRegType Reg);
+	void Add(AsmOpType Op, string Str);
+	void Add(AsmOpType Op, string Var, int offset);
+	void Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
+	void Add(AsmOpType Op, AsmRegType Reg, string Str);
+	void Add(AsmOpType Op, AsmRegType Reg, string Var, int offset);
+	void Add(AsmOpType Op, string Str, AsmRegType Reg);
+	void Add(AsmOpType Op, string Str, int offset, AsmRegType Reg);
 	void Print();
 	
 };

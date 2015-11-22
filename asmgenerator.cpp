@@ -3,10 +3,10 @@
 static const string AsmOp_str[] = { "push", "pop", "imul", "div", "add", "sub", "neg", "not", "or", "and", "xor", "shl", "shr", "call", "mov" };
 static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp" };
 
-Asm_Cmd::Asm_Cmd(AsmOp Op) : Op(Op) {}
-Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOp Op, Asm_Operand* Oper1, Asm_Operand* Oper2): Asm_Cmd(Op), Oper1(Oper1), Oper2(Oper2) {}
-Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOp Op, Asm_Operand* Oper1) : Asm_Cmd(Op), Oper1(Oper1) {}
-Asm_Registr::Asm_Registr(AsmRegistr Reg) : Reg(Reg) {}
+Asm_Cmd::Asm_Cmd(AsmOpType Op) : Op(Op) {}
+Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2) : Asm_Cmd(Op), Oper1(Oper1), Oper2(Oper2) {}
+Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1) : Asm_Cmd(Op), Oper1(Oper1) {}
+Asm_Registr::Asm_Registr(AsmRegType Reg) : Reg(Reg) {}
 Asm_StringConst::Asm_StringConst(string Str) : Str(Str) {}
 Asm_IntConst::Asm_IntConst(string Val) : Val(Val) {}
 Asm_Variable::Asm_Variable(string Val) : Val(Val) {}
@@ -41,54 +41,40 @@ string Asm_Address::GetCode() {
 }
 
 string Asm_Code::AddFormat(string new_format) {
-	Fmts.push_back("fmt_" + to_string(Fmts.size()) + " : db " + new_format);
-	return "fmt_" + to_string(Fmts.size() - 1);
+	string num = to_string(Fmts.size());
+	Fmts.push_back("fmt_" + num + " : db " + new_format);
+	return "fmt_" + num;
 }
 
-void Asm_Code::Add(AsmOp Op, AsmRegistr Reg) {
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg) {
 	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Registr(Reg)));
 }
 
-void Asm_Code::Add(AsmOp Op, string Str) {
-	if (Str[0] == '\'') {
-		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_StringConst(Str)));
-	}
-	else {
-		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_IntConst(Str)));
-	}
+void Asm_Code::Add(AsmOpType Op, string Str) {
+	Cmds.push_back(new Asm_Unar_Cmd(Op, Str[0] == '\'' ? new Asm_StringConst(Str) : (Asm_Operand*)new Asm_IntConst(Str)));
 }
 
-void Asm_Code::Add(AsmOp Op, string var, int offset) {
+void Asm_Code::Add(AsmOpType Op, string var, int offset) {
 	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(var, offset)));
 }
 
-void Asm_Code::Add(AsmOp Op, AsmRegistr Reg1, AsmRegistr Reg2) {
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Registr(Reg2)));
 }
 
-void Asm_Code::Add(AsmOp Op, AsmRegistr Reg, string Str) {
-	if (Str[0] == '\'') {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_StringConst(Str)));
-	}
-	else {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_IntConst(Str)));
-	}
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, string Str) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), Str[0] == '\'' ? new Asm_StringConst(Str) : (Asm_Operand*)new Asm_IntConst(Str)));
 }
 
-void Asm_Code::Add(AsmOp Op, AsmRegistr Reg, string Var, int offset) {
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, string Var, int offset) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_Address(Var, offset)));
 }
 
-void Asm_Code::Add(AsmOp Op, string Str, AsmRegistr Reg) {
-	if (Str[0] == '\'') {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_StringConst(Str), new Asm_Registr(Reg)));
-	}
-	else {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_IntConst(Str), new Asm_Registr(Reg)));
-	}
+void Asm_Code::Add(AsmOpType Op, string Str, AsmRegType Reg) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, Str[0] == '\'' ? new Asm_StringConst(Str) : (Asm_Operand*)new Asm_IntConst(Str), new Asm_Registr(Reg)));
 }
 
-void Asm_Code::Add(AsmOp Op, string Var, int offset, AsmRegistr Reg) {
+void Asm_Code::Add(AsmOpType Op, string Var, int offset, AsmRegType Reg) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Var, offset), new Asm_Registr(Reg)));
 }
 

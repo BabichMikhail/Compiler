@@ -6,6 +6,7 @@
 #include "symbol.h"
 #include <algorithm>
 #include "checktype.h"
+#include <map>
 
 Expr::Expr(TypeExpr TypeExp) : TypeExp(TypeExp){}
 
@@ -137,34 +138,35 @@ void ExprRecord::GetIdentStr(ExpArgList* List){
 	List->Flag = false;
 }
 
-set<pair<TokenType, AsmOp>> BinOperations = {
-	make_pair(TK_PLUS, AsmAdd), make_pair(TK_MINUS, AsmSub), make_pair(TK_XOR, AsmXor), make_pair(TK_OR, AsmOr),
-	make_pair(TK_MUL, AsmIMul), make_pair(TK_AND, AsmAnd), make_pair(TK_SHL, AsmShl), make_pair(TK_SHR, AsmShr)
+map<TokenType, AsmOpType> BinOperations = {
+	make_pair(TK_PLUS, Add), make_pair(TK_MINUS, Sub), make_pair(TK_XOR, Xor), make_pair(TK_OR, Or), make_pair(TK_MUL, IMul), make_pair(TK_AND, And)
 };
 
 void ExprBinOp::GetAsmCode(Asm_Code* Code){
 	Left->GetAsmCode(Code);
-	Right->GetAsmCode(Code);
-	Code->Add(AsmPop, AsmEBX);
-	Code->Add(AsmPop, AsmEAX);
-	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
-		Code->Add(AsmXor, AsmEDX, AsmEDX);
-		Code->Add(AsmDiv, AsmEBX);
-		if (Op.Type == TK_DIV_INT) {
-			Code->Add(AsmPush, AsmEAX);
+	if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
+		Code->Add(Pop, EAX);				      /* A - const only */
+		if (Right->TypeExp != ConstIntExp) {
+			throw ConstIntExpressionExpected(Op.Pos);
 		}
-		else {
-			Code->Add(AsmPush, AsmEDX);
-		}
+		Code->Add(Op.Type == TK_SHL ? Shl : Shr, EAX, ((ExprIntConst*)Right)->Value.Source);
+		Code->Add(Push, EAX);
 		return;
 	}
-	else {
-		for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
-			if ((*it).first == Op.Type) {
-				Code->Add((*it).second, AsmEAX, AsmEBX);
-				Code->Add(AsmPush, AsmEAX);
-				return;
-			}
+	Right->GetAsmCode(Code);
+	Code->Add(Pop, EBX);
+	Code->Add(Pop, EAX);
+	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
+		Code->Add(Xor, EDX, EDX);
+		Code->Add(Div, EBX);
+		Op.Type == TK_DIV_INT ? Code->Add(Push, EAX) : Code->Add(Push, EDX);
+		return;
+	}
+	for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
+		if ((*it).first == Op.Type) {
+			Code->Add((*it).second, EAX, EBX);
+			Code->Add(Push, EAX);
+			return;
 		}
 	}
 }
@@ -174,36 +176,35 @@ void ExprUnarOp::GetAsmCode(Asm_Code* Code) {
 	case TK_PLUS: 
 		return;
 	case TK_MINUS:	
-		Code->Add(AsmPop, AsmEAX);
-		Code->Add(AsmNeg, AsmEAX);
-		Code->Add(AsmPush, AsmEAX);
+		Code->Add(Pop, EAX);
+		Code->Add(Neg, EAX);
+		Code->Add(Push, EAX);
 		return;
 	case TK_NOT: 
-		Code->Add(AsmPop, AsmEAX);
-		Code->Add(AsmNot, AsmEAX);
-		Code->Add(AsmPush, AsmEAX);
+		Code->Add(Pop, EAX);
+		Code->Add(Not, EAX);
+		Code->Add(Push, EAX);
 		return;
 	}
 }
 
 void ExprIntConst::GetAsmCode(Asm_Code* Code) {
-	Code->Add(AsmPush, Value.Source);
+	Code->Add(Push, Value.Source);
 }
 
 void ExprStringConst::GetAsmCode(Asm_Code* Code) {
 	int Size = Value.Source.size();
 	if (Size == 1) {
-		Code->Add(AsmPush, '\'' + Value.Source + '\'');
+		Code->Add(Push, '\'' + Value.Source + '\'');
+		return;
 	}
-	else {
-		for (int i = 0; i < Size; i += 4) {
-			Code->Add(AsmMov, AsmEAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
-			Code->Add(AsmMov, "base_str", i, AsmEAX);
-		}
-		Code->Add(AsmMov, AsmEAX, "0x0");
-		Code->Add(AsmMov, "base_str", Size, AsmEAX);
-		Code->Add(AsmPush, "base_str");
+	for (int i = 0; i < Size; i += 4) {
+		Code->Add(Mov, EAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
+		Code->Add(Mov, "base_str", i, EAX);
 	}
+	Code->Add(Mov, EAX, "0x0");
+	Code->Add(Mov, "base_str", Size, EAX);
+	Code->Add(Push, "base_str");
 }
 
 void ExprFunction::GetAsmCode(Asm_Code* Code) {
@@ -213,7 +214,8 @@ void ExprFunction::GetAsmCode(Asm_Code* Code) {
 		Rights[i]->GetAsmCode(Code);
 		TypeIDexp.push_back(CheckType(((SymRecord*)Left)->Table, Position()).GetTypeID(Rights[i]));
 	}
-	if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_write || ((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_writeln){
+	int argc = ((SymFunction*)((ExprVar*)Left)->Sym)->argc;
+	if (argc == argc_write || argc == argc_writeln){
 		string format = "\'";
 		for (int i = 0; i < Rights.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
@@ -228,17 +230,12 @@ void ExprFunction::GetAsmCode(Asm_Code* Code) {
 				break;
 			}
 		}
-		if (((SymFunction*)((ExprVar*)Left)->Sym)->argc == argc_writeln) {
-			format += "\', 0xA, 0x0";
-		}
-		else {
-			format += "\', 0x0";
-		}
+		format += argc == argc_writeln ? "\', 0xA, 0x0" : "\', 0x0";
 		string FormatName = Code->AddFormat(format);
 
-		Code->Add(AsmPush, FormatName); 
-		Code->Add(AsmCall, "_printf");
-		Code->Add(AsmAdd, AsmESP, to_string(4 * Rights.size() + 4));
+		Code->Add(Push, FormatName); 
+		Code->Add(Call, "_printf");
+		Code->Add(Add, ESP, to_string(4 * Rights.size() + 4));
 	}
 }
 
