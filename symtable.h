@@ -20,9 +20,9 @@ public:
 	vector<Symbol*> Symbols;
 	SymTable(SymTable* ParentTable);
 
-	int Find(string Value);
+	bool Find(string Value);
 	int FindLocal(string Value);
-	vector<int> FindAll(string Value);
+	bool FindAll(string Value);
 	
 	Symbol* GetSymbol(string Name, const Position Pos);
 	vector<Symbol*> GetAllSymbols(string Name, const Position Pos);

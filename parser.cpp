@@ -644,7 +644,7 @@ Symbol* Parser::ParseType(SymTable* Table){
 			Lex.Next();
 		}
 		auto Pos = Lex.Get().Pos;
-		if (Table->Find(Lex.Get().Source) == -1) {
+		if (!Table->Find(Lex.Get().Source)) {
 			throw UnknownType(Lex.Get().Source, Lex.Get().Pos);
 		}
 		auto Sym = Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);

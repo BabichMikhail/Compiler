@@ -11,31 +11,31 @@ void SymTable::Add(Symbol* NewElem){
 	Symbols.push_back(NewElem);
 }
 
-int SymTable::Find(string Value){
+bool SymTable::Find(string Value){
 	auto TableNow = this;
 	do {
 		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
 			if (TableNow->Symbols[i]->isSame(Value)) {
-				return i;
+				return true;
 			}
 		}
 		TableNow = TableNow->Parent;
 	} while (TableNow != nullptr);
-	return -1;
+	return false;
 }
 
-vector<int> SymTable::FindAll(string Value) {
+bool SymTable::FindAll(string Value) {
 	vector<int> Ans;
 	auto TableNow = this;
 	do {
 		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
 			if (TableNow->Symbols[i]->isSame(Value)) {
-				Ans.push_back(i);
+				return true;
 			}
 		}
 		TableNow = TableNow->Parent;
 	} while (TableNow != nullptr);
-	return Ans;
+	return false;
 }
 
 int SymTable::FindLocal(string Value) {
