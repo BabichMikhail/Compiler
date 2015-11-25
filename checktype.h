@@ -1,8 +1,17 @@
 #ifndef CHECK_TYPE_H
 #define CHECK_TYPE_H
 
-#include "symtable.h"
+class SymTable;
+
 #include "syntaxnodes.h"
+
+#define argc_write -1
+#define argc_writeln -2
+
+enum MyTypeID {
+	TypeID_BadType = -1, TypeID_Integer = 0, TypeID_Double = 1, TypeID_Char = 2, TypeID_Boolean = 3, TypeID_String = 4, TypeID_Array = 5,
+	TypeID_DynArray = 6, TypeID_Record = 7, TypeID_Pointer = 8
+};
 
 class CmpArguments {
 private:

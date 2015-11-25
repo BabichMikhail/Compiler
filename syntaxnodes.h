@@ -14,9 +14,6 @@ using namespace std;
 class Symbol;
 class Asm_Code;
 
-#define argc_write -1
-#define argc_writeln -2
-
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
@@ -29,7 +26,8 @@ public:
 	Expr(TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces){};
-	virtual void GetAsmCode(Asm_Code* Code) {}
+	virtual void Generate(Asm_Code* Code) {}
+	virtual string GenerateInitList() { return ""; }
 };
 
 class ExprBinOp : public Expr{
@@ -40,7 +38,7 @@ public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void GetAsmCode(Asm_Code* Code);
+	void Generate(Asm_Code* Code);
 };
 
 class ExprUnarOp : public Expr{
@@ -50,7 +48,7 @@ public:
 	ExprUnarOp(Token Op, Expr* Exp);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void GetAsmCode(Asm_Code* Code);
+	void Generate(Asm_Code* Code);
 };
 
 class ExprConst : public Expr{
@@ -59,17 +57,19 @@ public:
 	ExprConst(Token Value, TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces);
+	virtual string GenerateInitList();
 };
 
 class ExprBoolConst : public ExprConst{
 public:
 	ExprBoolConst(Token Value);
+	string GenerateInitList();
 };
 
 class ExprIntConst : public ExprConst{
 public:
 	ExprIntConst(Token Value);
-	void GetAsmCode(Asm_Code* Code);
+	void Generate(Asm_Code* Code);
 };
 
 class ExprDoubleConst : public ExprConst{
@@ -80,15 +80,17 @@ public:
 class ExprStringConst : public ExprConst{
 public:
 	ExprStringConst(Token Value);
-	void GetAsmCode(Asm_Code* Code);
+	void Generate(Asm_Code* Code);
 };
 
-class ExprVar : public Expr{
+class ExprIdent : public Expr{
 public:
+	Position Pos;
 	Symbol* Sym;
-	ExprVar(Symbol* Sym);
+	ExprIdent(Symbol* Sym, Position Pos);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	void Generate(Asm_Code* Code);
 };
 
 class ExprAssign : public Expr{
@@ -98,6 +100,7 @@ public:
 	ExprAssign(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	void Generate(Asm_Code* Code);
 };
 
 class ExprArrayIndex : public Expr{
@@ -116,7 +119,7 @@ public:
 	ExprFunction(Expr* Left, vector<Expr*> Rights);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void GetAsmCode(Asm_Code* Code);
+	void Generate(Asm_Code* Code);
 };
 
 class ExprRecord : public Expr{
@@ -133,6 +136,7 @@ public:
 	vector<Expr*> List;
 	ExprInitList(vector<Expr*> List = vector<Expr*>());
 	void Print(const int Spaces);
+	string GenerateInitList();
 };
 
 class ExprPointer : public Expr {

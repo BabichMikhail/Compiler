@@ -1,4 +1,5 @@
 #include "checktype.h"
+#include "symtable.h"
 
 #define N 9
 
@@ -44,11 +45,11 @@ static vector<Cell> TypeTable[] = {
 	}
 };
 
-set<int> ReservedProc = { argc_write, argc_writeln };
-
 const string StrTypes[] = {
 	"Untyped", "Integer", "Double", "Char", "Boolean", "String", "Array", "Record", "Pointer", "Function"
 };
+
+set<int> ReservedProc = { argc_write, argc_writeln };
 
 /* TypeID_1 - тип, к которому приводится TypeID_2 */
 
@@ -143,7 +144,7 @@ MyTypeID CheckType::GetTypeID(Token TK) {
 		}
 	}
 	if (Sym->Section == DeclVar) {
-		auto ASym = (SymVar*)Sym;
+		auto ASym = (SymIdent*)Sym;
 		auto TypeID = ((SymType*)ASym->Type)->TypeID;
 		if (TypeID != TypeID_String) {
 			return TypeID;
@@ -170,7 +171,7 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		while (((ExprArrayIndex*)AIExp)->Left->TypeExp != VarExp) {
 			AIExp = ((ExprArrayIndex*)AIExp)->Left;
 		}
-		auto _Sym = ((SymVar*)((ExprVar*)((ExprArrayIndex*)AIExp)->Left)->Sym)->Type;
+		auto _Sym = ((SymIdent*)((ExprIdent*)((ExprArrayIndex*)AIExp)->Left)->Sym)->Type;
 		AIExp = Exp;
 		while (((ExprArrayIndex*)AIExp)->TypeExp != VarExp) {
 			AIExp = ((ExprArrayIndex*)AIExp)->Left;
@@ -185,7 +186,7 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		Check(TypeID_Pointer, GetTypeID(((ExprDereference*)Exp)->Exp));
 	}
 	if (Exp->TypeExp == VarExp) {
-		return ((SymType*)((SymVar*)(((ExprVar*)Exp)->Sym))->Type)->TypeID;
+		return ((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->TypeID;
 	}
 	if (Exp->TypeExp == ConstStringExp) {
 		if (((ExprStringConst*)Exp)->Value.Source.size() == 1) {
@@ -193,45 +194,17 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		}
 	}
 	if (Exp->TypeExp == RecordExp) {
-		auto TypeID = ((SymType*)((SymVar*)((ExprRecord*)Exp)->Right)->Type)->TypeID;
+		auto TypeID = ((SymType*)((SymIdent*)((ExprRecord*)Exp)->Right)->Type)->TypeID;
 		return TypeID;
 	}
 	if (Exp->TypeExp == FunctionExp) {
-		auto Symbols = Table->GetAllSymbols(((ExprVar*)((ExprFunction*)Exp)->Left)->Sym->Name, Pos);
-		for (int i = 0; i < Symbols.size(); ++i) {
-			if (Symbols[i]->Section == DeclFunction) {
-				if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
-					continue;
-				}
-			}
-			if (Symbols[i]->Section == DeclProcedure) {
-				if (ReservedProc.find(((SymFunction*)Symbols[i])->argc) != ReservedProc.end()) {
-					return TypeID_BadType;
-				}
-				if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc) {
-					continue;
-				}
-			}
-			bool flag = false;
-			if (Symbols[i]->Section == DeclFunction || Symbols[i]->Section == DeclProcedure) {
-				int offset = ((SymFunction*)Symbols[i])->Table->DeclTypeCount;
-				for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
-					if (GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)((SymVar*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
-						flag = true;
-					}
-				}
-			}
-			if (flag) {
-				continue;
-			}
-			if (Symbols[i]->Section == DeclFunction) {
-				return ((SymType*)((SymFunction*)Symbols[i])->Type)->TypeID;
-			}
-			if (Symbols[i]->Section == DeclProcedure) {
-				return TypeID_BadType;
-			}
+		auto Symbol = Table->FindRequiredSymbol(Exp, Pos);
+		if (Symbol->Section == DeclProcedure) {
+			return TypeID_BadType;
 		}
-		throw IllegalExpr(Pos);
+		else {
+			return ((SymType*)((SymFunction*)Symbol)->Type)->TypeID;
+		}
 	}
 	return GetTypeID(Exp->TypeExp);
 }
@@ -295,7 +268,7 @@ bool CmpArguments::Compare(Symbol* Sym_1, Symbol* Sym_2) {
 		return false;
 	}
 	for (int i = 0; i < Sym_R_1->argc; ++i) {
-		if (((SymVar*)Sym_R_1->Table->Symbols[i])->Type != ((SymVar*)Sym_R_2->Table->Symbols[i])->Type) {
+		if (((SymIdent*)Sym_R_1->Table->Symbols[i])->Type != ((SymIdent*)Sym_R_2->Table->Symbols[i])->Type) {
 			return false;
 		}
 	}

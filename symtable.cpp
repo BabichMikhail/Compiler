@@ -1,5 +1,6 @@
 #include "symtable.h"
 #include "lexer.h"
+#include "checktype.h"
 
 using namespace std;
 
@@ -47,6 +48,42 @@ int SymTable::FindLocal(string Value) {
 	return -1;
 }
 
+Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
+	auto Symbols = GetAllSymbols(((ExprIdent*)((ExprFunction*)Exp)->Left)->Sym->Name, Pos);
+	for (int i = 0; i < Symbols.size(); ++i) {
+		if (Symbols[i]->Section != DeclFunction && Symbols[i]->Section != DeclProcedure) {
+			continue;
+		}
+		if (Symbols[i]->Section == DeclFunction) {
+			if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
+				continue;
+			}
+		}
+		if (Symbols[i]->Section == DeclProcedure) {
+			if (((SymProcedure*)Symbols[i])->argc == argc_writeln || ((SymProcedure*)Symbols[i])->argc == argc_write){
+				return Symbols[i];
+			}
+			if (((ExprFunction*)Exp)->Rights.size() != ((SymProcedure*)Symbols[i])->argc) {
+				continue;
+			}
+		}
+		bool flag = false;
+		if (Symbols[i]->Section == DeclFunction || Symbols[i]->Section == DeclProcedure) {
+			int offset = ((SymCall*)Symbols[i])->Table->DeclTypeCount;
+			for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
+				if (CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)((SymIdent*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
+					flag = true;
+				}
+			}
+		}
+		if (flag) {
+			continue;
+		}
+		return Symbols[i];
+	}
+	throw IllegalExpr(Pos);
+}
+
 Symbol* SymTable::GetSymbol(string Name, const Position Pos) {
 	int idx = -1;
 	auto TableNow = this;
@@ -88,4 +125,50 @@ void SymTable::Print(int Spaces){
 		Symbols[i]->Print(Spaces);
 		cout << endl;
 	}
+}
+
+void SymTable::GenerateVariables(Asm_Code* Code) {
+	if (Parent == nullptr) {
+		for (int i = DeclTypeCount; i < Symbols.size(); ++i) {
+			Symbols[i]->Generate(Code);
+			if (Symbols[i]->Section == DeclVar) {
+				((SymIdent*)Symbols[i])->isLocal = false;
+			}
+		}
+	}
+}
+
+pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var) {
+	int size = 0;
+	int offset = 8;
+	for (int i = last_arg - 1; i >= 0; --i) {
+		if (Symbols[i]->Section == DeclVar) {
+			((SymIdent*)Symbols[i])->isLocal = true;
+			((SymIdent*)Symbols[i])->offset = offset;
+			offset += ((SymIdent*)Symbols[i])->Type->GetSize();
+		}
+	}
+	if (last_arg != first_var) {
+		((SymIdent*)Symbols[last_arg])->offset = offset;
+		((SymIdent*)Symbols[last_arg])->isLocal = true;
+	}
+	offset -= 8;
+	for (int i = first_var; i < Symbols.size(); ++i) {
+		if (Symbols[i]->Section == DeclVar) {
+			size += ((SymIdent*)Symbols[i])->Type->GetSize();
+			((SymIdent*)Symbols[i])->isLocal = true;
+			((SymIdent*)Symbols[i])->offset = -size;
+		}
+		else if (Symbols[i]->Section == DeclProcedure || Symbols[i]->Section == DeclFunction) {
+			Symbols[i]->Generate(Code);
+		}
+	}
+	Code->Add(Sub, ESP, to_string(size));
+	for (int i = first_var; i < Symbols.size(); ++i) {
+		if (Symbols[i]->Section == DeclVar && ((SymIdent*)Symbols[i])->InitExp != nullptr) {
+			ExprAssign* Exp = new ExprAssign(new ExprIdent(Symbols[i], Position()), ((SymIdent*)Symbols[i])->InitExp);
+			Exp->Generate(Code);
+		}
+	}
+	return make_pair(size, offset);
 }

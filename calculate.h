@@ -26,7 +26,7 @@ template <class T> CalculateConstExpr<T>::CalculateConstExpr(SymTable* Table, st
 template <class T> T CalculateConstExpr<T>::Calculate(Expr* Exp) {
 	switch (Exp->TypeExp) {
 	case VarExp:
-		return Calculate(((SymVar*)Table->GetSymbol(((ExprVar*)Exp)->Sym->Name.c_str(), Pos))->InitExp);
+		return Calculate(((SymVar*)Table->GetSymbol(((ExprIdent*)Exp)->Sym->Name.c_str(), Pos))->InitExp);
 	
 	case ConstIntExp:
 		CheckType<int>();
@@ -115,7 +115,7 @@ template <class T> T CalculateConstExpr<T>::CalculateArrayIndex(ExprArrayIndex* 
 		idxs.push_back(Calculate(((ExprArrayIndex*)IdentExp)->Right));
 		IdentExp = ((ExprArrayIndex*)IdentExp)->Left;
 	}
-	ExprInitList* ExpList = (ExprInitList*)((SymConst*)Table->GetSymbol(((ExprVar*)IdentExp)->Sym->Name.c_str(), Pos))->InitExp;
+	ExprInitList* ExpList = (ExprInitList*)((SymConst*)Table->GetSymbol(((ExprIdent*)IdentExp)->Sym->Name.c_str(), Pos))->InitExp;
 	IdentExp = Exp;
 	for (int i = idxs.size() - 1; i >= 0; --i) {
 		ExpList = (ExprInitList*)ExpList->List[idxs[i]];

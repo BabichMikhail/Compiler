@@ -7,12 +7,12 @@
 
 using namespace std;
 
-enum AsmOpType { Push = 0, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov };
+enum AsmOpType { Push = 0, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov, Ret };
 enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP };
 
 class Asm_Operand {
 public:
-	virtual string GetCode() { return ""; }
+	virtual string GetCode() = 0;
 };
 
 class Asm_Registr : public Asm_Operand{
@@ -46,9 +46,11 @@ public:
 class Asm_Address : public Asm_Operand {
 public:
 	string Val;
+	AsmRegType Reg;
 	int offset;
 	string GetCode();
 	Asm_Address(string Val, int offset);
+	Asm_Address(AsmRegType Reg, int offset);
 };
 
 class Asm_Cmd {
@@ -73,22 +75,55 @@ public:
 	Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1);
 };
 
+class Asm_Global_Data {
+public:
+	string Name;
+	string Type;
+	string InitList;
+	string GetCode();
+	Asm_Global_Data(string Name, string Type, string InitList);
+};
+
+class Asm_Local_Data {
+public:
+	int depth; 
+	int size;
+	int arg_size;
+	Asm_Local_Data(int depth, int size, int arg_size);
+};
+
+class Asm_Function {
+public:
+	int arg_size;
+	string Name;
+	vector<Asm_Cmd*> Cmds;
+	vector<Asm_Function*> Functions;
+	string GetCode();
+	Asm_Function(string Name, vector<Asm_Cmd*> Cmds, int arg_size);
+};
+
 class Asm_Code {
 private:
-	vector<string> Fmts;
-	vector<Asm_Cmd*> Cmds;
+	vector<Asm_Global_Data*> Data;
 public:
+	vector<Asm_Cmd*> Cmds; 
+	vector<string> *Fmts;
+	vector<Asm_Function*> Functions;
 	string AddFormat(string new_format);
 	void Add(AsmOpType Op, AsmRegType Reg);
-	void Add(AsmOpType Op, string Str);
+	void Add(AsmOpType Op, string Val);
 	void Add(AsmOpType Op, string Var, int offset);
 	void Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
-	void Add(AsmOpType Op, AsmRegType Reg, string Str);
+	void Add(AsmOpType Op, AsmRegType Reg, string Val);
 	void Add(AsmOpType Op, AsmRegType Reg, string Var, int offset);
 	void Add(AsmOpType Op, string Str, AsmRegType Reg);
 	void Add(AsmOpType Op, string Str, int offset, AsmRegType Reg);
+	void Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2, int offset);
+	void Add(AsmOpType Op, AsmRegType Reg1, int offset, AsmRegType Reg2);
+	void Add(string Name, string Type, string InitList); 
+	void Add(Asm_Function* Func);
 	void Print();
-	
+	Asm_Code();
 };
 
 #endif

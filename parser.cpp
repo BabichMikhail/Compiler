@@ -34,32 +34,25 @@ void Parser::Print(){
 
 void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2) {
 	auto NewTable = new SymTable(Table);
-	Symbol* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position()));
+	Symbol* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position()), Var);
 	NewTable->Add(SymArg);
-	Symbol* SymResult = new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position()));
+	Symbol* SymResult = new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position()), Var);
 	NewTable->Add(SymResult);
 	auto Stmt = new Stmt_Compound();
-	Stmt->Add(new Stmt_Assign(new ExprAssign(new ExprVar(NewTable->GetSymbol("Result", Position())), new ExprVar(NewTable->GetSymbol("Arg_0", Position())))));
+	Stmt->Add(new Stmt_Assign(new ExprAssign(new ExprIdent(NewTable->GetSymbol("Result", Position()), Position()), 
+		new ExprIdent(NewTable->GetSymbol("Arg_0", Position()), Position()))));
 	
 	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_1, Position()));
 	Table->Add(SymFunc);
 	++Table->DeclTypeCount;
 }
 
-void AddPrintf(SymTable* Table) {
-	auto NewTable = new SymTable(Table);
-	SymVar* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol("integer", Position()));
-	vector<Expr*> List;
-	List.push_back(SymArg->InitExp);
-	auto Stmt = new Stmt_Compound();
-}
-
 void Parser::ReservedFunctions(SymTable* Table) {
 	ReservedCastFunction(Table, "double", "integer");
 	ReservedCastFunction(Table, "integer", "char");
 	ReservedCastFunction(Table, "char", "integer");
-	Table->Add(new SymProcedure("write", nullptr, nullptr, argc_write));
-	Table->Add(new SymProcedure("writeln", nullptr, nullptr, argc_writeln));
+	Table->Add(new SymProcedure("write", new SymTable(Table), nullptr, argc_write));
+	Table->Add(new SymProcedure("writeln", new SymTable(Table), nullptr, argc_writeln));
 	++++Table->DeclTypeCount;
 }
 
@@ -431,7 +424,7 @@ void Parser::ParseVarDecl(SymTable* Table){
 		}
 		for (int i = 0; i < Names.size(); ++i) {
 			Table->CheckSymbol(Names[i], Names_Pos[i]);
-			Table->Add(new SymVar(Names[i], Exp, Type));
+			Table->Add(new SymVar(Names[i], Exp, Type, Null));
 		}
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
@@ -466,7 +459,7 @@ void Parser::ParseCallDecl(SymTable* Table, DeclSection Section) {
 	if (Section == DeclFunction) {
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType(Table);
-		LocTable->Add(new SymVar("Result", nullptr, Type));
+		LocTable->Add(new SymVar("Result", nullptr, Type, Null));
 		Lex.CheckAndNext(TK_SEMICOLON);
 		NewSym = new SymFunction(Name, LocTable, nullptr, argc + 1, Type);
 	}
@@ -517,15 +510,18 @@ Symbol* Parser::ParseRecord(SymTable* Table) {
 
 int Parser::ParseArguments(SymTable* Table) {
 	int argc = 0;
-	while (Lex.Get().Type == TK_IDENTIFIER || Lex.Get().Type == TK_CONST || Lex.Get().Type == TK_VAR) {
-		auto isConst = false;
+	while (Lex.Get().Type == TK_IDENTIFIER || Lex.Get().Type == TK_CONST || Lex.Get().Type == TK_VAR || Lex.Get().Type == TK_OUT) {
+		VariableState State = Null;
 		if (Lex.Get().Type == TK_CONST) {
-			isConst = true;
+			State = Const;
 			Lex.Next();
 		}
-		auto isVar = false;
 		if (Lex.Get().Type == TK_VAR) {
-			isVar = true;
+			State = Var;
+			Lex.Next();
+		}
+		if (Lex.Get().Type == TK_OUT) {
+			State = Out;
 			Lex.Next();
 		}
 		++argc;
@@ -535,7 +531,7 @@ int Parser::ParseArguments(SymTable* Table) {
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType(Table);
 		Table->CheckSymbol(Name, Pos);
-		Table->Add(new SymVar(Name, nullptr, Type));
+		Table->Add(new SymVar(Name, nullptr, Type, State));
 		if (Lex.Get().Type != TK_END  && Lex.Get().Type != TK_CLOSE_BRACKET) {
 			Lex.CheckAndNext(TK_SEMICOLON);
 		}
@@ -759,10 +755,10 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 	auto TK = Lex.Get();
 	Lex.Next();
 	if (State == Test_Exp) {
-		Table->Add(new SymVar(TK.Source, nullptr, nullptr));
+		Table->Add(new SymVar(TK.Source, nullptr, nullptr, Null));
 	}
 	auto Sym = Table->GetSymbol(TK.Source, TK.Pos);
-	Expr* ExpNow = new ExprVar(Sym);
+	Expr* ExpNow = new ExprIdent(Sym, TK.Pos);
 	while (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET || Lex.Get().Type == TK_OPEN_BRACKET || Lex.Get().Type == TK_POINT){
 		if (Lex.Get().Type == TK_OPEN_SQUARE_BRACKET){
 			do {
@@ -789,6 +785,10 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 			}
 			Lex.Next();
 			ExpNow = new ExprFunction(ExpNow, Arguments);
+			if (State != Test_Exp) {
+				auto Sym = Table->FindRequiredSymbol(ExpNow, TK.Pos);
+				((ExprIdent*)((ExprFunction*)ExpNow)->Left)->Sym = Sym;
+			}
 		}
 		if (Lex.Get().Type == TK_POINT){
 			Lex.Next();
@@ -797,10 +797,10 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 			}
 			Symbol* Right = nullptr;
 			if (State == Test_Exp) {
-				Right = new SymVar(Lex.Get().Source, nullptr, nullptr);
+				Right = new SymVar(Lex.Get().Source, nullptr, nullptr, Null);
 			}
 			else {
-				Right = ((SymRecord*)((SymVar*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+				Right = ((SymRecord*)((SymIdent*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 			}
 			Lex.Next();
 			ExpNow = new ExprRecord(ExpNow, Right);

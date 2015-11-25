@@ -2,16 +2,13 @@
 #define SYMBOL_H
 
 #include "syntaxnodes.h"
+#include "checktype.h"
 
 class Statement;
 class SymTable;
 
 enum DeclSection { DeclNull, DeclConst, DeclVar, DeclLabel, DeclType, DeclFunction, DeclProcedure, DeclRecord };
-
-enum MyTypeID {
-	TypeID_BadType = -1, TypeID_Integer = 0, TypeID_Double = 1, TypeID_Char = 2, TypeID_Boolean = 3, TypeID_String = 4, TypeID_Array = 5, 
-	TypeID_DynArray = 6, TypeID_Record = 7, TypeID_Pointer = 8, TypeID_Function = 9
-};
+enum VariableState { Null, Var, Const, Out };
 
 using namespace std;
 
@@ -24,6 +21,9 @@ public:
 	Symbol(Symbol* Sym);
 	bool isSame(string Value);
 	virtual void Print(int Spaces){};
+	virtual int GetSize() { return 0; }
+	virtual void Generate(Asm_Code* Code) {}
+	virtual string GenerateName() { return ""; };
 };
 
 class SymLabel : public Symbol{
@@ -39,28 +39,40 @@ public:
 	SymType(string Name, Symbol* Type);
 	SymType(string Name, MyTypeID TypeID);
 	void Print(int Spaces);
+	string GenerateName();
+	int GetSize();
 };
 
 class SymPointer : public Symbol {
 public:
 	Symbol* Type;
-	MyTypeID TypeID;
 	SymPointer(string Name, Symbol* Type);
 	void Print(int Spaces);
+	int GetSize();
 };
 
-class SymVar : public Symbol{
+class SymIdent : public Symbol {
+protected:
+	SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, VariableState State);
 public:
 	Expr* InitExp;
 	Symbol* Type;
-	SymVar(string Name, Expr* InitExp, Symbol* Type);
+	VariableState State;
+	bool isLocal;
+	int offset;
+	string GenerateName();
+	string GetInitList();
+	void Generate(Asm_Code* Code);
+};
+
+class SymVar : public SymIdent {
+public:
+	SymVar(string Name, Expr* InitExp, Symbol* Type, VariableState State);
 	void Print(int Spaces);
 };
 
-class SymConst : public Symbol{
+class SymConst : public SymIdent {
 public:
-	Expr* InitExp;
-	Symbol* Type;
 	SymConst(string Name, Expr* InitExp, Symbol* Type);
 	void Print(int Spaces);
 };
@@ -71,6 +83,7 @@ public:
 	MyTypeID TypeID;
 	SymDynArray(Symbol* Type);
 	void Print(int Spaces);
+	int GetSize();
 };
 
 class SymArray : public SymDynArray{
@@ -79,6 +92,7 @@ public:
 	int Right;
 	SymArray(Symbol* Type, int Left, int Right);
 	void Print(int Spaces);
+	int GetSize();
 };
 
 class SymStringType : public Symbol{
@@ -87,27 +101,31 @@ public:
 	MyTypeID TypeID;
 	SymStringType(int Length);
 	void Print(int Spaces);
+	int GetSize();
 };
 
 class SymCall : public Symbol {
+protected:
+	SymCall(DeclSection Section, string Name, SymTable* Table, Statement* Stmt, int argc);
 public:
 	SymTable* Table;
 	Statement* Stmt;
 	int argc;
-	SymCall(DeclSection Section, string Name, SymTable* Table, Statement* Stmt, int argc);
+	string GenerateName();
+	void Generate(Asm_Code* Code);
 };
 
 class SymFunction : public SymCall {
 public:	
-	Symbol* Type;
 	SymFunction(string Name, SymTable* Table, Statement* Stmt, int argc, Symbol* Type);
 	void Print(int Spaces);
+	Symbol* Type;
 };
 
 class SymProcedure : public SymCall {
 public:
 	SymProcedure(string Name, SymTable* Table, Statement* Stmt, int argc);
-	void Print(int Spaces);
+	void Print(int Spaces);	
 };
 
 class SymRecord : public Symbol {
@@ -116,6 +134,7 @@ public:
 	int argc;
 	SymRecord(SymTable* Table, string Name, int argc);
 	void Print(int Spaces);
+	int GetSize();
 };
 
 #endif

@@ -126,4 +126,9 @@ public:
 	ConstIntExpressionExpected(const Position Pos) : Error("Const Integer Expression Expected. " + StrPos(Pos), Pos) {};
 };
 
+class VariableIdentifierExpected : public Error {
+public:
+	VariableIdentifierExpected(const Position Pos) : Error("Variable identifier expectid. " + StrPos(Pos), Pos) {};
+};
+
 #endif 

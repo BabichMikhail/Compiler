@@ -5,6 +5,7 @@
 #include <set>
 #include "symbol.h"
 #include <algorithm>
+#include "symtable.h"
 #include "checktype.h"
 #include <map>
 
@@ -20,7 +21,7 @@ ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value, ConstIntExp){}
 ExprDoubleConst::ExprDoubleConst(Token Value) : ExprConst(Value, ConstDoubleExp){}
 ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value, ConstStringExp){}
 
-ExprVar::ExprVar(Symbol* Sym) : Sym(Sym), Expr(VarExp){}
+ExprIdent::ExprIdent(Symbol* Sym, Position Pos) : Sym(Sym), Expr(VarExp), Pos(Pos){}
 
 ExprArrayIndex::ExprArrayIndex(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(ArrayExp){}
 ExprAssign::ExprAssign(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(AssignExp){}
@@ -50,7 +51,7 @@ void ExprConst::Print(int Spaces){
 	cout << Value.Source.c_str() << endl;
 }
 
-void ExprVar::Print(int Spaces){
+void ExprIdent::Print(int Spaces){
 	print_indent(Spaces);
 	cout << Sym->Name << endl;
 }
@@ -117,7 +118,7 @@ void ExprUnarOp::GetIdentStr(ExpArgList* List){
 
 void ExprConst::GetIdentStr(ExpArgList* List){}
 
-void ExprVar::GetIdentStr(ExpArgList* List){
+void ExprIdent::GetIdentStr(ExpArgList* List){
 	List->Vec.push_back(Sym->Name);
 }
 
@@ -142,8 +143,8 @@ map<TokenType, AsmOpType> BinOperations = {
 	make_pair(TK_PLUS, Add), make_pair(TK_MINUS, Sub), make_pair(TK_XOR, Xor), make_pair(TK_OR, Or), make_pair(TK_MUL, IMul), make_pair(TK_AND, And)
 };
 
-void ExprBinOp::GetAsmCode(Asm_Code* Code){
-	Left->GetAsmCode(Code);
+void ExprBinOp::Generate(Asm_Code* Code){
+	Left->Generate(Code);
 	if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
 		Code->Add(Pop, EAX);				      /* A - const only */
 		if (Right->TypeExp != ConstIntExp) {
@@ -153,7 +154,7 @@ void ExprBinOp::GetAsmCode(Asm_Code* Code){
 		Code->Add(Push, EAX);
 		return;
 	}
-	Right->GetAsmCode(Code);
+	Right->Generate(Code);
 	Code->Add(Pop, EBX);
 	Code->Add(Pop, EAX);
 	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
@@ -171,16 +172,19 @@ void ExprBinOp::GetAsmCode(Asm_Code* Code){
 	}
 }
 
-void ExprUnarOp::GetAsmCode(Asm_Code* Code) {
+void ExprUnarOp::Generate(Asm_Code* Code) {
+	
 	switch (Op.Type) {
 	case TK_PLUS: 
 		return;
 	case TK_MINUS:	
+		Exp->Generate(Code);
 		Code->Add(Pop, EAX);
 		Code->Add(Neg, EAX);
 		Code->Add(Push, EAX);
 		return;
 	case TK_NOT: 
+		Exp->Generate(Code);
 		Code->Add(Pop, EAX);
 		Code->Add(Not, EAX);
 		Code->Add(Push, EAX);
@@ -188,11 +192,11 @@ void ExprUnarOp::GetAsmCode(Asm_Code* Code) {
 	}
 }
 
-void ExprIntConst::GetAsmCode(Asm_Code* Code) {
+void ExprIntConst::Generate(Asm_Code* Code) {
 	Code->Add(Push, Value.Source);
 }
 
-void ExprStringConst::GetAsmCode(Asm_Code* Code) {
+void ExprStringConst::Generate(Asm_Code* Code) {
 	int Size = Value.Source.size();
 	if (Size == 1) {
 		Code->Add(Push, '\'' + Value.Source + '\'');
@@ -207,15 +211,82 @@ void ExprStringConst::GetAsmCode(Asm_Code* Code) {
 	Code->Add(Push, "base_str");
 }
 
-void ExprFunction::GetAsmCode(Asm_Code* Code) {
-	vector<MyTypeID> TypeIDexp;
-	for (int i = Rights.size() - 1; i >= 0; --i) {
-		vector<Asm_Code*> Ret;
-		Rights[i]->GetAsmCode(Code);
-		TypeIDexp.push_back(CheckType(((SymRecord*)Left)->Table, Position()).GetTypeID(Rights[i]));
+void ExprIdent::Generate(Asm_Code* Code) {
+	switch (((SymIdent*)Sym)->State) {
+	case Null:
+		Code->Add(Mov, EAX, Sym->GenerateName(), 0);
+		break;
+	case Var:
+	case Const:
+	case Out:
+		if (((SymIdent*)Sym)->isLocal) {
+			Code->Add(Mov, EAX, Sym->GenerateName(), 0);
+			Code->Add(Mov, EAX, EAX, 0);
+			break;
+		}
+		Code->Add(Mov, EAX, Sym->GenerateName());
 	}
-	int argc = ((SymFunction*)((ExprVar*)Left)->Sym)->argc;
+	Code->Add(Push, EAX);
+}
+
+void ExprAssign::Generate(Asm_Code* Code) {
+	SymIdent* LSym = (SymIdent*)((ExprIdent*)Left)->Sym;
+	if (LSym->State == Const) {
+		throw VariableIdentifierExpected(((ExprIdent*)Left)->Pos);
+	}
+	if (LSym->State == Out) {
+		LSym->State = Var;
+	}
+	string Name;
+	switch (Left->TypeExp) {
+	case VarExp:
+		Name = LSym->GenerateName();
+		break;
+	//case RecordExp:
+	//case ArrayExp:
+	}
+	Right->Generate(Code);
+	Code->Add(Pop, EBX);
+	if (Right->TypeExp == VarExp && ((SymIdent*)((ExprIdent*)Right)->Sym)->State == Var) {
+		Code->Add(Mov, EBX, EBX, 0);
+	}
+	if (LSym->State == Var) {
+		Code->Add(Mov, EAX, Name, 0);
+		Code->Add(Mov, EAX, 0, EBX);
+		return;
+	}
+	Code->Add(Mov, Name, 0, EBX);
+}
+
+void ExprFunction::Generate(Asm_Code* Code) {
+	SymCall* LSym = (SymCall*)((ExprIdent*)Left)->Sym;
+	int argc = LSym->argc;
+	if (argc >= 0) {
+		if (LSym->Section == DeclFunction) {
+			Code->Add(Sub, ESP, to_string(((SymIdent*)LSym->Table->Symbols[LSym->argc - 1])->Type->GetSize()));
+		}
+		for (int i = 0; i < Rights.size(); ++i) {
+			if (Rights[i]->TypeExp == VarExp) {
+				SymIdent* RSym = (SymIdent*)((ExprIdent*)Rights[i])->Sym;
+				auto OldState = RSym->State;
+				RSym->State = ((SymIdent*)LSym->Table->Symbols[LSym->Table->DeclTypeCount + i])->State;
+				Rights[i]->Generate(Code);
+				RSym->State = OldState;
+			}
+			else {
+				Rights[i]->Generate(Code);
+			}
+		}
+		
+		string FuncName = LSym->GenerateName();
+		Code->Add(Call, FuncName);
+	}
 	if (argc == argc_write || argc == argc_writeln){
+		vector<MyTypeID> TypeIDexp;
+		for (int i = Rights.size() - 1; i >= 0; --i) {
+			Rights[i]->Generate(Code);
+			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(Rights[i]));
+		}
 		string format = "\'";
 		for (int i = 0; i < Rights.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
@@ -237,5 +308,21 @@ void ExprFunction::GetAsmCode(Asm_Code* Code) {
 		Code->Add(Call, "_printf");
 		Code->Add(Add, ESP, to_string(4 * Rights.size() + 4));
 	}
+}
+
+string ExprConst::GenerateInitList() {
+	return Value.Source;
+}
+
+string ExprBoolConst::GenerateInitList() {
+	return _stricmp(Value.Source.c_str(), "true") == 0 ? "1" : "0";
+}
+
+string ExprInitList::GenerateInitList() {
+	string Ans = List[0]->GenerateInitList();
+	for (int i = 1; List.size(); ++i) {
+		Ans += ", " + List[i]->GenerateInitList();
+	}
+	return Ans;
 }
 

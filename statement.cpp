@@ -1,4 +1,5 @@
 #include "statement.h"
+#include "symtable.h"
 
 Stmt_GOTO::Stmt_GOTO(Symbol* Sym) : LabelSym(Sym){};
 Stmt_Conditional::Stmt_Conditional(Expr* Exp) : Exp(Exp){};
@@ -161,12 +162,23 @@ void Stmt_Call::Print(int Spaces) {
 	Exp->Print(Spaces + 1);
 }
 
-void Stmt_Compound::GetAsmCode(Asm_Code* Code) {
+void Stmt_Assign::Generate(Asm_Code* Code) {
+	Exp->Generate(Code);
+}
+
+void Stmt_Compound::Generate(Asm_Code* Code) {
 	for (int i = 0; i < StmtList.size(); ++i) {
-		StmtList[i]->GetAsmCode(Code);
+		StmtList[i]->Generate(Code);
 	}
 }
 
-void Stmt_Call::GetAsmCode(Asm_Code* Code) {
-	return Exp->GetAsmCode(Code);
+void Stmt_Call::Generate(Asm_Code* Code) {
+	if (((ExprIdent*)((ExprFunction*)Exp)->Left)->Sym->Section == DeclFunction) {
+		Exp->Generate(Code);
+		SymFunction* Sym = (SymFunction*)((ExprIdent*)((ExprFunction*)Exp)->Left)->Sym;
+		Code->Add(Add, ESP, to_string(((SymIdent*)Sym->Table->Symbols[Sym->argc - 1])->Type->GetSize()));
+	}
+	else {
+		Exp->Generate(Code);
+	}
 }
