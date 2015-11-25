@@ -1,0 +1,7 @@
+function a : integer;
+begin
+	Result := 10;
+end;
+begin
+	a();
+end.

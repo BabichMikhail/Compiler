@@ -1,0 +1,7 @@
+function A(b : integer) : integer;
+begin
+    Result := b + 10;
+end;
+begin
+    A(5);
+end.

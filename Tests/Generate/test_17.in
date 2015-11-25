@@ -1,0 +1,11 @@
+procedure A(var a : integer);
+begin
+    write(a);
+end;
+
+var 
+    elem : integer = 10;
+
+begin
+    A(elem);
+end.

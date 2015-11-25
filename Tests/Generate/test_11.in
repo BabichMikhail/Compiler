@@ -1,0 +1,9 @@
+function A(b : integer) : integer;
+var
+    c : integer = 10;
+begin
+    Result := b + c;
+end;
+begin
+    write(A(5));
+end.

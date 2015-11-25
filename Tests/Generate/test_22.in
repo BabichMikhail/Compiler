@@ -1,0 +1,9 @@
+procedure Abc(var a : integer);
+begin
+    write(a);
+end;
+
+const b = 50;
+begin
+    Abc(b);
+end.

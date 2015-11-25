@@ -1,0 +1,38 @@
+    procedure A(b: integer);
+        procedure c(d: integer);
+        begin
+            writeln('Its overload!');
+        end;
+    begin
+        C(-B);
+    end;
+
+    procedure A(b: integer; c: integer);
+        procedure d(e : integer);
+        begin
+            writeln('Really?');
+        end;
+    begin
+        d(b + c);
+    end;
+
+    function A(b: char) : integer;
+        procedure c(d : integer);
+            procedure e();
+            begin
+                writeln('Yes!');
+            end;
+        begin
+            e();
+        end;
+    begin
+        c(10);
+    end;
+
+
+begin  
+    A(10);
+    A(10, 20);
+    A('a');
+end.
+   

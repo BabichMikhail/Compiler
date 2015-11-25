@@ -1,0 +1,12 @@
+procedure Abc(const a : integer);
+begin
+    writeln(a)
+end;
+
+var
+    Value : integer = 50;
+
+begin
+    Abc(Value);
+    writeln(Value);
+end.

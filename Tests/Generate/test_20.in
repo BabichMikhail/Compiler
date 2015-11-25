@@ -1,0 +1,12 @@
+procedure Abc(a : integer);
+begin
+    a := 10;
+end;
+
+var
+    Value : integer = 50;
+
+begin
+    Abc(Value);
+    writeln(Value);
+end.

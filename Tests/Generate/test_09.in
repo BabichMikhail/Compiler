@@ -1,0 +1,7 @@
+procedure A(b : integer);
+begin 
+	write('hello!');
+end;
+begin
+	A(10);
+end.

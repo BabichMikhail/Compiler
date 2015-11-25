@@ -1,0 +1,5 @@
+var
+	a : integer = 10;
+begin
+	write(a);
+end.

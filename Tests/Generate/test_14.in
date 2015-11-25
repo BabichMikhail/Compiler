@@ -1,0 +1,13 @@
+    procedure A(b: integer);
+        procedure c(d: integer);
+        begin
+            writeln('Hello world!');
+        end;
+    begin
+        C(-B);
+    end; 
+
+begin  
+    A(10);
+end.
+   

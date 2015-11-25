@@ -1,0 +1,12 @@
+procedure Abc(a : integer);
+var
+    b : integer;
+begin
+    b := 15;
+    writeln(a + b);
+end;
+
+var a : integer = 10;
+begin
+    abc(a)
+end.

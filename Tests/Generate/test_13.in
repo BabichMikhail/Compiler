@@ -1,0 +1,12 @@
+procedure A();
+    procedure B();
+    begin
+        write(1);
+    end;
+begin
+    B();
+end;
+
+begin
+    A();
+end.
