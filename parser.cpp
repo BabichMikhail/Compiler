@@ -44,7 +44,7 @@ void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2)
 	
 	auto SymFunc = new SymFunction(Type_1, NewTable, new Stmt_Compound(), 2, Table->GetSymbol(Type_1, Position()));
 	Table->Add(SymFunc);
-	++Table->DeclTypeCount;
+	++Table->DeclCount;
 }
 
 void Parser::ReservedFunctions(SymTable* Table) {
@@ -53,7 +53,7 @@ void Parser::ReservedFunctions(SymTable* Table) {
 	ReservedCastFunction(Table, "char", "integer");
 	Table->Add(new SymProcedure("write", new SymTable(Table), nullptr, argc_write));
 	Table->Add(new SymProcedure("writeln", new SymTable(Table), nullptr, argc_writeln));
-	++++Table->DeclTypeCount;
+	++++Table->DeclCount;
 }
 
 void Parser::ReservedTypes(SymTable* Table) {
@@ -65,7 +65,7 @@ void Parser::ReservedTypes(SymTable* Table) {
 	Table->Symbols.push_back(new SymType("array", TypeID_Array));
 	Table->Symbols.push_back(new SymType("record", TypeID_Record));
 	Table->Symbols.push_back(new SymType("pointer", TypeID_Pointer));
-	Table->DeclTypeCount = Table->Symbols.size();
+	Table->DeclCount = Table->Symbols.size();
 }
 
 Parser::Parser(const char* filename, PMod State) : Lex(filename), State(State), Table(new SymTable(nullptr)){
@@ -511,7 +511,7 @@ Symbol* Parser::ParseRecord(SymTable* Table) {
 int Parser::ParseArguments(SymTable* Table) {
 	int argc = 0;
 	while (Lex.Get().Type == TK_IDENTIFIER || Lex.Get().Type == TK_CONST || Lex.Get().Type == TK_VAR || Lex.Get().Type == TK_OUT) {
-		VariableState State = Null;
+		ArgState State = Null;
 		if (Lex.Get().Type == TK_CONST) {
 			State = Const;
 			Lex.Next();

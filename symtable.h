@@ -14,7 +14,7 @@ typedef struct {
 
 class SymTable{
 public:
-	int DeclTypeCount;
+	int DeclCount;
 
 	SymTable* Parent;
 	vector<Symbol*> Symbols;

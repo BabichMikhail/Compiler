@@ -13,8 +13,8 @@ SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type)
 SymType::SymType(string Name, MyTypeID TypeID) : Symbol(DeclType, Name), Type(nullptr), TypeID(TypeID){}
 SymPointer::SymPointer(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type){}
 
-SymIdent::SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, VariableState State) : Symbol(Section, Name), InitExp(InitExp), Type(Type), State(State) {}
-SymVar::SymVar(string Name, Expr* InitExp, Symbol* Type, VariableState State) : SymIdent(DeclVar, Name, InitExp, Type, State){}
+SymIdent::SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, ArgState State) : Symbol(Section, Name), InitExp(InitExp), Type(Type), State(State) {}
+SymVar::SymVar(string Name, Expr* InitExp, Symbol* Type, ArgState State) : SymIdent(DeclVar, Name, InitExp, Type, State){}
 SymConst::SymConst(string Name, Expr* InitExp, Symbol* Type) : SymIdent(DeclConst, Name, InitExp, Type, Const){}
 
 SymDynArray::SymDynArray(Symbol* Type) : Type(Type), TypeID(TypeID_DynArray){}

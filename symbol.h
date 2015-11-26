@@ -8,7 +8,6 @@ class Statement;
 class SymTable;
 
 enum DeclSection { DeclNull, DeclConst, DeclVar, DeclLabel, DeclType, DeclFunction, DeclProcedure, DeclRecord };
-enum VariableState { Null, Var, Const, Out };
 
 using namespace std;
 
@@ -53,11 +52,11 @@ public:
 
 class SymIdent : public Symbol {
 protected:
-	SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, VariableState State);
+	SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, ArgState State);
 public:
 	Expr* InitExp;
 	Symbol* Type;
-	VariableState State;
+	ArgState State;
 	bool isLocal;
 	int offset;
 	string GenerateName();
@@ -67,7 +66,7 @@ public:
 
 class SymVar : public SymIdent {
 public:
-	SymVar(string Name, Expr* InitExp, Symbol* Type, VariableState State);
+	SymVar(string Name, Expr* InitExp, Symbol* Type, ArgState State);
 	void Print(int Spaces);
 };
 

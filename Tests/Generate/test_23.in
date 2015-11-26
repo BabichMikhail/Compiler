@@ -1,0 +1,17 @@
+procedure P(var a : integer);
+    procedure Q(var b : integer);
+    begin
+        b := 10;
+    end;
+
+begin
+    Q(a);
+end;
+
+var 
+    a : integer;
+
+begin
+    P(a);
+    write(a);
+end.

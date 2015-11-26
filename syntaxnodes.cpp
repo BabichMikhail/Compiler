@@ -143,7 +143,7 @@ map<TokenType, AsmOpType> BinOperations = {
 	make_pair(TK_PLUS, Add), make_pair(TK_MINUS, Sub), make_pair(TK_XOR, Xor), make_pair(TK_OR, Or), make_pair(TK_MUL, IMul), make_pair(TK_AND, And)
 };
 
-void ExprBinOp::Generate(Asm_Code* Code){
+void ExprBinOp::Generate(Asm_Code* Code, ArgState State){
 	Left->Generate(Code);
 	if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
 		Code->Add(Pop, EAX);				      /* A - const only */
@@ -172,8 +172,7 @@ void ExprBinOp::Generate(Asm_Code* Code){
 	}
 }
 
-void ExprUnarOp::Generate(Asm_Code* Code) {
-	
+void ExprUnarOp::Generate(Asm_Code* Code, ArgState State) {
 	switch (Op.Type) {
 	case TK_PLUS: 
 		return;
@@ -192,11 +191,11 @@ void ExprUnarOp::Generate(Asm_Code* Code) {
 	}
 }
 
-void ExprIntConst::Generate(Asm_Code* Code) {
+void ExprIntConst::Generate(Asm_Code* Code, ArgState State) {
 	Code->Add(Push, Value.Source);
 }
 
-void ExprStringConst::Generate(Asm_Code* Code) {
+void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
 	int Size = Value.Source.size();
 	if (Size == 1) {
 		Code->Add(Push, '\'' + Value.Source + '\'');
@@ -211,17 +210,25 @@ void ExprStringConst::Generate(Asm_Code* Code) {
 	Code->Add(Push, "base_str");
 }
 
-void ExprIdent::Generate(Asm_Code* Code) {
-	switch (((SymIdent*)Sym)->State) {
+void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
+	auto IdenSym = (SymIdent*)Sym;
+	switch (IdenSym->State) {
 	case Null:
-		Code->Add(Mov, EAX, Sym->GenerateName(), 0);
+		if (State == Null) {
+			Code->Add(Mov, EAX, Sym->GenerateName(), 0);
+		}
+		else {
+			Code->Add(Mov, EAX, Sym->GenerateName());
+		}
 		break;
 	case Var:
 	case Const:
 	case Out:
-		if (((SymIdent*)Sym)->isLocal) {
+		if (IdenSym->isLocal) {
 			Code->Add(Mov, EAX, Sym->GenerateName(), 0);
-			Code->Add(Mov, EAX, EAX, 0);
+			if (State == Null) {
+				Code->Add(Mov, EAX, EAX, 0);
+			}
 			break;
 		}
 		Code->Add(Mov, EAX, Sym->GenerateName());
@@ -229,7 +236,7 @@ void ExprIdent::Generate(Asm_Code* Code) {
 	Code->Add(Push, EAX);
 }
 
-void ExprAssign::Generate(Asm_Code* Code) {
+void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
 	SymIdent* LSym = (SymIdent*)((ExprIdent*)Left)->Sym;
 	if (LSym->State == Const) {
 		throw VariableIdentifierExpected(((ExprIdent*)Left)->Pos);
@@ -258,7 +265,7 @@ void ExprAssign::Generate(Asm_Code* Code) {
 	Code->Add(Mov, Name, 0, EBX);
 }
 
-void ExprFunction::Generate(Asm_Code* Code) {
+void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	SymCall* LSym = (SymCall*)((ExprIdent*)Left)->Sym;
 	int argc = LSym->argc;
 	if (argc >= 0) {
@@ -266,16 +273,7 @@ void ExprFunction::Generate(Asm_Code* Code) {
 			Code->Add(Sub, ESP, to_string(((SymIdent*)LSym->Table->Symbols[LSym->argc - 1])->Type->GetSize()));
 		}
 		for (int i = 0; i < Rights.size(); ++i) {
-			if (Rights[i]->TypeExp == VarExp) {
-				SymIdent* RSym = (SymIdent*)((ExprIdent*)Rights[i])->Sym;
-				auto OldState = RSym->State;
-				RSym->State = ((SymIdent*)LSym->Table->Symbols[LSym->Table->DeclTypeCount + i])->State;
-				Rights[i]->Generate(Code);
-				RSym->State = OldState;
-			}
-			else {
-				Rights[i]->Generate(Code);
-			}
+			Rights[i]->Generate(Code, Rights[i]->TypeExp == VarExp ? ((SymIdent*)LSym->Table->Symbols[LSym->Table->DeclCount + i])->State : Null);
 		}
 		
 		string FuncName = LSym->GenerateName();

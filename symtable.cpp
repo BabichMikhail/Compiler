@@ -5,7 +5,7 @@
 using namespace std;
 
 SymTable::SymTable(SymTable* ParentTable): Parent(ParentTable){
-	DeclTypeCount = Symbols.size();
+	DeclCount = Symbols.size();
 }
 
 void SymTable::Add(Symbol* NewElem){
@@ -69,7 +69,7 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 		}
 		bool flag = false;
 		if (Symbols[i]->Section == DeclFunction || Symbols[i]->Section == DeclProcedure) {
-			int offset = ((SymCall*)Symbols[i])->Table->DeclTypeCount;
+			int offset = ((SymCall*)Symbols[i])->Table->DeclCount;
 			for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
 				if (CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)((SymIdent*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
 					flag = true;
@@ -121,7 +121,7 @@ void SymTable::CheckSymbol(string Name, const Position Pos) {
 }
 
 void SymTable::Print(int Spaces){
-	for (int i = DeclTypeCount; i < Symbols.size(); ++i){ /* No Print STD Type */
+	for (int i = DeclCount; i < Symbols.size(); ++i){ /* No Print STD Type */
 		Symbols[i]->Print(Spaces);
 		cout << endl;
 	}
@@ -129,7 +129,7 @@ void SymTable::Print(int Spaces){
 
 void SymTable::GenerateVariables(Asm_Code* Code) {
 	if (Parent == nullptr) {
-		for (int i = DeclTypeCount; i < Symbols.size(); ++i) {
+		for (int i = DeclCount; i < Symbols.size(); ++i) {
 			Symbols[i]->Generate(Code);
 			if (Symbols[i]->Section == DeclVar) {
 				((SymIdent*)Symbols[i])->isLocal = false;

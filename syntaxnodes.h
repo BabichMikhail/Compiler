@@ -14,6 +14,8 @@ using namespace std;
 class Symbol;
 class Asm_Code;
 
+enum ArgState { Null, Var, Const, Out };
+
 #define indent "   "
 #define print_indent(spaces) for (int i = 0; i < spaces; ++i) cout << indent
 
@@ -26,7 +28,7 @@ public:
 	Expr(TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces){};
-	virtual void Generate(Asm_Code* Code) {}
+	virtual void Generate(Asm_Code* Code, ArgState State = Null) {}
 	virtual string GenerateInitList() { return ""; }
 };
 
@@ -38,7 +40,7 @@ public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprUnarOp : public Expr{
@@ -48,7 +50,7 @@ public:
 	ExprUnarOp(Token Op, Expr* Exp);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprConst : public Expr{
@@ -69,7 +71,7 @@ public:
 class ExprIntConst : public ExprConst{
 public:
 	ExprIntConst(Token Value);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprDoubleConst : public ExprConst{
@@ -80,7 +82,7 @@ public:
 class ExprStringConst : public ExprConst{
 public:
 	ExprStringConst(Token Value);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprIdent : public Expr{
@@ -90,7 +92,7 @@ public:
 	ExprIdent(Symbol* Sym, Position Pos);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprAssign : public Expr{
@@ -100,7 +102,7 @@ public:
 	ExprAssign(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprArrayIndex : public Expr{
@@ -119,7 +121,7 @@ public:
 	ExprFunction(Expr* Left, vector<Expr*> Rights);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprRecord : public Expr{
