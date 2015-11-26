@@ -1,0 +1,18 @@
+var
+    a : record
+        a : integer;
+        b : char;
+        c : integer;
+    end;
+
+    b : integer;
+
+begin
+    b := 10;
+    a.c := b;
+    a.a := b * 2;
+    a.b := 'a';
+    writeln(a.a);
+    writeln(a.b);
+    write(a.c);
+end.

@@ -1,0 +1,7 @@
+var 
+    a : integer = 10;
+    b : ^pointer;
+begin
+    b := @a;
+    write(b^);
+end.
