@@ -238,6 +238,15 @@ void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 
 void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
 	SymIdent* LSym = (SymIdent*)((ExprIdent*)Left)->Sym;
+	if (Left->TypeExp == ArrayExp) {
+		Left->Generate(Code, Var);
+		LSym = (SymIdent*)((ExprIdent*)((ExprArrayIndex*)Left)->Left)->Sym;
+	}
+	if (Left->TypeExp == RecordExp) {
+		Left->Generate(Code, Var);
+		LSym = (SymIdent*)((ExprIdent*)((ExprRecord*)Left)->Left)->Sym;
+	}
+	
 	if (LSym->State == Const) {
 		throw VariableIdentifierExpected(((ExprIdent*)Left)->Pos);
 	}
@@ -249,20 +258,67 @@ void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
 	case VarExp:
 		Name = LSym->GenerateName();
 		break;
-	//case RecordExp:
-	//case ArrayExp:
+	case RecordExp:
+	case ArrayExp:
+		break;
 	}
 	Right->Generate(Code);
 	Code->Add(Pop, EBX);
+	
 	if (Right->TypeExp == VarExp && ((SymIdent*)((ExprIdent*)Right)->Sym)->State == Var) {
 		Code->Add(Mov, EBX, EBX, 0);
 	}
-	if (LSym->State == Var) {
-		Code->Add(Mov, EAX, Name, 0);
+	if (LSym->State == Var && Name.length() > 0) {
+		if (Right->TypeExp == PointerExp) {
+			Code->Add(Mov, EAX, Name);
+		}
+		else {
+			Code->Add(Mov, EAX, Name, 0);
+		}
 		Code->Add(Mov, EAX, 0, EBX);
 		return;
 	}
-	Code->Add(Mov, Name, 0, EBX);
+	if (Left->TypeExp == ArrayExp) {
+		Code->Add(Pop, EAX);
+		Code->Add(Mov, EAX, 0, EBX);
+	}
+	else if (Left->TypeExp == RecordExp) {
+		Code->Add(Pop, EAX);
+		Code->Add(Mov, EAX, 0, EBX);
+	}
+	else {
+		Code->Add(Mov, Name, 0, EBX);
+	}
+}
+
+void ExprArrayIndex::Generate(Asm_Code* Code, ArgState State) {
+	Right->Generate(Code);
+	Code->Add(Pop, EAX);
+	int low = ((SymArray*)((ExprIdent*)Left)->Sym)->Left;
+	Code->Add(IMul, EAX, to_string(low));
+	int size = ((SymType*)((SymArray*)((ExprIdent*)Left)->Sym)->Type)->Type->GetSize();
+	Code->Add(IMul, EAX, to_string(size));
+	Code->Add(Push, EAX);
+	Left->Generate(Code, Var);
+	Code->Add(Pop, EAX);
+	Code->Add(Pop, EBX);
+	Code->Add(Add, EAX, EBX);
+	if (State == Null) {
+		Code->Add(Mov, EAX, EAX, 0);
+	}
+	Code->Add(Push, EAX);
+}
+
+void ExprRecord::Generate(Asm_Code* Code, ArgState State) {
+	auto Sym = (SymIdent*)Right;
+	int offset = Sym->offset;
+	Left->Generate(Code, Var);
+	Code->Add(Pop, EAX);
+	Code->Add(Add, EAX, to_string(offset));
+	if (State == Null) {
+		Code->Add(Mov, EAX, EAX, 0);
+	}
+	Code->Add(Push, EAX);
 }
 
 void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
@@ -289,6 +345,7 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 		for (int i = 0; i < Rights.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
 			case TypeID_Integer:
+			case TypeID_Pointer:
 				format += "%d";
 				break;
 			case TypeID_Char:
@@ -308,6 +365,17 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	}
 }
 
+void ExprPointer::Generate(Asm_Code* Code, ArgState State) {
+	Exp->Generate(Code, State);
+}
+
+void ExprDereference::Generate(Asm_Code* Code, ArgState State) {
+	Exp->Generate(Code, State);
+	Code->Add(Pop, EAX);
+	Code->Add(Mov, EAX, EAX, 0);
+	Code->Add(Push, EAX);
+}
+
 string ExprConst::GenerateInitList() {
 	return Value.Source;
 }
@@ -323,4 +391,3 @@ string ExprInitList::GenerateInitList() {
 	}
 	return Ans;
 }
-

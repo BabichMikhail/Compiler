@@ -112,6 +112,7 @@ public:
 	ExprArrayIndex(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprFunction : public Expr{
@@ -131,6 +132,7 @@ public:
 	ExprRecord(Expr* Left, Symbol* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprInitList : public Expr {
@@ -146,6 +148,7 @@ public:
 	Expr* Exp;
 	ExprPointer(Expr* Exp);
 	void Print(const int Spaces);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 class ExprDereference : public Expr {
@@ -153,6 +156,7 @@ public:
 	Expr* Exp;
 	ExprDereference(Expr* Exp);
 	void Print(const int Spaces);
+	void Generate(Asm_Code* Code, ArgState State = Null);
 };
 
 #endif

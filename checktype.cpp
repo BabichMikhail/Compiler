@@ -183,9 +183,12 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		return GetTypeID(((ExprUnarOp*)Exp)->Exp);
 	}
 	if (Exp->TypeExp == DereferenceExp) {
-		Check(TypeID_Pointer, GetTypeID(((ExprDereference*)Exp)->Exp));
+		return GetTypeID(((ExprDereference*)Exp)->Exp);
 	}
 	if (Exp->TypeExp == VarExp) {
+		if (_stricmp(((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->Name.c_str(), StrTypes[TypeID_Pointer].c_str()) == 0) {
+			return ((SymType*)((SymType*)((SymPointer*)(((ExprIdent*)Exp)->Sym))->Type)->Type)->TypeID;
+		}
 		return ((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->TypeID;
 	}
 	if (Exp->TypeExp == ConstStringExp) {

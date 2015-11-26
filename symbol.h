@@ -47,6 +47,7 @@ public:
 	Symbol* Type;
 	SymPointer(string Name, Symbol* Type);
 	void Print(int Spaces);
+	string GenerateName();
 	int GetSize();
 };
 
@@ -54,8 +55,8 @@ class SymIdent : public Symbol {
 protected:
 	SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, ArgState State);
 public:
-	Expr* InitExp;
 	Symbol* Type;
+	Expr* InitExp;
 	ArgState State;
 	bool isLocal;
 	int offset;
@@ -91,6 +92,7 @@ public:
 	int Right;
 	SymArray(Symbol* Type, int Left, int Right);
 	void Print(int Spaces);
+	string GenerateName();
 	int GetSize();
 };
 
@@ -134,6 +136,7 @@ public:
 	SymRecord(SymTable* Table, string Name, int argc);
 	void Print(int Spaces);
 	int GetSize();
+	string GenerateName();
 };
 
 #endif

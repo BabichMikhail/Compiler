@@ -410,6 +410,10 @@ void Parser::ParseVarDecl(SymTable* Table){
 		}
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType(Table);
+		ArgState State = Null;
+		if (_stricmp(Type->Name.c_str(), "pointer") == 0 || Type->Name.length() == 0) {
+			State = Var;
+		}
 		while (((SymType*)Type)->TypeID == TypeID_BadType) {
 			Type = ((SymType*)Type)->Type;
 		}
@@ -424,7 +428,7 @@ void Parser::ParseVarDecl(SymTable* Table){
 		}
 		for (int i = 0; i < Names.size(); ++i) {
 			Table->CheckSymbol(Names[i], Names_Pos[i]);
-			Table->Add(new SymVar(Names[i], Exp, Type, Null));
+			Table->Add(new SymVar(Names[i], Exp, Type, State));
 		}
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
@@ -504,6 +508,10 @@ Symbol* Parser::ParseRecord(SymTable* Table) {
 	Lex.Next();
 	auto LocTable = new SymTable(Table);
 	int argc = ParseArguments(LocTable);
+	for (int i = 0, offset = 0; i < argc; ++i) {
+		((SymIdent*)LocTable->Symbols[i])->offset = offset;
+		offset += ((SymIdent*)LocTable->Symbols[i])->Type->GetSize();
+	}
 	Lex.CheckAndNext(TK_END);
 	return new SymRecord(LocTable, "", argc);
 }
@@ -702,6 +710,10 @@ Expr* Parser::ParseLevel(SymTable* Table, const int level){
 		Token Op = Lex.Get();
 		Lex.Next();
 		Left = new ExprBinOp(Left, Op, ParseLevel(Table, level + 1));
+	}
+	if (Lex.Get().Type == TK_CAP) {
+		Left = new ExprDereference(Left);
+		Lex.Next();
 	}
 	return Left;
 }

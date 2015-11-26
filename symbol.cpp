@@ -160,20 +160,18 @@ int SymType::GetSize() {
 }
 
 string SymType::GenerateName() {
-	//string Ans;
 	switch (TypeID) {
-	//case TypeID_Array:
-	//	Ans = "times " + to_string(((SymArray*)Type)->Right - ((SymArray*)Type)->Left + 1) + " ";
  	case TypeID_Integer:
 		return "dd";
 	case TypeID_Char:
 		return "db";
 	case TypeID_Boolean:
 		return "db";
-	//case TypeID_Record:
-		//Ans = "istruc" + (Name != "" ? "r_" + Name : "r_" + to_string((int)&Name)) + "\n";
 	}
-	//return Ans;
+}
+
+string SymPointer::GenerateName() {
+	return "dd";
 }
 
 string SymCall::GenerateName() {
@@ -211,6 +209,14 @@ string SymIdent::GenerateName() {
 
 void SymIdent::Generate(Asm_Code* Code) {
 	Code->Add(GenerateName(), Type->GenerateName(), GetInitList());
+}
+
+string SymArray::GenerateName() {
+	return "times " + to_string(Right - Left + 1) + " " + Type->GenerateName();
+}
+
+string SymRecord::GenerateName() {
+	return "times " + to_string(GetSize()) + " db";
 }
 
 string SymIdent::GetInitList() {
