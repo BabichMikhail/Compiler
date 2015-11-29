@@ -84,10 +84,6 @@ void Asm_Code::Add(AsmOpType Op, string Val) {
 	}
 }
 
-void Asm_Code::Add(AsmOpType Op, string Var, int offset) {
-	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(Var, offset)));
-}
-
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Registr(Reg2)));
 }
@@ -104,10 +100,6 @@ void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, string Val) {
 	}
 }
 
-void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, string Var, int offset) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_Address(Var, offset)));
-}
-
 void Asm_Code::Add(AsmOpType Op, string Val, AsmRegType Reg) {
 	if (Val[0] == '\'') {
 		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_StringConst(Val), new Asm_Registr(Reg)));
@@ -120,10 +112,6 @@ void Asm_Code::Add(AsmOpType Op, string Val, AsmRegType Reg) {
 	}
 }
 
-void Asm_Code::Add(AsmOpType Op, string Var, int offset, AsmRegType Reg) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Var, offset), new Asm_Registr(Reg)));
-}
-
 void Asm_Code::Add(string Name, string Type, string InitList) {
 	Data.push_back(new Asm_Global_Data(Name, Type, InitList));
 }
@@ -132,12 +120,32 @@ void Asm_Code::Add(Asm_Function* Func) {
 	Functions.push_back(Func);
 }
 
-void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2, int offset) {
+void Asm_Code::Add_Addr(AsmOpType Op, string Var, int offset) {
+	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(Var, offset)));
+}
+
+void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg, string Var, int offset) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_Address(Var, offset)));
+}
+
+void Asm_Code::Add_LAddr(AsmOpType Op, string Var, int offset, AsmRegType Reg) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Var, offset), new Asm_Registr(Reg)));
+}
+
+void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2, int offset) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, offset)));
 }
 
-void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, int offset, AsmRegType Reg2) {
+void Asm_Code::Add_LAddr(AsmOpType Op, AsmRegType Reg1, int offset, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, offset), new Asm_Registr(Reg2)));
+}
+
+void Asm_Code::Add_LAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, 0), new Asm_Registr(Reg2)));
+}
+
+void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, 0)));
 }
 
 void Asm_Code::Print() {
