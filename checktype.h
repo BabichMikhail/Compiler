@@ -10,7 +10,7 @@ class SymTable;
 
 enum MyTypeID {
 	TypeID_BadType = -1, TypeID_Integer = 0, TypeID_Double = 1, TypeID_Char = 2, TypeID_Boolean = 3, TypeID_String = 4, TypeID_Array = 5,
-	TypeID_DynArray = 6, TypeID_Record = 7, TypeID_Pointer = 8
+	TypeID_Record = 6, TypeID_Pointer = 7
 };
 
 class CmpArguments {
@@ -36,7 +36,6 @@ public:
 	CheckType(SymTable* Table, Symbol* SymType, Expr* Exp, const Position Pos);
 	CheckType(SymTable* Table, Expr* Exp_Left, Expr* Exp_Right, const Position Pos);
 	CheckType(SymTable* Table, MyTypeID TypeID_1, Expr* Exp, const Position Pos);
-	
 };
-	
+
 #endif

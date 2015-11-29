@@ -1,18 +1,17 @@
 #include "checktype.h"
 #include "symtable.h"
 
-#define N 9
+#define N 8
 
 static MyTypeID CastTable[N][N] = {
-	{ TypeID_Integer, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
-	{ TypeID_Double,  TypeID_Double,  TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_Char,    TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Boolean, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_String,  TypeID_BadType, TypeID_String , TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Array,   TypeID_BadType,  TypeID_BadType, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_DynArray, TypeID_BadType, TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_Record,  TypeID_BadType },
-	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType,  TypeID_BadType, TypeID_Pointer }
+	{ TypeID_Integer, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
+	{ TypeID_Double,  TypeID_Double,  TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_Char,    TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Boolean, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_String,  TypeID_BadType, TypeID_String , TypeID_BadType, TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Array,   TypeID_BadType, TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Record,  TypeID_BadType },
+	{ TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_BadType, TypeID_Pointer }
 };
 
 typedef struct Cell {
@@ -23,19 +22,19 @@ typedef struct Cell {
 
 static vector<Cell> TypeTable[] = {
 	{ /* Integer */
-		{TK_PLUS, TypeID_Integer}, {TK_MINUS, TypeID_Integer}, {TK_MUL, TypeID_Integer}, {TK_DIV, TypeID_Double}, {TK_DIV_INT, TypeID_Integer},
-		{TK_MOD, TypeID_Integer}, {TK_EQUAL, TypeID_Boolean}, {TK_NOT_EQUAL, TypeID_Boolean}, {TK_GREAT, TypeID_Boolean}, {TK_LESS, TypeID_Boolean},
-		{TK_GREAT_EQUAL, TypeID_Boolean}, {TK_LESS_EQUAL, TypeID_Boolean}, {TK_XOR, TypeID_Integer}, {TK_SHL, TypeID_Integer}, 
-		{TK_SHR, TypeID_Integer}, {TK_AND, TypeID_Integer}, {TK_OR, TypeID_Integer}
+		{ TK_PLUS, TypeID_Integer },{ TK_MINUS, TypeID_Integer },{ TK_MUL, TypeID_Integer },{ TK_DIV, TypeID_Double },{ TK_DIV_INT, TypeID_Integer },
+		{ TK_MOD, TypeID_Integer },{ TK_EQUAL, TypeID_Boolean },{ TK_NOT_EQUAL, TypeID_Boolean },{ TK_GREAT, TypeID_Boolean },{ TK_LESS, TypeID_Boolean },
+		{ TK_GREAT_EQUAL, TypeID_Boolean },{ TK_LESS_EQUAL, TypeID_Boolean },{ TK_XOR, TypeID_Integer },{ TK_SHL, TypeID_Integer },
+		{ TK_SHR, TypeID_Integer },{ TK_AND, TypeID_Integer },{ TK_OR, TypeID_Integer }
 	},
 	{ /* Double */
-		{ TK_PLUS, TypeID_Double }, { TK_MINUS, TypeID_Double }, { TK_MUL, TypeID_Double }, { TK_DIV, TypeID_Double }, { TK_EQUAL, TypeID_Boolean },
-		{ TK_NOT, TypeID_Boolean }, { TK_GREAT, TypeID_Boolean }, { TK_LESS, TypeID_Boolean }, { TK_GREAT_EQUAL, TypeID_Boolean },
+		{ TK_PLUS, TypeID_Double },{ TK_MINUS, TypeID_Double },{ TK_MUL, TypeID_Double },{ TK_DIV, TypeID_Double },{ TK_EQUAL, TypeID_Boolean },
+		{ TK_NOT, TypeID_Boolean },{ TK_GREAT, TypeID_Boolean },{ TK_LESS, TypeID_Boolean },{ TK_GREAT_EQUAL, TypeID_Boolean },
 		{ TK_LESS_EQUAL, TypeID_Boolean }
 	},
 	{ /* Char */ },
 	{ /* Boolean */
-		{TK_XOR, TypeID_Boolean}, {TK_AND, TypeID_Boolean}, {TK_OR, TypeID_Boolean}
+		{ TK_XOR, TypeID_Boolean },{ TK_AND, TypeID_Boolean },{ TK_OR, TypeID_Boolean }
 	},
 	{ /* String */ },
 	{ /* Array */ },
@@ -51,22 +50,20 @@ const string StrTypes[] = {
 
 set<int> ReservedProc = { argc_write, argc_writeln };
 
-/* TypeID_1 - тип, к которому приводится TypeID_2 */
-
 void CheckType::Check(MyTypeID TypeID_1, MyTypeID TypeID_2) {
 	if (!CanCast(TypeID_1, TypeID_2)) {
 		throw IncompatibleTypes(StrTypes[TypeID_1 + 1], StrTypes[TypeID_2 + 1], Pos);
 	}
 }
 
-CheckType::CheckType(SymTable* Table, const Position Pos): Table(Table), Pos(Pos){}
+CheckType::CheckType(SymTable* Table, const Position Pos) : Table(Table), Pos(Pos) {}
 
-CheckType::CheckType(SymTable* Table, Expr* Exp_Left, Expr* Exp_Right, const Position Pos): Table(Table), Pos(Pos) {
+CheckType::CheckType(SymTable* Table, Expr* Exp_Left, Expr* Exp_Right, const Position Pos) : Table(Table), Pos(Pos) {
 	Check(GetTypeID(Exp_Left), GetTypeID(Exp_Right));
 }
 
-CheckType::CheckType(SymTable* Table, Expr* ExpAssign, const Position Pos) : Table(Table), Pos(Pos){
-	if (ExpAssign->TypeExp != AssignExp){ 
+CheckType::CheckType(SymTable* Table, Expr* ExpAssign, const Position Pos) : Table(Table), Pos(Pos) {
+	if (ExpAssign->TypeExp != AssignExp) {
 		throw IllegalExpr(Pos);
 	}
 	Check(GetTypeID(((ExprAssign*)ExpAssign)->Left), GetTypeID(((ExprAssign*)ExpAssign)->Right));
@@ -91,8 +88,8 @@ CheckType::CheckType(SymTable* Table, Symbol* Sym, Expr* Exp, const Position Pos
 			CheckType(Table, ((SymArray*)Sym)->Type, ((ExprInitList*)Exp)->List[i], Pos);
 		}
 		return;
-	case TypeID_DynArray:
-		throw IncompatibleTypes(StrTypes[TypeID_DynArray + 1], StrTypes[GetTypeID(Exp->TypeExp) + 1], Pos);
+	//case TypeID_DynArray:
+	//	throw IncompatibleTypes(StrTypes[TypeID_DynArray + 1], StrTypes[GetTypeID(Exp->TypeExp) + 1], Pos);
 	}
 }
 
@@ -167,15 +164,37 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		return GetTypeID_BinExp(GetTypeID(((ExprBinOp*)Exp)->Left), GetTypeID(((ExprBinOp*)Exp)->Right), ((ExprBinOp*)Exp)->Op.Type);
 	}
 	if (Exp->TypeExp == ArrayExp) {
-		auto AIExp = Exp;
-		while (((ExprArrayIndex*)AIExp)->Left->TypeExp != VarExp) {
-			AIExp = ((ExprArrayIndex*)AIExp)->Left;
+		Expr* AIExp = Exp;
+		int Count = 0;
+		while (AIExp->TypeExp != VarExp && AIExp->TypeExp != RecordExp) {
+			if (AIExp->TypeExp == ArrayExp) {
+				AIExp = ((ExprArrayIndex*)AIExp)->Left;
+				++Count;
+			}
+			else if (AIExp->TypeExp == DereferenceExp) {
+				AIExp = ((ExprDereference*)AIExp)->Exp;
+			}
+			else if (AIExp->TypeExp == FunctionExp) {
+				AIExp = ((ExprFunction*)AIExp)->Left;
+			}
 		}
-		auto _Sym = ((SymIdent*)((ExprIdent*)((ExprArrayIndex*)AIExp)->Left)->Sym)->Type;
-		AIExp = Exp;
-		while (((ExprArrayIndex*)AIExp)->TypeExp != VarExp) {
-			AIExp = ((ExprArrayIndex*)AIExp)->Left;
-			_Sym = ((SymArray*)_Sym)->Type;
+		Symbol* _Sym = nullptr;
+		if (AIExp->TypeExp == VarExp) {
+			_Sym = ((ExprIdent*)AIExp)->Sym;
+		}
+		else if (AIExp->TypeExp == RecordExp) {
+			_Sym = ((ExprRecord*)AIExp)->Right;
+		}
+		for (int i = Count; i >= 0; --i) {
+			if (_Sym->Section == DeclType) {
+				_Sym = ((SymType*)_Sym)->Type;
+			}
+			else if (_Sym->Section == DeclVar || _Sym->Section == DeclConst){
+				_Sym = ((SymIdent*)_Sym)->Type;
+			}
+			else if (_Sym->Section == DeclFunction) {
+				_Sym = ((SymFunction*)_Sym)->Type;
+			}
 		}
 		return ((SymType*)_Sym)->TypeID;
 	}
@@ -186,8 +205,11 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		return GetTypeID(((ExprDereference*)Exp)->Exp);
 	}
 	if (Exp->TypeExp == VarExp) {
-		if (_stricmp(((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->Name.c_str(), StrTypes[TypeID_Pointer].c_str()) == 0) {
+		if (((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->Name == "pointer") {
 			return ((SymType*)((SymType*)((SymPointer*)(((ExprIdent*)Exp)->Sym))->Type)->Type)->TypeID;
+		}
+		if (((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type->Section == DeclRecord) {
+			return TypeID_Record;// ((SymType*)((SymIdent*)((ExprIdent*)Exp)->Sym)->Type)->TypeID;
 		}
 		return ((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->TypeID;
 	}
@@ -206,6 +228,9 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 			return TypeID_BadType;
 		}
 		else {
+			if (((SymFunction*)Symbol)->Type->Section == DeclRecord) {
+				return TypeID_Record;
+			}
 			return ((SymType*)((SymFunction*)Symbol)->Type)->TypeID;
 		}
 	}
@@ -219,7 +244,7 @@ MyTypeID CheckType::GetTypeID_BinExp(MyTypeID TypeID_Left, MyTypeID TypeID_Right
 	else if (CanCast(TypeID_Right, TypeID_Left)) {
 		TypeID_Left = TypeID_Right;
 	}
-	else  {
+	else {
 		throw IncompatibleTypes(StrTypes[TypeID_Left + 1], StrTypes[TypeID_Right + 1], Pos);
 	}
 	for (int i = 0; i < TypeTable[TypeID_Left].size(); ++i) {
@@ -248,7 +273,6 @@ bool CmpArguments::CompareTypes(Symbol* Type_1, Symbol* Type_2) {
 	case TypeID_Integer:
 		return true;
 	case TypeID_Array:
-	case TypeID_DynArray:
 		return Compare(((SymType*)Type_1)->Type, ((SymType*)Type_2)->Type);
 	case TypeID_Record:
 		Ans = true;
