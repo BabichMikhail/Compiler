@@ -8,7 +8,7 @@ using namespace std;
 
 class Statement{
 public:
-	virtual void Print(int Spaces);
+	virtual void Print(int Spaces) {};
 	virtual void Generate(Asm_Code* Code) {};
 };
 

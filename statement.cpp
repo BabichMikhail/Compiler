@@ -28,10 +28,6 @@ void Stmt_Case::Add(Case_Selector Selector) {
 	SelectorList.push_back(Selector);
 }
 
-void Statement::Print(int Spaces) {
-	
-}
-
 void Stmt_Compound::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "begin" << endl;
