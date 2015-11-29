@@ -167,5 +167,5 @@ void Asm_Code::Print() {
 	for (int i = 0; i < Cmds.size(); ++i) {
 		cout << "    " + Cmds[i]->GetCode() << endl;
 	}
-	cout << "ret";
+	cout << "    ret";
 }
