@@ -1,0 +1,17 @@
+function Abc() : array[100..102] of integer;
+    function GetIndex() : array[1..2] of integer;
+    begin
+        Result[1] := 10;
+        Result[2] := 12;
+    end;
+var 
+    Ans : array [10..12] of integer;
+    index : integer;
+begin
+    writeln(GetIndex()[1]);
+    writeln(GetIndex()[2]);
+end;
+
+begin 
+    Abc();
+end.

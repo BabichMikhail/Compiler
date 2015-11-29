@@ -3,6 +3,7 @@ begin
     write(a);
 end;
 
+//var b : integer = 50;
 const b = 50;
 begin
     Abc(b);

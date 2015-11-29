@@ -1,0 +1,12 @@
+procedure Abc(var arr : array of integer);
+begin
+    arr[0] := 5; 
+end;
+
+var 
+    arr : array [5..7] of integer;
+
+begin 
+     Abc(arr);
+     write(arr[5]);
+end.

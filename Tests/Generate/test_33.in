@@ -1,0 +1,18 @@
+function Abc() : array[100..102] of integer;
+var 
+    Ans : array [10..12] of integer;
+    index : integer = 11;
+begin
+    Ans[10] := 5; 
+    Ans[index] := 10;
+    Ans[12] := 15;
+    Result := Ans;
+end;
+
+var 
+    arr : array [5..7] of integer;
+
+begin 
+     arr := Abc();
+     writeln(arr[5], ' ', arr[6], ' ', arr[7]);
+end.

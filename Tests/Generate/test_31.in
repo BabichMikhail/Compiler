@@ -1,0 +1,8 @@
+var
+    a : array[0..9,10..20] of integer;
+begin
+    a[5][10] := 5;
+    a[6][11] := 10;
+    writeln(a[5][10]);
+    writeln(a[6][11]);
+end.

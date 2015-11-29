@@ -1,0 +1,32 @@
+type 
+    rec = Record
+        a : integer;
+        b : char;
+        c : array [3..5, 100..102] of integer;
+        d : char;
+    end;
+
+function Abc() : REc;
+begin
+    Result.a := 1000;
+    Result.c[4][102] := 999;
+    Result.c[3][102] := 1001;
+    Result.c[5][100] := 10;
+    Result.d := 'Q';
+end;
+
+var 
+    A : Rec;
+    b : integer;
+    arr : array [1..3] of integer;
+
+begin
+    b := Abc().c[4][102];
+    A := Abc();
+    arr := Abc().C[5];
+    writeln(A.a, ' ', Abc().c[4][102], ' ', A.c[4][102], ' ', Abc().d); 
+    writeln(Abc().c[3][102], ' ', arr[1]);
+end.
+
+
+

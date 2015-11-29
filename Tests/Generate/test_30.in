@@ -1,0 +1,23 @@
+type 
+    rec = record
+        a : integer;
+        c : record 
+            a : integer;
+            b : integer;
+        end;
+        b : char;
+    end;
+
+procedure F(var Ans : Rec);
+begin
+    Ans.c.a := 10;
+    Ans.c.b := 20;
+end;
+
+var 
+    Ans : Rec;
+begin
+    F(Ans);
+    writeln(Ans.c.a);
+    writeln(Ans.c.b);
+end.
