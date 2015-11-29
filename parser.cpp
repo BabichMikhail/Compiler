@@ -373,7 +373,7 @@ void Parser::ParseConstDecl(SymTable* Table){
 			Lex.Next();
 			Type = ParseType(Table);
 			while (((SymType*)Type)->TypeID == TypeID_BadType) {
-				Type = ((SymType*)Type)->Type;
+				Type = Type->GetType();
 			}
 		}
 		Lex.Check(TK_EQUAL);
@@ -589,7 +589,7 @@ Symbol* Parser::ParseArray(SymTable* Table){
 		*Sym_TypeInit = ParseType(Table);
 		while (((SymType*)*Sym_TypeInit)->TypeID == TypeID_BadType) {
 			auto Sym = Table->GetSymbol((*Sym_TypeInit)->Name, Pos);
-			*Sym_TypeInit = ((SymType*)Sym)->Type;
+			*Sym_TypeInit = Sym->GetType();
 		}
 		return Sym;
 	}
@@ -665,7 +665,7 @@ Symbol* Parser::ParseType(SymTable* Table){
 		auto Sym = Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 		while (((SymType*)Sym)->TypeID == TypeID_BadType) { 
 			auto _Sym = Table->GetSymbol(Sym->Name, Pos);
-			Sym = ((SymType*)_Sym)->Type;
+			Sym = _Sym->GetType();
 		}
 		Lex.Next();
 		if (flag) {
@@ -824,10 +824,10 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 			}
 			else {
 				if (Sym->Section == DeclFunction) {
-					Right = ((SymRecord*)((SymFunction*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+					Right = ((SymRecord*)Sym->GetType())->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 				}
 				else {
-					Right = ((SymRecord*)((SymIdent*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+					Right = ((SymRecord*)Sym->GetType())->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 				}
 			}
 			Lex.Next();

@@ -85,11 +85,9 @@ CheckType::CheckType(SymTable* Table, Symbol* Sym, Expr* Exp, const Position Pos
 			throw IncompatibleTypes(StrTypes[TypeID_Array + 1], StrTypes[GetTypeID(Exp->TypeExp) + 1], Pos);
 		}
 		for (int i = 0; i < ((ExprInitList*)Exp)->List.size(); ++i) {
-			CheckType(Table, ((SymArray*)Sym)->Type, ((ExprInitList*)Exp)->List[i], Pos);
+			CheckType(Table, Sym->GetType(), ((ExprInitList*)Exp)->List[i], Pos);
 		}
 		return;
-	//case TypeID_DynArray:
-	//	throw IncompatibleTypes(StrTypes[TypeID_DynArray + 1], StrTypes[GetTypeID(Exp->TypeExp) + 1], Pos);
 	}
 }
 
@@ -121,11 +119,11 @@ MyTypeID CheckType::GetTypeID(Token TK) {
 		throw;
 	}
 	if (Sym->Section == DeclConst) {
-		auto ASym = (SymConst*)Sym;
-		if (ASym->Type != nullptr) {
-			return ((SymType*)ASym->Type)->TypeID;
+		//auto ASym = (SymConst*)Sym;
+		if (Sym->GetType() != nullptr) {
+			return ((SymType*)Sym->GetType())->TypeID;
 		}
-		auto TypeID = GetTypeID(ASym->InitExp->TypeExp);
+		auto TypeID = GetTypeID(((SymConst*)Sym)->InitExp->TypeExp);
 		if (TypeID != TypeID_String) {
 			return TypeID;
 		}
@@ -133,7 +131,7 @@ MyTypeID CheckType::GetTypeID(Token TK) {
 			return TypeID_Char;
 		}
 		else {
-			int Length = ((SymStringType*)((SymType*)ASym)->Type)->Length;
+			int Length = ((SymStringType*)Sym->GetType())->Length;
 			if (TK.Source.size() > Length && Length != -1) {
 				throw IncompatibleTypes(StrTypes[TypeID_String + 1], StrTypes[TypeID + 1], Pos);
 			}
@@ -141,8 +139,7 @@ MyTypeID CheckType::GetTypeID(Token TK) {
 		}
 	}
 	if (Sym->Section == DeclVar) {
-		auto ASym = (SymIdent*)Sym;
-		auto TypeID = ((SymType*)ASym->Type)->TypeID;
+		auto TypeID = ((SymType*)Sym->GetType())->TypeID;
 		if (TypeID != TypeID_String) {
 			return TypeID;
 		}
@@ -150,7 +147,7 @@ MyTypeID CheckType::GetTypeID(Token TK) {
 			return TypeID_Char;
 		}
 		else {
-			int Length = ((SymStringType*)((SymType*)ASym)->Type)->Length;
+			int Length = ((SymStringType*)Sym->GetType())->Length;
 			if (TK.Source.size() > Length && Length != -1) {
 				throw IncompatibleTypes(StrTypes[TypeID_String + 1], StrTypes[TypeID_BadType + 1], Pos);
 			}
@@ -187,13 +184,13 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		}
 		for (int i = Count; i >= 0; --i) {
 			if (_Sym->Section == DeclType) {
-				_Sym = ((SymType*)_Sym)->Type;
+				_Sym = _Sym->GetType();
 			}
 			else if (_Sym->Section == DeclVar || _Sym->Section == DeclConst){
-				_Sym = ((SymIdent*)_Sym)->Type;
+				_Sym = _Sym->GetType();
 			}
 			else if (_Sym->Section == DeclFunction) {
-				_Sym = ((SymFunction*)_Sym)->Type;
+				_Sym = _Sym->GetType();
 			}
 		}
 		return ((SymType*)_Sym)->TypeID;
@@ -205,13 +202,13 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		return GetTypeID(((ExprDereference*)Exp)->Exp);
 	}
 	if (Exp->TypeExp == VarExp) {
-		if (((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->Name == "pointer") {
-			return ((SymType*)((SymType*)((SymPointer*)(((ExprIdent*)Exp)->Sym))->Type)->Type)->TypeID;
+		if ((((ExprIdent*)Exp)->Sym)->GetType()->Name == "pointer") {
+			return ((SymType*)(((ExprIdent*)Exp)->Sym)->GetType()->GetType())->TypeID;
 		}
-		if (((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type->Section == DeclRecord) {
-			return TypeID_Record;// ((SymType*)((SymIdent*)((ExprIdent*)Exp)->Sym)->Type)->TypeID;
+		if (((ExprIdent*)Exp)->Sym->GetType()->Section == DeclRecord) {
+			return TypeID_Record;
 		}
-		return ((SymType*)((SymIdent*)(((ExprIdent*)Exp)->Sym))->Type)->TypeID;
+		return ((SymType*)(((ExprIdent*)Exp)->Sym)->GetType())->TypeID;
 	}
 	if (Exp->TypeExp == ConstStringExp) {
 		if (((ExprStringConst*)Exp)->Value.Source.size() == 1) {
@@ -219,7 +216,7 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		}
 	}
 	if (Exp->TypeExp == RecordExp) {
-		auto TypeID = ((SymType*)((SymIdent*)((ExprRecord*)Exp)->Right)->Type)->TypeID;
+		auto TypeID = ((SymType*)((ExprRecord*)Exp)->Right->GetType())->TypeID;
 		return TypeID;
 	}
 	if (Exp->TypeExp == FunctionExp) {
@@ -228,10 +225,10 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 			return TypeID_BadType;
 		}
 		else {
-			if (((SymFunction*)Symbol)->Type->Section == DeclRecord) {
+			if (Symbol->GetType()->Section == DeclRecord) {
 				return TypeID_Record;
 			}
-			return ((SymType*)((SymFunction*)Symbol)->Type)->TypeID;
+			return ((SymType*)Symbol->GetType())->TypeID;
 		}
 	}
 	return GetTypeID(Exp->TypeExp);
@@ -273,14 +270,14 @@ bool CmpArguments::CompareTypes(Symbol* Type_1, Symbol* Type_2) {
 	case TypeID_Integer:
 		return true;
 	case TypeID_Array:
-		return Compare(((SymType*)Type_1)->Type, ((SymType*)Type_2)->Type);
+		return Compare(Type_1->GetType(), Type_2->GetType());
 	case TypeID_Record:
 		Ans = true;
-		if (((SymRecord*)((SymType*)Type_1)->Type)->argc != ((SymRecord*)((SymType*)Type_2)->Type)->argc) {
+		if (((SymRecord*)Type_1->GetType())->argc != ((SymRecord*)(Type_2->GetType()))->argc) {
 			return false;
 		}
-		for (int i = 0; i < ((SymRecord*)((SymType*)Type_1)->Type)->Table->Symbols.size(); ++i) {
-			Ans = Ans && Compare(((SymRecord*)((SymType*)Type_1)->Type)->Table->Symbols[i], ((SymRecord*)((SymType*)Type_2)->Type)->Table->Symbols[i]);
+		for (int i = 0; i < ((SymRecord*)Type_1->GetType())->Table->Symbols.size(); ++i) {
+			Ans = Ans && Compare(((SymRecord*)Type_1->GetType())->Table->Symbols[i], ((SymRecord*)Type_2->GetType())->Table->Symbols[i]);
 		}
 		return Ans;
 	default:
@@ -295,7 +292,7 @@ bool CmpArguments::Compare(Symbol* Sym_1, Symbol* Sym_2) {
 		return false;
 	}
 	for (int i = 0; i < Sym_R_1->argc; ++i) {
-		if (((SymIdent*)Sym_R_1->Table->Symbols[i])->Type != ((SymIdent*)Sym_R_2->Table->Symbols[i])->Type) {
+		if (Sym_R_1->Table->Symbols[i]->GetType() != Sym_R_2->Table->Symbols[i]->GetType()) {
 			return false;
 		}
 	}

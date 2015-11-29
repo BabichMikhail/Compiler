@@ -69,7 +69,7 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 		}
 		bool flag = false;
 		for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
-			auto Type = ((SymIdent*)((SymCall*)Symbols[i])->Table->Symbols[j])->Type;
+			auto Type = ((SymCall*)Symbols[i])->Table->Symbols[j]->GetType();
 			if (Type->Section == DeclRecord && CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) == TypeID_Record){
 				continue;
 			}
@@ -162,7 +162,7 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 	offset -= 8;
 	for (int i = first_var; i < Symbols.size(); ++i) {
 		if (Symbols[i]->Section == DeclVar) {
-			size += ((SymIdent*)Symbols[i])->Type->GetSize();
+			size += Symbols[i]->GetType()->GetSize();
 			((SymIdent*)Symbols[i])->isLocal = true;
 			((SymIdent*)Symbols[i])->offset = -size;
 		}
