@@ -15,10 +15,10 @@ SymPointer::SymPointer(string Name, Symbol* Type) : Symbol(DeclType, Name), Type
 
 SymIdent::SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, ArgState State) : Symbol(Section, Name), InitExp(InitExp), Type(Type), State(State) {}
 SymVar::SymVar(string Name, Expr* InitExp, Symbol* Type, ArgState State) : SymIdent(DeclVar, Name, InitExp, Type, State){}
-SymConst::SymConst(string Name, Expr* InitExp, Symbol* Type) : SymIdent(DeclConst, Name, InitExp, Type, Const){}
+SymConst::SymConst(string Name, Expr* InitExp, Symbol* Type, ArgState State) : SymIdent(DeclConst, Name, InitExp, Type, State){}
 
-SymDynArray::SymDynArray(Symbol* Type) : Type(Type), TypeID(TypeID_DynArray){}
-SymArray::SymArray(Symbol* Type, int Left, int Right) : SymDynArray(Type), Left(Left), Right(Right) { TypeID = TypeID_Array; }
+SymDynArray::SymDynArray(Symbol* Type) : Type(Type), TypeID(TypeID_Array), Symbol(DeclType){}
+SymArray::SymArray(Symbol* Type, int Left, int Right) : SymDynArray(Type), Left(Left), Right(Right) {}
 SymStringType::SymStringType(int Length) : Length(Length), TypeID(TypeID_String){}
 
 SymCall::SymCall(DeclSection Section, string Name, SymTable* Table, Statement* Stmt, int argc) : Symbol(Section, Name), Table(Table), Stmt(Stmt), argc(argc){}
@@ -132,7 +132,7 @@ int SymStringType::GetSize() {
 int SymRecord::GetSize() {
 	int size = 0;
 	for (int i = 0; i < Table->Symbols.size(); ++i) {
-		size += ((SymIdent*)Table->Symbols[i])->Type->GetSize();
+		size += ((SymIdent*)Table->Symbols[i])->GetSize();
 	}
 	return alignment(size);
 }
@@ -143,6 +143,22 @@ int SymDynArray::GetSize() {
 
 int SymArray::GetSize() {
 	return (Right - Left + 1)*Type->GetSize();
+}
+
+int SymDynArray::GetLow() {
+	return 0;
+}
+
+int SymDynArray::GetHigh() {
+	return 0;
+}
+
+int SymArray::GetLow() {
+	return Left;
+}
+
+int SymArray::GetHigh() {
+	return Right;
 }
 
 int SymType::GetSize() {
@@ -199,16 +215,19 @@ void SymCall::Generate(Asm_Code* Code) {
 }
 
 string SymIdent::GenerateName() {
-	if (isLocal) {
-		return "ebp" + (offset == 0 ? "" : " + " + to_string(offset));
-	}
-	else {
-		return "v_" + Name;
-	}
+	return "v_" + Name;
 }
 
 void SymIdent::Generate(Asm_Code* Code) {
 	Code->Add(GenerateName(), Type->GenerateName(), GetInitList());
+}
+
+int SymIdent::GetSize() {
+	return Type->GetSize();
+}
+
+int SymFunction::GetSize() {
+	return Type->GetSize();
 }
 
 string SymArray::GenerateName() {
@@ -224,4 +243,24 @@ string SymIdent::GetInitList() {
 		return "0";
 	}
 	return InitExp->GenerateInitList();
+}
+
+Symbol* SymType::GetType() {
+	return Type;
+}
+
+Symbol* SymIdent::GetType() {
+	return Type;
+}
+
+Symbol* SymDynArray::GetType() {
+	return Type;
+}
+
+Symbol* SymFunction::GetType() {
+	return Type;
+}
+
+Symbol* SymPointer::GetType() {
+	return Type;
 }

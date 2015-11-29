@@ -4,15 +4,15 @@
 
 using namespace std;
 
-SymTable::SymTable(SymTable* ParentTable): Parent(ParentTable){
+SymTable::SymTable(SymTable* ParentTable) : Parent(ParentTable) {
 	DeclCount = Symbols.size();
 }
 
-void SymTable::Add(Symbol* NewElem){
+void SymTable::Add(Symbol* NewElem) {
 	Symbols.push_back(NewElem);
 }
 
-bool SymTable::Find(string Value){
+bool SymTable::Find(string Value) {
 	auto TableNow = this;
 	do {
 		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
@@ -60,7 +60,7 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 			}
 		}
 		if (Symbols[i]->Section == DeclProcedure) {
-			if (((SymProcedure*)Symbols[i])->argc == argc_writeln || ((SymProcedure*)Symbols[i])->argc == argc_write){
+			if (((SymProcedure*)Symbols[i])->argc == argc_writeln || ((SymProcedure*)Symbols[i])->argc == argc_write) {
 				return Symbols[i];
 			}
 			if (((ExprFunction*)Exp)->Rights.size() != ((SymProcedure*)Symbols[i])->argc) {
@@ -68,14 +68,16 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 			}
 		}
 		bool flag = false;
-		if (Symbols[i]->Section == DeclFunction || Symbols[i]->Section == DeclProcedure) {
-			int offset = ((SymCall*)Symbols[i])->Table->DeclCount;
-			for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
-				if (CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)((SymIdent*)((SymCall*)Symbols[i])->Table->Symbols[offset + j])->Type)->TypeID) {
-					flag = true;
-				}
+		for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
+			auto Type = ((SymIdent*)((SymCall*)Symbols[i])->Table->Symbols[j])->Type;
+			if (Type->Section == DeclRecord && CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) == TypeID_Record){
+				continue;
+			}
+			if (CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)Type)->TypeID) {
+				flag = true;
 			}
 		}
+		
 		if (flag) {
 			continue;
 		}
@@ -145,7 +147,12 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 		if (Symbols[i]->Section == DeclVar) {
 			((SymIdent*)Symbols[i])->isLocal = true;
 			((SymIdent*)Symbols[i])->offset = offset;
-			offset += ((SymIdent*)Symbols[i])->Type->GetSize();
+			if (((SymIdent*)Symbols[i])->State == RValue) {
+				offset += ((SymIdent*)Symbols[i])->GetSize();
+			}
+			else {
+				offset += 4;
+			}
 		}
 	}
 	if (last_arg != first_var) {

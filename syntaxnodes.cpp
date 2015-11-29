@@ -203,120 +203,89 @@ void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
 	}
 	for (int i = 0; i < Size; i += 4) {
 		Code->Add(Mov, EAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
-		Code->Add(Mov, "base_str", i, EAX);
+		Code->Add_LAddr(Mov, "base_str", i, EAX);
 	}
 	Code->Add(Mov, EAX, "0x0");
-	Code->Add(Mov, "base_str", Size, EAX);
+	Code->Add_LAddr(Mov, "base_str", Size, EAX);
 	Code->Add(Push, "base_str");
+}
+
+static void PushRValue(Asm_Code* Code, int Size) {
+	for (int i = Size - 4; i >= 0; i -= 4) {
+		Code->Add_RAddr(Mov, EBX, EAX, i);
+		Code->Add(Push, EBX);
+	}
 }
 
 void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 	auto IdenSym = (SymIdent*)Sym;
-	switch (IdenSym->State) {
-	case Null:
-		if (State == Null) {
-			Code->Add(Mov, EAX, Sym->GenerateName(), 0);
-		}
-		else {
-			Code->Add(Mov, EAX, Sym->GenerateName());
-		}
-		break;
-	case Var:
-	case Const:
-	case Out:
-		if (IdenSym->isLocal) {
-			Code->Add(Mov, EAX, Sym->GenerateName(), 0);
-			if (State == Null) {
-				Code->Add(Mov, EAX, EAX, 0);
-			}
-			break;
-		}
-		Code->Add(Mov, EAX, Sym->GenerateName());
+	if (IdenSym->isLocal) {
+		Code->Add(Mov, EAX, EBP);
+		Code->Add(Add, EAX, to_string(IdenSym->offset));
+	}
+	else {
+		Code->Add(Mov, EAX, IdenSym->GenerateName());
+	}
+	if ((IdenSym->State == Var || IdenSym->State == Const)) {
+		Code->Add_RAddr(Mov, EAX, EAX);
+	}
+	if (State == RValue) {
+		PushRValue(Code, IdenSym->GetSize());
+		return;
 	}
 	Code->Add(Push, EAX);
 }
 
 void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
-	SymIdent* LSym = (SymIdent*)((ExprIdent*)Left)->Sym;
-	if (Left->TypeExp == ArrayExp) {
-		Left->Generate(Code, Var);
-		LSym = (SymIdent*)((ExprIdent*)((ExprArrayIndex*)Left)->Left)->Sym;
-	}
-	if (Left->TypeExp == RecordExp) {
-		Left->Generate(Code, Var);
-		LSym = (SymIdent*)((ExprIdent*)((ExprRecord*)Left)->Left)->Sym;
-	}
-	
-	if (LSym->State == Const) {
-		throw VariableIdentifierExpected(((ExprIdent*)Left)->Pos);
-	}
-	if (LSym->State == Out) {
-		LSym->State = Var;
-	}
-	string Name;
-	switch (Left->TypeExp) {
-	case VarExp:
-		Name = LSym->GenerateName();
-		break;
-	case RecordExp:
-	case ArrayExp:
-		break;
-	}
 	Right->Generate(Code);
-	Code->Add(Pop, EBX);
-	
-	if (Right->TypeExp == VarExp && ((SymIdent*)((ExprIdent*)Right)->Sym)->State == Var) {
-		Code->Add(Mov, EBX, EBX, 0);
-	}
-	if (LSym->State == Var && Name.length() > 0) {
-		if (Right->TypeExp == PointerExp) {
-			Code->Add(Mov, EAX, Name);
-		}
-		else {
-			Code->Add(Mov, EAX, Name, 0);
-		}
-		Code->Add(Mov, EAX, 0, EBX);
-		return;
-	}
-	if (Left->TypeExp == ArrayExp) {
-		Code->Add(Pop, EAX);
-		Code->Add(Mov, EAX, 0, EBX);
-	}
-	else if (Left->TypeExp == RecordExp) {
-		Code->Add(Pop, EAX);
-		Code->Add(Mov, EAX, 0, EBX);
-	}
-	else {
-		Code->Add(Mov, Name, 0, EBX);
+	Left->Generate(Code, Var);
+	Code->Add(Pop, EAX);
+	int Size = Left->GetSize();
+	for (int i = 0; i < Size; i += 4) {
+		Code->Add(Pop, EBX);
+		Code->Add_LAddr(Mov, EAX, i, EBX);
 	}
 }
 
 void ExprArrayIndex::Generate(Asm_Code* Code, ArgState State) {
-	Right->Generate(Code);
-	Code->Add(Pop, EAX);
-	int low = ((SymArray*)((ExprIdent*)Left)->Sym)->Left;
-	Code->Add(IMul, EAX, to_string(low));
-	int size = ((SymType*)((SymArray*)((ExprIdent*)Left)->Sym)->Type)->Type->GetSize();
-	Code->Add(IMul, EAX, to_string(size));
-	Code->Add(Push, EAX);
 	Left->Generate(Code, Var);
-	Code->Add(Pop, EAX);
+	Right->Generate(Code);
 	Code->Add(Pop, EBX);
-	Code->Add(Add, EAX, EBX);
-	if (State == Null) {
-		Code->Add(Mov, EAX, EAX, 0);
+	int Size = GetSize();
+	int Low = GetBound(0).first;
+	Code->Add(Sub, EBX, to_string(Low));
+	Code->Add(IMul, EBX, to_string(Size));
+	if (Left->TypeExp == FunctionExp) {
+		Code->Add(Mov, EAX, ESP);
+		Code->Add(Add, EAX, EBX);
+		Code->Add(Add, ESP, to_string(Left->GetSize()));
+	}
+	else {
+		Code->Add(Pop, EAX);
+		Code->Add(Add, EAX, EBX);
+	}
+	if (State == RValue) {
+		PushRValue(Code, Size);
+		return;
 	}
 	Code->Add(Push, EAX);
 }
 
 void ExprRecord::Generate(Asm_Code* Code, ArgState State) {
-	auto Sym = (SymIdent*)Right;
-	int offset = Sym->offset;
 	Left->Generate(Code, Var);
-	Code->Add(Pop, EAX);
-	Code->Add(Add, EAX, to_string(offset));
-	if (State == Null) {
-		Code->Add(Mov, EAX, EAX, 0);
+	int offset = ((SymIdent*)Right)->offset;
+	if (Left->TypeExp == FunctionExp) {
+		Code->Add(Mov, EAX, ESP);
+		Code->Add(Add, EAX, to_string(offset));
+		Code->Add(Add, ESP, to_string(Left->GetSize()));
+	}
+	else {
+		Code->Add(Pop, EAX);
+		Code->Add(Add, EAX, to_string(offset));
+	}
+	if (State == RValue) {
+		PushRValue(Code, Right->GetSize());
+		return;
 	}
 	Code->Add(Push, EAX);
 }
@@ -326,15 +295,14 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	int argc = LSym->argc;
 	if (argc >= 0) {
 		if (LSym->Section == DeclFunction) {
-			Code->Add(Sub, ESP, to_string(((SymIdent*)LSym->Table->Symbols[LSym->argc - 1])->Type->GetSize()));
+			Code->Add(Sub, ESP, to_string((LSym->Table->Symbols[argc - 1])->GetSize()));
 		}
 		for (int i = 0; i < Rights.size(); ++i) {
-			Rights[i]->Generate(Code, Rights[i]->TypeExp == VarExp ? ((SymIdent*)LSym->Table->Symbols[LSym->Table->DeclCount + i])->State : Null);
+			Rights[i]->Generate(Code, ((SymIdent*)(LSym->Table->Symbols[argc - 1]))->State);
 		}
-		
-		string FuncName = LSym->GenerateName();
-		Code->Add(Call, FuncName);
+		Code->Add(Call, LSym->GenerateName());
 	}
+
 	if (argc == argc_write || argc == argc_writeln){
 		vector<MyTypeID> TypeIDexp;
 		for (int i = Rights.size() - 1; i >= 0; --i) {
@@ -365,15 +333,18 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	}
 }
 
+void ExprInitList::Generate(Asm_Code* Code, ArgState State) {
+	for (int i = List.size() - 1; i >= 0; --i) {
+		List[i]->Generate(Code);
+	}
+}
+
 void ExprPointer::Generate(Asm_Code* Code, ArgState State) {
-	Exp->Generate(Code, State);
+	Exp->Generate(Code, RValue);
 }
 
 void ExprDereference::Generate(Asm_Code* Code, ArgState State) {
-	Exp->Generate(Code, State);
-	Code->Add(Pop, EAX);
-	Code->Add(Mov, EAX, EAX, 0);
-	Code->Add(Push, EAX);
+	Exp->Generate(Code, RValue);
 }
 
 string ExprConst::GenerateInitList() {
@@ -390,4 +361,70 @@ string ExprInitList::GenerateInitList() {
 		Ans += ", " + List[i]->GenerateInitList();
 	}
 	return Ans;
+}
+
+int ExprBinOp::GetSize() {
+	return Left->GetSize();
+}
+
+int ExprUnarOp::GetSize() {
+	return Exp->GetSize();
+}
+
+int ExprConst::GetSize() {
+	return 4;
+}
+
+int ExprIdent::GetSize() {
+	return Sym->GetSize();
+}
+
+pair<int, int> ExprIdent::GetBound(int depth) {
+	Symbol* SymId = Sym->GetType();
+	for (int i = 0; i < depth - 1; ++i) {
+		SymId = SymId->GetType();
+	}
+	return make_pair(((SymDynArray*)SymId)->GetLow(), ((SymDynArray*)SymId)->GetHigh());
+}
+
+int ExprArrayIndex::GetSize() {
+	auto Bound = Left->GetBound(1);
+	int Size = Left->GetSize();
+	return Left->GetSize() / (Bound.second - Bound.first + 1);
+}
+
+pair<int, int> ExprArrayIndex::GetBound(int depth) {
+	return Left->GetBound(depth + 1);
+}
+
+int ExprFunction::GetSize() {
+	return Left->GetSize();
+}
+
+pair<int, int> ExprFunction::GetBound(int depth) {
+	return Left->GetBound(depth);
+}
+
+int ExprRecord::GetSize() {
+	return Right->GetSize();
+}
+
+pair<int, int> ExprRecord::GetBound(int depth) {
+	Symbol* SymId = Right->GetType();
+	for (int i = 0; i < depth - 1; ++i) {
+		SymId = SymId->GetType();
+	}
+	return make_pair(((SymDynArray*)SymId)->GetLow(), ((SymDynArray*)SymId)->GetHigh());
+}
+
+int ExprInitList::GetSize() {
+	return List[0]->GetSize();
+}
+
+int ExprDereference::GetSize() {
+	return Exp->GetSize();
+}
+
+pair<int, int> ExprDereference::GetBound(int depth) {
+	return Exp->GetBound(depth);
 }

@@ -23,6 +23,7 @@ public:
 	virtual int GetSize() { return 0; }
 	virtual void Generate(Asm_Code* Code) {}
 	virtual string GenerateName() { return ""; };
+	virtual Symbol* GetType() { return nullptr; }
 };
 
 class SymLabel : public Symbol{
@@ -40,6 +41,7 @@ public:
 	void Print(int Spaces);
 	string GenerateName();
 	int GetSize();
+	Symbol* GetType();
 };
 
 class SymPointer : public Symbol {
@@ -49,6 +51,7 @@ public:
 	void Print(int Spaces);
 	string GenerateName();
 	int GetSize();
+	Symbol* GetType();
 };
 
 class SymIdent : public Symbol {
@@ -63,6 +66,8 @@ public:
 	string GenerateName();
 	string GetInitList();
 	void Generate(Asm_Code* Code);
+	int GetSize();
+	Symbol* GetType();
 };
 
 class SymVar : public SymIdent {
@@ -73,7 +78,7 @@ public:
 
 class SymConst : public SymIdent {
 public:
-	SymConst(string Name, Expr* InitExp, Symbol* Type);
+	SymConst(string Name, Expr* InitExp, Symbol* Type, ArgState State);
 	void Print(int Spaces);
 };
 
@@ -83,7 +88,10 @@ public:
 	MyTypeID TypeID;
 	SymDynArray(Symbol* Type);
 	void Print(int Spaces);
+	virtual int GetLow();
+	virtual int GetHigh();
 	int GetSize();
+	Symbol* GetType();
 };
 
 class SymArray : public SymDynArray{
@@ -93,6 +101,8 @@ public:
 	SymArray(Symbol* Type, int Left, int Right);
 	void Print(int Spaces);
 	string GenerateName();
+	int GetLow();
+	int GetHigh();
 	int GetSize();
 };
 
@@ -121,6 +131,8 @@ public:
 	SymFunction(string Name, SymTable* Table, Statement* Stmt, int argc, Symbol* Type);
 	void Print(int Spaces);
 	Symbol* Type;
+	int GetSize();
+	Symbol* GetType();
 };
 
 class SymProcedure : public SymCall {
