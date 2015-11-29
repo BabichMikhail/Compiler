@@ -34,9 +34,9 @@ void Parser::Print(){
 
 void Parser::ReservedCastFunction(SymTable* Table, string Type_1, string Type_2) {
 	auto NewTable = new SymTable(Table);
-	Symbol* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position()), Var);
+	Symbol* SymArg = new SymVar("Arg_0", nullptr, Table->GetSymbol(Type_2, Position()), RValue);
 	NewTable->Add(SymArg);
-	Symbol* SymResult = new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position()), Var);
+	Symbol* SymResult = new SymVar("Result", nullptr, Table->GetSymbol(Type_1, Position()), RValue);
 	NewTable->Add(SymResult);
 	auto Stmt = new Stmt_Compound();
 	Stmt->Add(new Stmt_Assign(new ExprAssign(new ExprIdent(NewTable->GetSymbol("Result", Position()), Position()), 
@@ -382,14 +382,24 @@ void Parser::ParseConstDecl(SymTable* Table){
 		if (Exp->TypeExp == InitExp && Type == nullptr) {
 			throw IllegalExpr(Pos);
 		}
+		ArgState State = RValue;
 		if (Type != nullptr) {
 			CheckType(Table, Type, Exp, Pos);
+			if (_stricmp(Type->Name.c_str(), "pointer") == 0 || Type->Name.length() == 0) {
+				State = Var;
+			}
 		}
 		else {
-			Type = new SymType("", CheckType(Table, Pos).GetTypeID(Exp));
+			auto TypeID = CheckType(Table, Pos).GetTypeID(Exp);
+			Type = new SymType("", TypeID);
+			if (TypeID == TypeID_Array || TypeID == TypeID_Pointer) {
+				State = Var;
+			}
 		}
+		
+		
 		Table->CheckSymbol(Name, Name_Pos);
-		Table->Add(new SymConst(Name, Exp, Type));
+		Table->Add(new SymConst(Name, Exp, Type, RValue));
 		Lex.CheckAndNext(TK_SEMICOLON);
 	}
 }
@@ -410,11 +420,11 @@ void Parser::ParseVarDecl(SymTable* Table){
 		}
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType(Table);
-		ArgState State = Null;
+		ArgState State = RValue;
 		if (_stricmp(Type->Name.c_str(), "pointer") == 0 || Type->Name.length() == 0) {
-			State = Var;
+			State = RValue;
 		}
-		while (((SymType*)Type)->TypeID == TypeID_BadType) {
+		while (Type->Section == DeclType && ((SymType*)Type)->TypeID == TypeID_BadType) {
 			Type = ((SymType*)Type)->Type;
 		}
 		if (Names.size() > 1 && Lex.Get().Type == TK_EQUAL) {
@@ -463,7 +473,7 @@ void Parser::ParseCallDecl(SymTable* Table, DeclSection Section) {
 	if (Section == DeclFunction) {
 		Lex.CheckAndNext(TK_COLON);
 		auto Type = ParseType(Table);
-		LocTable->Add(new SymVar("Result", nullptr, Type, Null));
+		LocTable->Add(new SymVar("Result", nullptr, Type, RValue));
 		Lex.CheckAndNext(TK_SEMICOLON);
 		NewSym = new SymFunction(Name, LocTable, nullptr, argc + 1, Type);
 	}
@@ -519,7 +529,7 @@ Symbol* Parser::ParseRecord(SymTable* Table) {
 int Parser::ParseArguments(SymTable* Table) {
 	int argc = 0;
 	while (Lex.Get().Type == TK_IDENTIFIER || Lex.Get().Type == TK_CONST || Lex.Get().Type == TK_VAR || Lex.Get().Type == TK_OUT) {
-		ArgState State = Null;
+		ArgState State = RValue;
 		if (Lex.Get().Type == TK_CONST) {
 			State = Const;
 			Lex.Next();
@@ -529,7 +539,8 @@ int Parser::ParseArguments(SymTable* Table) {
 			Lex.Next();
 		}
 		if (Lex.Get().Type == TK_OUT) {
-			State = Out;
+			//State = Out;
+			State = Var;
 			Lex.Next();
 		}
 		++argc;
@@ -767,7 +778,7 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 	auto TK = Lex.Get();
 	Lex.Next();
 	if (State == Test_Exp) {
-		Table->Add(new SymVar(TK.Source, nullptr, nullptr, Null));
+		Table->Add(new SymVar(TK.Source, nullptr, nullptr, RValue));
 	}
 	auto Sym = Table->GetSymbol(TK.Source, TK.Pos);
 	Expr* ExpNow = new ExprIdent(Sym, TK.Pos);
@@ -809,12 +820,18 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 			}
 			Symbol* Right = nullptr;
 			if (State == Test_Exp) {
-				Right = new SymVar(Lex.Get().Source, nullptr, nullptr, Null);
+				Right = new SymVar(Lex.Get().Source, nullptr, nullptr, RValue);
 			}
 			else {
-				Right = ((SymRecord*)((SymIdent*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+				if (Sym->Section == DeclFunction) {
+					Right = ((SymRecord*)((SymFunction*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+				}
+				else {
+					Right = ((SymRecord*)((SymIdent*)Sym)->Type)->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
+				}
 			}
 			Lex.Next();
+			Sym = Right;
 			ExpNow = new ExprRecord(ExpNow, Right);
 		}
 	}
