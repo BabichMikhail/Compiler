@@ -171,6 +171,9 @@ int SymType::GetSize() {
 	case TypeID_Boolean:
 		return alignment(1);
 	default:
+		if (Type == nullptr) {
+			return 0;
+		}
 		return Type->GetSize();
 	}
 }
@@ -200,8 +203,11 @@ void SymCall::Generate(Asm_Code* Code) {
 	FuncCode->Fmts = Code->Fmts;
 	FuncCode->Add(Push, EBP);
 	FuncCode->Add(Mov, EBP, ESP);
-	auto size = Table->GenerateLocalVariables(FuncCode, Section == DeclFunction ? argc - 1 : argc, argc);
-	Stmt->Generate(FuncCode);
+	Table->Offsets->depth = Table->Parent->Offsets->depth + 1;
+	Table->Offsets->Pref = Table->Parent->Offsets;
+	Table->Offsets->size = Table->Size;
+	auto size = Table->GenerateLocalVariables(FuncCode, Section == DeclFunction ? argc - 1 : argc, argc, Table->Offsets->depth);
+	Stmt->Generate(FuncCode, Table->Offsets);
 	FuncCode->Add(Add, ESP, to_string(size.first));
 	FuncCode->Add(Pop, EBP);
 	FuncCode->Add(Ret, to_string(size.second));
@@ -223,6 +229,9 @@ void SymIdent::Generate(Asm_Code* Code) {
 }
 
 int SymIdent::GetSize() {
+	if (Type == nullptr) {
+		return 0;
+	}
 	return Type->GetSize();
 }
 

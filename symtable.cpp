@@ -4,12 +4,14 @@
 
 using namespace std;
 
-SymTable::SymTable(SymTable* ParentTable) : Parent(ParentTable) {
+SymTable::SymTable(SymTable* ParentTable) : Parent(ParentTable), Offsets(new OffsetNode(nullptr, 0, 0)) {
 	DeclCount = Symbols.size();
+	Size = 0;
 }
 
 void SymTable::Add(Symbol* NewElem) {
 	Symbols.push_back(NewElem);
+	Size += NewElem->GetSize();
 }
 
 bool SymTable::Find(string Value) {
@@ -140,13 +142,14 @@ void SymTable::GenerateVariables(Asm_Code* Code) {
 	}
 }
 
-pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var) {
+pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var, int depth) {
 	int size = 0;
 	int offset = 8;
 	for (int i = last_arg - 1; i >= 0; --i) {
 		if (Symbols[i]->Section == DeclVar) {
 			((SymIdent*)Symbols[i])->isLocal = true;
 			((SymIdent*)Symbols[i])->offset = offset;
+			((SymIdent*)Symbols[i])->depth = depth;
 			if (((SymIdent*)Symbols[i])->State == RValue) {
 				offset += ((SymIdent*)Symbols[i])->GetSize();
 			}
@@ -156,8 +159,9 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 		}
 	}
 	if (last_arg != first_var) {
-		((SymIdent*)Symbols[last_arg])->offset = offset;
+		((SymIdent*)Symbols[last_arg])->offset = offset; 
 		((SymIdent*)Symbols[last_arg])->isLocal = true;
+		((SymIdent*)Symbols[last_arg])->depth = depth;
 	}
 	offset -= 8;
 	for (int i = first_var; i < Symbols.size(); ++i) {
@@ -165,6 +169,7 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 			size += Symbols[i]->GetType()->GetSize();
 			((SymIdent*)Symbols[i])->isLocal = true;
 			((SymIdent*)Symbols[i])->offset = -size;
+			((SymIdent*)Symbols[i])->depth = depth;
 		}
 		else if (Symbols[i]->Section == DeclProcedure || Symbols[i]->Section == DeclFunction) {
 			Symbols[i]->Generate(Code);
@@ -174,7 +179,7 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 	for (int i = first_var; i < Symbols.size(); ++i) {
 		if (Symbols[i]->Section == DeclVar && ((SymIdent*)Symbols[i])->InitExp != nullptr) {
 			ExprAssign* Exp = new ExprAssign(new ExprIdent(Symbols[i], Position()), ((SymIdent*)Symbols[i])->InitExp);
-			Exp->Generate(Code);
+			Exp->Generate(Code, Offsets);
 		}
 	}
 	return make_pair(size, offset);

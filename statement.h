@@ -9,7 +9,7 @@ using namespace std;
 class Statement{
 public:
 	virtual void Print(int Spaces) {};
-	virtual void Generate(Asm_Code* Code) {};
+	virtual void Generate(Asm_Code* Code, OffsetNode* Offsets = nullptr) {};
 };
 
 class Stmt_GOTO : public Statement{
@@ -24,7 +24,7 @@ public:
 	vector<Statement*> StmtList;
 	void Add(Statement* Stmt);
 	void Print(int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, OffsetNode* Offsets);
 };
 
 class Stmt_Conditional : public Statement{
@@ -122,7 +122,7 @@ public:
 	Expr* Exp;
 	Stmt_Assign(Expr* Exp);
 	void Print(int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, OffsetNode* Offsets);
 };
 
 class Stmt_Call : public Statement {
@@ -130,7 +130,7 @@ public:
 	Expr* Exp;
 	Stmt_Call(Expr* Exp);
 	void Print(int Spaces);
-	void Generate(Asm_Code* Code);
+	void Generate(Asm_Code* Code, OffsetNode* Offsets);
 };
 
 #endif

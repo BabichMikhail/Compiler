@@ -3,14 +3,10 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "symbol.h"
 
 using namespace std;
-
-typedef struct {
-	Symbol Sym;
-	string Name;
-} Field;
 
 class SymTable{
 public:
@@ -32,7 +28,9 @@ public:
 	void CheckSymbol(string Name, const Position Pos);
 	void Print(int Spaces);
 	void GenerateVariables(Asm_Code* Code);
-	pair<int, int> GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var);
+	pair<int, int> GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var, int depth);
+	int Size; 
+	OffsetNode *Offsets;
 };
 
 #endif

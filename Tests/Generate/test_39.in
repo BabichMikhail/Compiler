@@ -1,0 +1,17 @@
+procedure Ext;
+var
+  x: Integer;
+  
+  procedure Int;
+  begin
+    Writeln(x);
+  end;
+
+begin
+  x := 5;
+  Int;
+end;
+
+begin
+  Ext;
+end.

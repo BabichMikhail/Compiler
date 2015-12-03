@@ -67,6 +67,7 @@ public:
 	string GetInitList();
 	void Generate(Asm_Code* Code);
 	int GetSize();
+	int depth;
 	Symbol* GetType();
 };
 
