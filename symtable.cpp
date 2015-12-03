@@ -143,7 +143,6 @@ void SymTable::GenerateVariables(Asm_Code* Code) {
 }
 
 pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var, int depth) {
-	int size = 0;
 	int offset = 8;
 	for (int i = last_arg - 1; i >= 0; --i) {
 		if (Symbols[i]->Section == DeclVar) {
@@ -163,24 +162,24 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 		((SymIdent*)Symbols[last_arg])->isLocal = true;
 		((SymIdent*)Symbols[last_arg])->depth = depth;
 	}
-	offset -= 8;
+	int size = 0;
 	for (int i = first_var; i < Symbols.size(); ++i) {
 		if (Symbols[i]->Section == DeclVar) {
-			size += Symbols[i]->GetType()->GetSize();
+			size -= Symbols[i]->GetType()->GetSize();
 			((SymIdent*)Symbols[i])->isLocal = true;
-			((SymIdent*)Symbols[i])->offset = -size;
+			((SymIdent*)Symbols[i])->offset = size;
 			((SymIdent*)Symbols[i])->depth = depth;
 		}
 		else if (Symbols[i]->Section == DeclProcedure || Symbols[i]->Section == DeclFunction) {
 			Symbols[i]->Generate(Code);
 		}
 	}
-	Code->Add(Sub, ESP, to_string(size));
+	Code->Add(Sub, ESP, to_string(-size));
 	for (int i = first_var; i < Symbols.size(); ++i) {
 		if (Symbols[i]->Section == DeclVar && ((SymIdent*)Symbols[i])->InitExp != nullptr) {
 			ExprAssign* Exp = new ExprAssign(new ExprIdent(Symbols[i], Position()), ((SymIdent*)Symbols[i])->InitExp);
 			Exp->Generate(Code, Offsets);
 		}
 	}
-	return make_pair(size, offset);
+	return make_pair(-size, offset - 8);
 }
