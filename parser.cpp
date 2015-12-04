@@ -209,7 +209,7 @@ Statement* Parser::ParseCase(SymTable* Table, int State){
 	}
 	if (Lex.Get().Type == TK_ELSE) {
 		Lex.Next();
-		Stmt_CASE->Stmt_Else = ParseStatement(Table, State);
+		Stmt_CASE->StmtElse = ParseStatement(Table, State);
 	}
 	Lex.CheckAndNext(TK_END);
 	CheckSemicolon();
@@ -691,20 +691,36 @@ void Parser::CheckConstExpr(SymTable* Table, Expr* Exp) {
 /* Parse Expr */
 
 Expr* Parser::ParseExpr(SymTable* Table){
+	auto Pos = Lex.Get().Pos;
 	auto Left = ParseLevel(Table, 0);
+	if (State != Test_Exp) {
+		Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
+	}
 	if (Lex.Get().Type == TK_CAP) {
+		auto Pos = Lex.Get().Pos;
 		Left = new ExprDereference(Left);
+		if (State != Test_Exp) {
+			Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
+		}
 		Lex.Next();
 	}
 	auto TK = Lex.Get();
 	if (TK.Type == TK_ASSIGNED){
 		Lex.Next();
+		auto Pos = Lex.Get().Pos;
 		auto Right = ParseLevel(Table, 0);
+		if (State != Test_Exp) {
+			Right->TypeID = CheckType(Table, Pos).GetTypeID(Right);
+		}
 		if (Left_Op_Assign.find(Left->TypeExp) == Left_Op_Assign.cend()){
 			throw ExpectedVariable(Lex.Get().Pos);
 		}
 		if (Lex.Get().Type == TK_CAP) {
+			auto Pos = Lex.Get().Pos;
 			Right = new ExprDereference(Right);
+			if (State != Test_Exp) {
+				Right->TypeID = CheckType(Table, Pos).GetTypeID(Right);
+			}
 			Lex.Next();
 		}
 		return new ExprAssign(Left, Right);
@@ -716,14 +732,26 @@ Expr* Parser::ParseLevel(SymTable* Table, const int level){
 	if (level == parse_factor_level){
 		return ParseFactor(Table);
 	}
+	auto Pos = Lex.Get().Pos;
 	auto Left = ParseLevel(Table, level + 1);
+	if (State != Test_Exp) {
+		Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
+	}
 	while (level_list[level].find(Lex.Get().Type) != level_list[level].cend()){
 		Token Op = Lex.Get();
 		Lex.Next();
+		auto Pos = Lex.Get().Pos;
 		Left = new ExprBinOp(Left, Op, ParseLevel(Table, level + 1));
+		if (State != Test_Exp) {
+			Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
+		}
 	}
 	if (Lex.Get().Type == TK_CAP) {
+		auto Pos = Lex.Get().Pos;
 		Left = new ExprDereference(Left);
+		if (State != Test_Exp) {
+			Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
+		}
 		Lex.Next();
 	}
 	return Left;

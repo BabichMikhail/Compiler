@@ -30,9 +30,12 @@ enum ArgState { RValue, Var, Const, Out };
 enum TypeExpr { BinExp, UnarExp, ConstIntExp, ConstDoubleExp, ConstBoolExp, ConstStringExp, VarExp, ArrayExp, AssignExp, FunctionExp, RecordExp, InitExp, 
 	PointerExp, DereferenceExp };
 
+enum MyTypeID;
+
 class Expr{
 public:
 	TypeExpr TypeExp;
+	MyTypeID TypeID;
 	Expr(TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces){};

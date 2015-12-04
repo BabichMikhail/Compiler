@@ -119,7 +119,6 @@ MyTypeID CheckType::GetTypeID(Token TK) {
 		throw;
 	}
 	if (Sym->Section == DeclConst) {
-		//auto ASym = (SymConst*)Sym;
 		if (Sym->GetType() != nullptr) {
 			return ((SymType*)Sym->GetType())->TypeID;
 		}
@@ -202,7 +201,11 @@ MyTypeID CheckType::GetTypeID(Expr* Exp) {
 		return GetTypeID(((ExprDereference*)Exp)->Exp);
 	}
 	if (Exp->TypeExp == VarExp) {
-		if ((((ExprIdent*)Exp)->Sym)->GetType()->Name == "pointer") {
+		auto Type = (((ExprIdent*)Exp)->Sym)->GetType();
+		if (Type == nullptr) {
+			return TypeID_BadType;
+		}
+		if (Type->Name == "pointer") {
 			return ((SymType*)(((ExprIdent*)Exp)->Sym)->GetType()->GetType())->TypeID;
 		}
 		if (((ExprIdent*)Exp)->Sym->GetType()->Section == DeclRecord) {
