@@ -235,9 +235,6 @@ Statement* Parser::ParseForStmt(SymTable* Table, int State){
 	CheckType(Table, TypeID_Integer, Exp_2, Pos);
 	Lex.CheckAndNext(TK_DO);
 	auto Stmt = ParseStatement(Table, State | 2);
-	if (Stmt != nullptr) {
-		CheckSemicolon();
-	}
 	return new Stmt_FOR(Exp_1, Exp_2, isTO, Stmt);
 }
 
@@ -250,9 +247,9 @@ Statement* Parser::ParseWhileStmt(SymTable* Table, int State){
 	return new Stmt_WHILE(Cond, ParseStatement(Table, State | 2));
 }
 
-Statement* Parser::ParseRepeatStmt(SymTable* Table, int State){
+Statement* Parser::ParseRepeatStmt(SymTable* Table, int State) {
 	Lex.Next();
-	auto Stmt_List = ParseStmtList(Table, State);
+	auto Stmt_List = ParseStmtList(Table, State | 2);
 	Lex.CheckAndNext(TK_UNTIL);
 	auto Pos = Lex.Get().Pos;
 	auto Exp = ParseExpr(Table);
@@ -284,6 +281,12 @@ Statement* Parser::ParseTryStmt(SymTable* Table, int State){
 
 Statement* Parser::ParseIdentifier(SymTable* Table, int State) {
 	auto Pos = Lex.Get().Pos;
+	auto Sym = Table->GetSymbol(Lex.Get().Source, Pos);
+	if (Sym->Section == DeclLabel) {
+		Lex.Next();
+		Lex.CheckAndNext(TK_COLON);
+		return new Stmt_GOTO_Label(Sym);
+	}
 	Exp = ParseExpr(Table);
 	if (Exp->TypeExp == FunctionExp) {
 		CheckType(Table, TypeID_BadType, Exp, Pos);
@@ -487,6 +490,7 @@ void Parser::ParseCallDecl(SymTable* Table, DeclSection Section) {
 		if (CmpArguments().Compare(NewSym, Symbols[i])) {
 			if (Symbols[i]->Section == Section && ((SymCall*)Symbols[i])->Stmt == nullptr) {
 				FirstDeclSym = (SymCall*)Symbols[i];
+				LocTable = FirstDeclSym->Table;
 			}
 			else {
 				throw DuplicateIdentifier(Name, Pos);
@@ -509,8 +513,8 @@ void Parser::ParseCallDecl(SymTable* Table, DeclSection Section) {
 		FirstDeclSym->Stmt = ParseStatement(LocTable, 0);
 	}
 	else {
-		((SymCall*)NewSym)->Stmt = ParseStatement(LocTable, 0);
 		Table->Add(NewSym);
+		((SymCall*)NewSym)->Stmt = ParseStatement(LocTable, 0);
 	}
 }
 
