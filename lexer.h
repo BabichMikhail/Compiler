@@ -45,6 +45,7 @@ public:
 	Token() : Pos(0, 0), Source(), Type(NOT_TOKEN){};
 	Token(const Token &TK) : Pos(TK.Pos), Source(TK.Source), Type(TK.Type){};
 	Token(const Position Pos, const string S, const TokenType T) : Pos(Pos), Source(S), Type(T){};
+	Token(const TokenType T) : Pos(Position()), Source(), Type(T) {}
 };
 
 class Lexer{
