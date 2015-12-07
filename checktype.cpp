@@ -29,7 +29,7 @@ static vector<Cell> TypeTable[] = {
 	},
 	{ /* Double */
 		{ TK_PLUS, TypeID_Double },{ TK_MINUS, TypeID_Double },{ TK_MUL, TypeID_Double },{ TK_DIV, TypeID_Double },{ TK_EQUAL, TypeID_Boolean },
-		{ TK_NOT, TypeID_Boolean },{ TK_GREAT, TypeID_Boolean },{ TK_LESS, TypeID_Boolean },{ TK_GREAT_EQUAL, TypeID_Boolean },
+		{ TK_NOT_EQUAL, TypeID_Boolean },{ TK_GREAT, TypeID_Boolean },{ TK_LESS, TypeID_Boolean },{ TK_GREAT_EQUAL, TypeID_Boolean },
 		{ TK_LESS_EQUAL, TypeID_Boolean }
 	},
 	{ /* Char */ },

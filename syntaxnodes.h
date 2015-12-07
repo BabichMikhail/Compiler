@@ -35,6 +35,7 @@ public:
 	virtual string GenerateInitList() { return ""; }
 	virtual int GetSize() { return 0; };
 	virtual pair<int, int> GetBound(int depth) { return make_pair(0, 0); };
+	virtual void ConvertToDouble(Asm_Code* Code, ArgState State = RValue) {};
 };
 
 class ExprBinOp : public Expr{
@@ -48,6 +49,7 @@ public:
 	void Generate_Bool_Expr(Asm_Code* Code, ArgState State, AsmOpType Op);
 	void Generate_Relation_Expr(Asm_Code* Code, ArgState State);
 	void Generate(Asm_Code* Code, ArgState State = RValue);
+	void Generate_Double_Expr(Asm_Code* Code, ArgState State);
 	int GetSize();
 };
 
@@ -84,11 +86,14 @@ public:
 	ExprIntConst(Token Value);
 	ExprIntConst(string Value);
 	void Generate(Asm_Code* Code, ArgState State = RValue);
+	void ConvertToDouble(Asm_Code* Code, ArgState State = RValue);
 };
 
 class ExprDoubleConst : public ExprConst{
 public:
 	ExprDoubleConst(Token Value);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
+	int GetSize();
 };
 
 class ExprStringConst : public ExprConst{

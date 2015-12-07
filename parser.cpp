@@ -437,6 +437,7 @@ void Parser::ParseVarDecl(SymTable* Table){
 		if (Lex.Get().Type == TK_EQUAL) {
 			auto Pos = Lex.Get().Pos;
 			Exp = ParseInit(Table);
+			Exp->TypeID = ((SymType*)Type)->TypeID;
 			CheckType(Table, Type, Exp, Pos);
 		}
 		for (int i = 0; i < Names.size(); ++i) {
@@ -745,9 +746,11 @@ Expr* Parser::ParseLevel(SymTable* Table, const int level){
 		Token Op = Lex.Get();
 		Lex.Next();
 		auto Pos = Lex.Get().Pos;
-		Left = new ExprBinOp(Left, Op, ParseLevel(Table, level + 1));
+		auto Right = ParseLevel(Table, level + 1);
+		Left = new ExprBinOp(Left, Op, Right);
 		if (State != Test_Exp) {
 			Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
+			Right->TypeID = CheckType(Table, Pos).GetTypeID(Right);
 		}
 	}
 	if (Lex.Get().Type == TK_CAP) {

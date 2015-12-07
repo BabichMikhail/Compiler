@@ -8,8 +8,10 @@
 
 using namespace std;
 
-enum AsmOpType { Null = 0, Push, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov, Ret, Test, Cmp, Jz, Jnz, Jmp, Jg, Jge, Jl, Jle, Je, Jne };
-enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP };
+enum AsmOpType { Null = 0, Push, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov, Ret, Test, Cmp, Jz, Jnz, Jmp, Jg, Jge, Jl, Jle, Je, Jne, 
+	Fld, Fild, Fstp, Fadd, Fsub, Fdiv, Fmul, Fiadd, Fisub, Fidiv, Fimul, Ja, Jb, Jae, Jbe, Fcom, Fcomi, Fcomip };
+enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP, ST0, ST1 };
+enum AsmSize { qword, dword };
 
 class Asm_Operand {
 public:
@@ -57,7 +59,7 @@ public:
 class Asm_Cmd {
 public:
 	AsmOpType Op;
-	virtual string GetCode() = 0;
+	virtual string GetCode();
 	Asm_Cmd(AsmOpType Cmd);
 };
 
@@ -81,6 +83,14 @@ public:
 	Asm_Operand* Oper1;
 	string GetCode();
 	Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1);
+};
+
+class Asm_Unar_Size_Cmd : public Asm_Cmd {
+public:
+	Asm_Operand* Oper1;
+	AsmSize Size;
+	string GetCode();
+	Asm_Unar_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1);
 };
 
 class Asm_Global_Data {
@@ -114,6 +124,7 @@ class Asm_Code {
 private:
 	vector<Asm_Global_Data*> Data;
 	int Label_Count;
+	int Double_Count;
 	vector<string> BreakLabelNames;
 	vector<string> ContinueLabelNames;
 public:
@@ -125,6 +136,7 @@ public:
 	void AddLabel(string Name);
 	string GetLocalLabelName();
 	string GetGlobalLabelName(string Name);
+	string AddDoubleVar(string Value);
 	void Add(AsmOpType Op, AsmRegType Reg);
 	void Add(AsmOpType Op, string Val);
 	void Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
@@ -132,6 +144,9 @@ public:
 	void Add(AsmOpType Op, string Val, AsmRegType Reg);
 	void Add(string Name, string Type, string InitList); 
 	void Add(Asm_Function* Func);
+	void Add(AsmOpType Op, AsmSize Size, string Val);
+	void Add(AsmOpType Op);
+	void Add_Addr(AsmOpType Op, AsmSize Size, AsmRegType Reg, int offset = 0);
 	void Add_Addr(AsmOpType Op, string Var, int offset);
 	void Add_RAddr(AsmOpType Op, AsmRegType Reg, string Var, int offset);
 	void Add_LAddr(AsmOpType Op, string Val, int offset, AsmRegType Reg);

@@ -160,26 +160,53 @@ void ExprBinOp::Generate_Bool_Expr(Asm_Code* Code, ArgState State, AsmOpType Op)
 	Code->AddLabel(LabelName_2);
 }
 
+#define GetCmd(TypeID, Cmd_f, Cmd_i) (TypeID == TypeID_Double ? Cmd_f : Cmd_i)
+
 void ExprBinOp::Generate_Relation_Expr(Asm_Code* Code, ArgState State) {
 	string LabelName_1 = Code->GetLocalLabelName();
 	string LabelName_2 = Code->GetLocalLabelName();
 	Left->Generate(Code, State);
+	if (Left->TypeID != TypeID_Double && Right->TypeID == TypeID_Double) {
+		Code->Add_Addr(Fild, dword, ESP);
+		Code->Add(Sub, ESP, to_string(4));
+		Code->Add_Addr(Fstp, qword, ESP);
+	}
 	Right->Generate(Code, State);
-	Code->Add(Pop, EBX);
-	Code->Add(Pop, EAX);
-	Code->Add(Cmp, EAX, EBX);
+	if (Left->TypeID == TypeID_Double && Right->TypeID != TypeID_Double) {
+		Code->Add_Addr(Fild, dword, ESP);
+		Code->Add(Sub, ESP, to_string(4));
+		Code->Add_Addr(Fstp, qword, ESP);
+	}
+
+	auto TypeID = Left->TypeID == TypeID_Double || Right->TypeID == TypeID_Double ? TypeID_Double : TypeID_Integer;
+	if (TypeID == TypeID_Double) {
+		Code->Add_Addr(Fld, qword, ESP);
+		Code->Add_Addr(Fld, qword, ESP, 8);
+		Code->Add(Add, ESP, to_string(16));
+	}
+
+	if (Left->TypeID == TypeID_Double || Right->TypeID == TypeID_Double) {
+		Code->Add(Fcomip, ST0, ST1);
+		Code->Add(Fstp);
+	}
+	else {
+		Code->Add(Pop, EBX);
+		Code->Add(Pop, EAX);
+		Code->Add(Cmp, EAX, EBX);
+	}
+	
 	switch (Op.Type) {
 	case TK_GREAT:
-		Code->Add(Jg, LabelName_1);
+		Code->Add(GetCmd(TypeID, Ja, Jg), LabelName_1);
 		break;
 	case TK_GREAT_EQUAL:
-		Code->Add(Jge, LabelName_1);
+		Code->Add(GetCmd(TypeID, Jae, Jge), LabelName_1);
 		break;
 	case TK_LESS:
-		Code->Add(Jl, LabelName_1);
+		Code->Add(GetCmd(TypeID, Jb, Jl), LabelName_1);
 		break;
 	case TK_LESS_EQUAL:
-		Code->Add(Jle, LabelName_1);
+		Code->Add(GetCmd(TypeID, Jbe, Jle), LabelName_1);
 		break;
 	case TK_EQUAL:
 		Code->Add(Je, LabelName_1);
@@ -195,42 +222,84 @@ void ExprBinOp::Generate_Relation_Expr(Asm_Code* Code, ArgState State) {
 	Code->AddLabel(LabelName_2);
 }
 
-void ExprBinOp::Generate(Asm_Code* Code, ArgState State){
-	if (Op.Type == TK_AND && Left->TypeID == TypeID_Boolean) {
-		Generate_Bool_Expr(Code, State, Jz);
-	}
-	else if (Op.Type == TK_OR && Left->TypeID == TypeID_Boolean) {
-		Generate_Bool_Expr(Code, State, Jnz);
-	}
-	else if (RelOp.find(Op.Type) != RelOp.end()){
-		Generate_Relation_Expr(Code, State);
+void ExprBinOp::Generate_Double_Expr(Asm_Code* Code, ArgState State) {
+	Right->Generate(Code, State);
+	Left->Generate(Code, State);
+	if (Left->TypeID == TypeID_Double) {
+		Code->Add_Addr(Fld, qword, ESP);
+		Code->Add(Add, ESP, to_string(8));
 	}
 	else {
-		Left->Generate(Code);
-		if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
-			Code->Add(Pop, EAX);				      /* A - const only */
-			if (Right->TypeExp != ConstIntExp) {
-				throw ConstIntExpressionExpected(Op.Pos);
-			}
-			Code->Add(Op.Type == TK_SHL ? Shl : Shr, EAX, ((ExprIntConst*)Right)->Value.Source);
+		Code->Add_Addr(Fild, dword, ESP);
+		Code->Add(Add, ESP, to_string(4));
+	}
+
+	auto TypeID = Right->TypeID;
+	auto Size = TypeID == TypeID_Double ? qword : dword;	
+	switch (Op.Type) {
+	case TK_PLUS:
+		Code->Add_Addr(GetCmd(TypeID, Fadd, Fiadd), Size, ESP);
+		break;
+	case TK_MINUS:
+		Code->Add_Addr(GetCmd(TypeID, Fsub, Fisub), Size, ESP);
+		break;
+	case TK_MUL:
+		Code->Add_Addr(GetCmd(TypeID, Fmul, Fimul), Size, ESP);
+		break;
+	case TK_DIV:
+		Code->Add_Addr(GetCmd(TypeID, Fdiv, Fidiv), Size, ESP);
+		break;
+	}
+
+	if (Right->TypeID != TypeID_Double) {
+		Code->Add(Sub, ESP, to_string(4));
+	}
+	Code->Add_Addr(Fstp, qword, ESP);
+}
+
+void ExprBinOp::Generate(Asm_Code* Code, ArgState State) {
+	if (RelOp.find(Op.Type) != RelOp.end()) {
+		Generate_Relation_Expr(Code, State);
+		return;
+	}
+	if (TypeID == TypeID_Double) {
+		Generate_Double_Expr(Code, State);
+		return;
+	}
+	if (Left->TypeID == TypeID_Boolean && (Op.Type == TK_AND || Op.Type == TK_OR)) {
+		if (Op.Type == TK_AND) {
+			Generate_Bool_Expr(Code, State, Jz);
+		}
+		if (Op.Type == TK_OR) {
+			Generate_Bool_Expr(Code, State, Jnz);
+		}
+		return;
+	}
+
+	Left->Generate(Code);
+	if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
+		Code->Add(Pop, EAX);				      /* A - const only */
+		if (Right->TypeExp != ConstIntExp) {
+			throw ConstIntExpressionExpected(Op.Pos);
+		}
+		Code->Add(Op.Type == TK_SHL ? Shl : Shr, EAX, ((ExprIntConst*)Right)->Value.Source);
+		Code->Add(Push, EAX);
+		return;
+	}
+	Right->Generate(Code);
+	Code->Add(Pop, EBX);
+	Code->Add(Pop, EAX);
+	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
+		Code->Add(Xor, EDX, EDX);
+		Code->Add(Div, EBX);
+		Op.Type == TK_DIV_INT ? Code->Add(Push, EAX) : Code->Add(Push, EDX);
+		return;
+	}
+	for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
+		if ((*it).first == Op.Type) {
+			Code->Add((*it).second, EAX, EBX);
 			Code->Add(Push, EAX);
 			return;
-		}
-		Right->Generate(Code);
-		Code->Add(Pop, EBX);
-		Code->Add(Pop, EAX);
-		if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
-			Code->Add(Xor, EDX, EDX);
-			Code->Add(Div, EBX);
-			Op.Type == TK_DIV_INT ? Code->Add(Push, EAX) : Code->Add(Push, EDX);
-			return;
-		}
-		for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
-			if ((*it).first == Op.Type) {
-				Code->Add((*it).second, EAX, EBX);
-				Code->Add(Push, EAX);
-				return;
-			}
 		}
 	}
 }
@@ -260,6 +329,20 @@ void ExprBoolConst::Generate(Asm_Code* Code, ArgState State) {
 
 void ExprIntConst::Generate(Asm_Code* Code, ArgState State) {
 	Code->Add(Push, Value.Source);
+}
+
+void ExprIntConst::ConvertToDouble(Asm_Code* Code, ArgState State) {
+	Code->Add_Addr(Fild, dword, ESP);
+	Code->Add(Sub, ESP, to_string(4));
+	Code->Add_Addr(Fstp, qword, ESP);
+}
+
+void ExprDoubleConst::Generate(Asm_Code* Code, ArgState State) {
+	string Name = Code->AddDoubleVar(Value.Source);
+	Code->Add_RAddr(Mov, EAX, Name, 4);
+	Code->Add(Push, EAX);
+	Code->Add_RAddr(Mov, EAX, Name, 0);
+	Code->Add(Push, EAX);
 }
 
 void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
@@ -312,7 +395,10 @@ void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
 	Right->Generate(Code);
 	Left->Generate(Code, Var);
 	Code->Add(Pop, EAX);
-	int Size = Left->GetSize();
+	if (Left->TypeID == TypeID_Double && Right->TypeID != TypeID_Double) {
+		Right->ConvertToDouble(Code);
+	}
+	int Size = max(Left->GetSize(), Right->GetSize());
 	for (int i = 0; i < Size; i += 4) {
 		Code->Add(Pop, EBX);
 		Code->Add_LAddr(Mov, EAX, i, EBX);
@@ -396,6 +482,9 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 			case TypeID_String:
 				format += "%s";
 				break;
+			case TypeID_Double:
+				format += "%f";
+				break;
 			}
 		}
 		format += argc == argc_writeln ? "\', 0xA, 0x0" : "\', 0x0";
@@ -407,13 +496,13 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 		for (int i = 0; i < Rights.size(); ++i) {
 			Size += Rights[i]->GetSize();
 		}
-
 		Code->Add(Add, ESP, to_string(Size + 4));
 	}
 }
 
 void ExprInitList::Generate(Asm_Code* Code, ArgState State) {
 	for (int i = List.size() - 1; i >= 0; --i) {
+		List[i]->TypeID = TypeID;
 		List[i]->Generate(Code);
 	}
 }
@@ -435,7 +524,7 @@ string ExprBoolConst::GenerateInitList() {
 }
 
 string ExprInitList::GenerateInitList() {
-	string Ans = List[0]->GenerateInitList();
+	string Ans = List[0]->GenerateInitList(); 
 	for (int i = 1; i < List.size(); ++i) {
 		Ans += ", " + List[i]->GenerateInitList();
 	}
@@ -443,7 +532,7 @@ string ExprInitList::GenerateInitList() {
 }
 
 int ExprBinOp::GetSize() {
-	return Left->GetSize();
+	return max(Left->GetSize(), Right->GetSize());
 }
 
 int ExprUnarOp::GetSize() {
@@ -452,6 +541,10 @@ int ExprUnarOp::GetSize() {
 
 int ExprConst::GetSize() {
 	return 4;
+}
+
+int ExprDoubleConst::GetSize() {
+	return 8;
 }
 
 int ExprIdent::GetSize() {

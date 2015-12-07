@@ -1,13 +1,17 @@
 #include "asmgenerator.h"
 
 static const string AsmOp_str[] = { "", "push", "pop", "imul", "div", "add", "sub", "neg", "not", "or", "and", "xor", "shl", "shr", "call", "mov", "ret", "test", "cmp", "jz", 
-	"jnz", "jmp", "jg", "jge", "jl", "jle", "je", "jne" };
-static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp" };
+	"jnz", "jmp", "jg", "jge", "jl", "jle", "je", "jne", "fld", "fild", "fstp", "fadd", "fsub", "fdiv", "fmul", "fiadd", "fisub", "fidiv", "fimul", "ja", "jb", "jae", "jbe",
+	"fcom", "fcomi", "fcomip"
+};
+static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp","ST0", "ST1" };
+static const string AsmSize_str[] = { "qword", "dword" };
 
 Asm_Cmd::Asm_Cmd(AsmOpType Op) : Op(Op) {}
 Asm_Label::Asm_Label(string Name) : Name(Name), Asm_Cmd(Null) {};
 Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2) : Asm_Cmd(Op), Oper1(Oper1), Oper2(Oper2) {}
 Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1) : Asm_Cmd(Op), Oper1(Oper1) {}
+Asm_Unar_Size_Cmd::Asm_Unar_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1) : Asm_Cmd(Op), Size(Size), Oper1(Oper1) {}
 Asm_Registr::Asm_Registr(AsmRegType Reg) : Reg(Reg) {}
 Asm_StringConst::Asm_StringConst(string Str) : Str(Str) {}
 Asm_IntConst::Asm_IntConst(string Val) : Val(Val) {}
@@ -19,12 +23,20 @@ Asm_Local_Data::Asm_Local_Data(int depth, int size, int arg_size) : depth(depth)
 Asm_Function::Asm_Function(string Name, vector<Asm_Cmd*> Cmds, int arg_size) : Name(Name), Cmds(Cmds), arg_size(arg_size){};
 Asm_Code::Asm_Code() : Fmts(new vector<string>), depth(0) {}
 
+string Asm_Cmd::GetCode() {
+	return AsmOp_str[Op];
+}
+
 string Asm_Label::GetCode() {
 	return Name + ":";
 }
 
 string Asm_Unar_Cmd::GetCode() {
 	return AsmOp_str[Op] + " " + Oper1->GetCode();
+}
+
+string Asm_Unar_Size_Cmd::GetCode() {
+	return AsmOp_str[Op] + " " + AsmSize_str[Size] + " " + Oper1->GetCode();
 }
 
 string Asm_Bin_Cmd::GetCode() {
@@ -126,6 +138,18 @@ void Asm_Code::Add(Asm_Function* Func) {
 	Functions.push_back(Func);
 }
 
+void Asm_Code::Add(AsmOpType Op, AsmSize Size, string Val) {
+	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_IntConst(Val)));
+}
+
+void Asm_Code::Add(AsmOpType Op) {
+	Cmds.push_back(new Asm_Cmd(Op));
+}
+
+void Asm_Code::Add_Addr(AsmOpType Op, AsmSize Size, AsmRegType Reg, int offset) {
+	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Reg, offset)));
+}
+
 void Asm_Code::Add_Addr(AsmOpType Op, string Var, int offset) {
 	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(Var, offset)));
 }
@@ -167,11 +191,19 @@ string Asm_Code::GetLocalLabelName() {
 	return ".L_" + to_string(Label_Count);
 }
 
+string Asm_Code::AddDoubleVar(string Value) {
+	++Double_Count;
+	string Name = "D_" + to_string(Double_Count);
+	Add(Name, "dq", Value);
+	return Name;
+}
+
 void Asm_Code::Print() {
 	cout << "extern _printf" << endl;
 	cout << "section .data" << endl;
 	cout << "    depth : times 1024 dd 0" << endl; 
 	cout << "    base_str : times 256 db 0" << endl;
+	cout << "    double : dq 0.0" << endl;
 	for (int i = 0; i < (*Fmts).size(); ++i) {
 		cout << "    " + (*Fmts)[i] << endl;
 	}

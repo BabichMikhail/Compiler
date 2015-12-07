@@ -186,6 +186,8 @@ string SymType::GenerateName() {
 		return "db";
 	case TypeID_Boolean:
 		return "db";
+	case TypeID_Double:
+		return "dq";
 	}
 }
 
@@ -230,9 +232,6 @@ int SymIdent::GetSize() {
 	if (Type == nullptr) {
 		return 0;
 	}
-	/*if (State == Var) {
-		return 4;
-	}*/
 	return Type->GetSize();
 }
 
@@ -252,7 +251,7 @@ string SymIdent::GetInitList() {
 	if (InitExp == nullptr) {
 		return "0";
 	}
-	return InitExp->GenerateInitList();
+	return InitExp->GenerateInitList() + (InitExp->TypeExp != ConstDoubleExp && InitExp->TypeID == TypeID_Double ? ".0" : "");
 }
 
 Symbol* SymType::GetType() {
