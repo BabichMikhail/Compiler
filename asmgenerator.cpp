@@ -1,9 +1,11 @@
 #include "asmgenerator.h"
 
-static const string AsmOp_str[] = { "push", "pop", "imul", "div", "add", "sub", "neg", "not", "or", "and", "xor", "shl", "shr", "call", "mov", "ret" };
+static const string AsmOp_str[] = { "", "push", "pop", "imul", "div", "add", "sub", "neg", "not", "or", "and", "xor", "shl", "shr", "call", "mov", "ret", "test", "cmp", "jz", 
+	"jnz", "jmp", "jg", "jge", "jl", "jle", "je", "jne" };
 static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp" };
 
 Asm_Cmd::Asm_Cmd(AsmOpType Op) : Op(Op) {}
+Asm_Label::Asm_Label(string Name) : Name(Name), Asm_Cmd(Null) {};
 Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2) : Asm_Cmd(Op), Oper1(Oper1), Oper2(Oper2) {}
 Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1) : Asm_Cmd(Op), Oper1(Oper1) {}
 Asm_Registr::Asm_Registr(AsmRegType Reg) : Reg(Reg) {}
@@ -15,7 +17,11 @@ Asm_Address::Asm_Address(AsmRegType Reg, int offset) : Reg(Reg), offset(offset),
 Asm_Global_Data::Asm_Global_Data(string Name, string Type, string InitList) : Name(Name), Type(Type), InitList(InitList) {}
 Asm_Local_Data::Asm_Local_Data(int depth, int size, int arg_size) : depth(depth), size(size), arg_size(arg_size) {}
 Asm_Function::Asm_Function(string Name, vector<Asm_Cmd*> Cmds, int arg_size) : Name(Name), Cmds(Cmds), arg_size(arg_size){};
-Asm_Code::Asm_Code() : Fmts(new vector<string>) {}
+Asm_Code::Asm_Code() : Fmts(new vector<string>), depth(0) {}
+
+string Asm_Label::GetCode() {
+	return Name + ":";
+}
 
 string Asm_Unar_Cmd::GetCode() {
 	return AsmOp_str[Op] + " " + Oper1->GetCode();
@@ -148,9 +154,23 @@ void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, 0)));
 }
 
+void Asm_Code::AddLabel(string Name) {
+	Cmds.push_back(new Asm_Label(Name));
+}
+
+string Asm_Code::GetGlobalLabelName(string Name) {
+	return "L_" + Name;
+}
+
+string Asm_Code::GetLocalLabelName() {
+	++Label_Count;
+	return ".L_" + to_string(Label_Count);
+}
+
 void Asm_Code::Print() {
 	cout << "extern _printf" << endl;
 	cout << "section .data" << endl;
+	cout << "    depth : times 1024 dd 0" << endl; 
 	cout << "    base_str : times 256 db 0" << endl;
 	for (int i = 0; i < (*Fmts).size(); ++i) {
 		cout << "    " + (*Fmts)[i] << endl;
@@ -168,4 +188,22 @@ void Asm_Code::Print() {
 		cout << "    " + Cmds[i]->GetCode() << endl;
 	}
 	cout << "    ret";
+}
+
+void Asm_Code::SaveLabels(string LabelContinue, string LabelBreak) {
+	BreakLabelNames.push_back(LabelBreak);
+	ContinueLabelNames.push_back(LabelContinue);
+}
+
+void Asm_Code::LoadLabels() {
+	BreakLabelNames.pop_back();
+	ContinueLabelNames.pop_back();
+}
+
+string Asm_Code::GetLabelBreak() {
+	return *BreakLabelNames.crbegin();
+}
+
+string Asm_Code::GetLabelContinue() {
+	return *ContinueLabelNames.crbegin();
 }

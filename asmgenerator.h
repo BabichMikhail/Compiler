@@ -4,10 +4,11 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <set>
 
 using namespace std;
 
-enum AsmOpType { Push = 0, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov, Ret };
+enum AsmOpType { Null = 0, Push, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xor, Shl, Shr, Call, Mov, Ret, Test, Cmp, Jz, Jnz, Jmp, Jg, Jge, Jl, Jle, Je, Jne };
 enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP };
 
 class Asm_Operand {
@@ -60,6 +61,13 @@ public:
 	Asm_Cmd(AsmOpType Cmd);
 };
 
+class Asm_Label : public Asm_Cmd {
+public:
+	string Name;
+	Asm_Label(string Name);
+	string GetCode();
+};
+
 class Asm_Bin_Cmd : public Asm_Cmd {
 public:
 	Asm_Operand* Oper1;
@@ -105,11 +113,18 @@ public:
 class Asm_Code {
 private:
 	vector<Asm_Global_Data*> Data;
+	int Label_Count;
+	vector<string> BreakLabelNames;
+	vector<string> ContinueLabelNames;
 public:
+	int depth;
 	vector<Asm_Cmd*> Cmds; 
 	vector<string> *Fmts;
 	vector<Asm_Function*> Functions;
 	string AddFormat(string new_format);
+	void AddLabel(string Name);
+	string GetLocalLabelName();
+	string GetGlobalLabelName(string Name);
 	void Add(AsmOpType Op, AsmRegType Reg);
 	void Add(AsmOpType Op, string Val);
 	void Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
@@ -126,6 +141,10 @@ public:
 	void Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
 	void Print();
 	Asm_Code();
+	void SaveLabels(string LabelContinue, string LabelBreak);
+	void LoadLabels();
+	string GetLabelContinue();
+	string GetLabelBreak();
 };
 
 #endif
