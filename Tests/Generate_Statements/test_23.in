@@ -1,0 +1,9 @@
+var a : double;
+begin
+	a := 15.0;
+	case a of 
+	10 : writeln(10);
+	13..15 : writeln(20);
+	16..30 : writeln(30);
+	end; 
+end.

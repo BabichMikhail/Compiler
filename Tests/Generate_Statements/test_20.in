@@ -1,0 +1,9 @@
+var a : integer;
+begin
+	a := 20;
+	case a of 
+	10 : writeln(10);
+	20 : writeln(20);
+	30 : writeln(30);
+	end; 
+end.
