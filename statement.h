@@ -67,6 +67,7 @@ public:
 	void Add(Case_Selector Selector);
 	Stmt_Case(Expr* Exp);
 	void Print(int Spaces);
+	void Generate(Asm_Code* Code);
 };
 
 class Stmt_FOR : public Stmt_Conditional{

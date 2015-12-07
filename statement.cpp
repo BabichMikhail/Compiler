@@ -196,6 +196,33 @@ void Stmt_IF::Generate(Asm_Code* Code) {
 	}
 }
 
+void Stmt_Case::Generate(Asm_Code* Code) {
+	string LabelName_Exit = Code->GetLocalLabelName();
+	for (auto it = SelectorList.begin(); it < SelectorList.end(); ++it) {
+		if (it->Exp_2 == nullptr) {
+			ExprBinOp(Exp, Token(TK_EQUAL), it->Exp_1).Generate(Code);
+			Code->Add(Pop, EAX);
+		}
+		else {
+			ExprBinOp(Exp, Token(TK_GREAT_EQUAL), it->Exp_1).Generate(Code);
+			ExprBinOp(Exp, Token(TK_LESS_EQUAL), it->Exp_2).Generate(Code);
+			Code->Add(Pop, EAX);
+			Code->Add(Pop, EBX);
+			Code->Add(And, EAX, EBX);			
+		}
+		Code->Add(Test, EAX, EAX);
+		string LabelName_Else = Code->GetLocalLabelName();
+		Code->Add(Jz, LabelName_Else);
+		it->Stmt->Generate(Code);
+		Code->Add(Jmp, LabelName_Exit);
+		Code->AddLabel(LabelName_Else);
+	}
+	if (StmtElse != nullptr) {
+		StmtElse->Generate(Code);
+	}
+	Code->AddLabel(LabelName_Exit);
+}
+
 void Stmt_FOR::Generate(Asm_Code* Code) {
 	Exp_1->Generate(Code);
 	string LabelName_Cond = Code->GetLocalLabelName();

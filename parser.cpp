@@ -290,6 +290,7 @@ Statement* Parser::ParseIdentifier(SymTable* Table, int State) {
 	Exp = ParseExpr(Table);
 	if (Exp->TypeExp == FunctionExp) {
 		CheckType(Table, TypeID_BadType, Exp, Pos);
+		CheckSemicolon();
 		return new Stmt_Call(Exp);
 	}
 	if (Exp->TypeExp == AssignExp) {
