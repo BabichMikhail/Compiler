@@ -1,0 +1,5 @@
+var a : double;
+begin
+	a := 10.1;
+	writeln(a);
+end.

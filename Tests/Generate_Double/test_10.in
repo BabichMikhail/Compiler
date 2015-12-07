@@ -1,0 +1,9 @@
+var
+	a : double = 500.01;
+	b : integer = 10;
+begin
+	a := 0.1 + a;
+	a := a + b;
+	a := a * 1.0;
+	writeln(5.00001 + a*1.0 - 5.00001);
+end.

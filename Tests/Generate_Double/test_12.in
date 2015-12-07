@@ -1,0 +1,5 @@
+var a : integer = 9;
+begin
+	if a < 10.0 then
+		writeln(100.5);
+end.
