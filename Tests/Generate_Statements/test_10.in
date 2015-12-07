@@ -1,0 +1,11 @@
+procedure A(a : integer; b : integer; c : integer; d : integer);
+var i, j : integer;
+begin
+    for i := a to b do 
+        for j := c to d do
+            writeln(i, ' ', j);
+end;
+
+begin
+    A(1, 4, 1, 4);
+end.

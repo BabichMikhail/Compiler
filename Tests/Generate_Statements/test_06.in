@@ -1,0 +1,10 @@
+var
+    i : integer = 5;
+begin
+    repeat 
+        i := i + 1;
+        writeln(i);
+        continue;
+        break;
+    until i = 10;
+end.

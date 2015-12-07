@@ -1,0 +1,7 @@
+var i, j : integer;
+
+begin
+    for i := 1 to 4 do 
+        for j := 1 to 4 do
+            writeln(i, ' ', j);
+end.

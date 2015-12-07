@@ -1,0 +1,8 @@
+var a: integer = 10;
+begin
+    repeat 
+	writeln(a);        
+        a := a - 1;
+    until (a = 0); 
+    writeln('Go!');
+end.

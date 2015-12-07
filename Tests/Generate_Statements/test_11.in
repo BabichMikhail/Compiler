@@ -1,0 +1,15 @@
+procedure B(L : integer; R : integer);
+    procedure A(a : integer; b : integer);
+    var i, j : integer;
+    begin
+        for i := L to b do 
+            for j := a to R do
+               writeln(i, ' ', j);
+    end;
+begin
+    A(L, R);
+end;
+
+begin
+    B(1, 4);
+end.

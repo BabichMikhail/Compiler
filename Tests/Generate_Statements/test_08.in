@@ -1,0 +1,13 @@
+label a;
+label b;
+label c;
+begin
+    goto b;
+    a:
+        writeln('world!');
+        goto c;
+    b:
+        write('Hello ');
+        goto a;
+    c:
+end.

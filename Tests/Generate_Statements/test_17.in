@@ -1,0 +1,42 @@
+const max = 20;
+type
+	list = array[1..max] of integer;
+
+var 
+	a : list = (20, 10, 11, 12, 13, 19, 18, 17, 16, 15, 14, 1, 2, 3, 6, 4, 5, 7, 9, 8);
+	i : integer;
+
+	//procedure sort(l: integer; r: integer); forward;
+  	procedure sort(l: integer; r: integer);
+  	var
+    	i, j, x, y: integer;
+  	begin
+    	i := l; 
+		j := r; 
+		x := a[(r + l) div 2]; 
+    	repeat
+      		while a[i] < x do 
+				i := i + 1; 
+      		while x < a[j] do 
+				j := j - 1; 
+      		if i <= j then begin
+        		if a[i] > a[j] then begin
+          			y := a[i]; 
+					a[i] := a[j]; 
+					a[j] := y;
+        		end;
+        		i := i + 1; 
+				j := j - 1;
+      		end;
+    	until i >= j;
+    	if l < j then 
+			sort(l,j);
+    	if i < r then 
+			sort(i,r);
+  	end;
+
+begin
+    sort(1, max);
+    for i := 1 to 20 do 
+        writeln(a[i]);
+end. 

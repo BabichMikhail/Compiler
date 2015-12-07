@@ -1,0 +1,14 @@
+	procedure P(var a : integer; b : integer);
+	begin
+		if a > b then
+			writeln()	
+		else 
+			writeln('Hello world!');
+	end;
+
+var 
+	a : integer = 20;
+	b : integer = 10;
+begin
+	P(b, a);
+end.

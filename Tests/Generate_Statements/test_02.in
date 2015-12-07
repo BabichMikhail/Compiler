@@ -1,0 +1,6 @@
+var a : integer = 0;
+begin
+    writeln(a);
+    while (false) do
+        writeln('hello world!');
+end.

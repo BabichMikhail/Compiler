@@ -1,0 +1,6 @@
+begin
+    while true do begin
+       writeln('Hello world!'); 
+       break;
+    end;
+end.

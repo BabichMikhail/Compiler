@@ -1,0 +1,8 @@
+var
+    a: boolean;
+begin
+    repeat 
+         a := true;
+         writeln('Hello world');
+    until (true and a or false);
+end.        
