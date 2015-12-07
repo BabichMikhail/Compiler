@@ -13,7 +13,7 @@ SymType::SymType(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type)
 SymType::SymType(string Name, MyTypeID TypeID) : Symbol(DeclType, Name), Type(nullptr), TypeID(TypeID){}
 SymPointer::SymPointer(string Name, Symbol* Type) : Symbol(DeclType, Name), Type(Type){}
 
-SymIdent::SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, ArgState State) : Symbol(Section, Name), InitExp(InitExp), Type(Type), State(State) {}
+SymIdent::SymIdent(DeclSection Section, string Name, Expr* InitExp, Symbol* Type, ArgState State) : Symbol(Section, Name), InitExp(InitExp), Type(Type), State(State), isLocal(true) {}
 SymVar::SymVar(string Name, Expr* InitExp, Symbol* Type, ArgState State) : SymIdent(DeclVar, Name, InitExp, Type, State){}
 SymConst::SymConst(string Name, Expr* InitExp, Symbol* Type, ArgState State) : SymIdent(DeclConst, Name, InitExp, Type, State){}
 
@@ -203,11 +203,9 @@ void SymCall::Generate(Asm_Code* Code) {
 	FuncCode->Fmts = Code->Fmts;
 	FuncCode->Add(Push, EBP);
 	FuncCode->Add(Mov, EBP, ESP);
-	Table->Offsets->depth = Table->Parent->Offsets->depth + 1;
-	Table->Offsets->Pref = Table->Parent->Offsets;
-	Table->Offsets->size = Table->Size;
-	auto size = Table->GenerateLocalVariables(FuncCode, Section == DeclFunction ? argc - 1 : argc, argc, Table->Offsets->depth);
-	Stmt->Generate(FuncCode, Table->Offsets);
+	FuncCode->depth = Code->depth + 1;
+	auto size = Table->GenerateLocalVariables(FuncCode, Section == DeclFunction ? argc - 1 : argc, argc, FuncCode->depth);
+	Stmt->Generate(FuncCode);
 	FuncCode->Add(Add, ESP, to_string(size.first));
 	FuncCode->Add(Pop, EBP);
 	FuncCode->Add(Ret, to_string(size.second));
@@ -232,6 +230,9 @@ int SymIdent::GetSize() {
 	if (Type == nullptr) {
 		return 0;
 	}
+	/*if (State == Var) {
+		return 4;
+	}*/
 	return Type->GetSize();
 }
 

@@ -14,14 +14,6 @@ using namespace std;
 class Symbol;
 class Asm_Code;
 
-class OffsetNode {
-public:
-	OffsetNode(OffsetNode* Pref, int depth, int size);
-	OffsetNode* Pref;
-	int depth;
-	int size;
-};
-
 enum ArgState { RValue, Var, Const, Out };
 
 #define indent "   "
@@ -39,7 +31,7 @@ public:
 	Expr(TypeExpr TypeExp);
 	virtual void GetIdentStr(ExpArgList* List);
 	virtual void Print(const int Spaces){};
-	virtual void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue) {}
+	virtual void Generate(Asm_Code* Code, ArgState State = RValue) {}
 	virtual string GenerateInitList() { return ""; }
 	virtual int GetSize() { return 0; };
 	virtual pair<int, int> GetBound(int depth) { return make_pair(0, 0); };
@@ -53,7 +45,9 @@ public:
 	ExprBinOp(Expr* Left, Token Op, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate_Bool_Expr(Asm_Code* Code, ArgState State, AsmOpType Op);
+	void Generate_Relation_Expr(Asm_Code* Code, ArgState State);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 };
 
@@ -64,7 +58,7 @@ public:
 	ExprUnarOp(Token Op, Expr* Exp);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 };
 
@@ -82,12 +76,14 @@ class ExprBoolConst : public ExprConst{
 public:
 	ExprBoolConst(Token Value);
 	string GenerateInitList();
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 };
 
 class ExprIntConst : public ExprConst{
 public:
 	ExprIntConst(Token Value);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	ExprIntConst(string Value);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 };
 
 class ExprDoubleConst : public ExprConst{
@@ -98,7 +94,7 @@ public:
 class ExprStringConst : public ExprConst{
 public:
 	ExprStringConst(Token Value);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 };
 
 class ExprIdent : public Expr{
@@ -108,7 +104,7 @@ public:
 	ExprIdent(Symbol* Sym, Position Pos);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 	pair<int, int> GetBound(int depth);
 };
@@ -120,7 +116,7 @@ public:
 	ExprAssign(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 };
 
 class ExprArrayIndex : public Expr{
@@ -130,7 +126,7 @@ public:
 	ExprArrayIndex(Expr* Left, Expr* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 	pair<int, int> GetBound(int depth);
 };
@@ -142,7 +138,7 @@ public:
 	ExprFunction(Expr* Left, vector<Expr*> Rights);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 	pair<int, int> GetBound(int depth);
 };
@@ -154,7 +150,7 @@ public:
 	ExprRecord(Expr* Left, Symbol* Right);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 	pair<int, int> GetBound(int depth);
 };
@@ -165,7 +161,7 @@ public:
 	ExprInitList(vector<Expr*> List = vector<Expr*>());
 	void Print(const int Spaces);
 	string GenerateInitList();
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 };
 
@@ -174,7 +170,7 @@ public:
 	Expr* Exp;
 	ExprPointer(Expr* Exp);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 };
 
 class ExprDereference : public Expr {
@@ -182,7 +178,7 @@ public:
 	Expr* Exp;
 	ExprDereference(Expr* Exp);
 	void Print(const int Spaces);
-	void Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State = RValue);
+	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 	pair<int, int> GetBound(int depth);
 };

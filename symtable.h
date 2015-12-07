@@ -29,8 +29,6 @@ public:
 	void Print(int Spaces);
 	void GenerateVariables(Asm_Code* Code);
 	pair<int, int> GenerateLocalVariables(Asm_Code* Code, int last_arg, int first_var, int depth);
-	int Size; 
-	OffsetNode *Offsets;
 };
 
 #endif

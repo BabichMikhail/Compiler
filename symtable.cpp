@@ -4,14 +4,12 @@
 
 using namespace std;
 
-SymTable::SymTable(SymTable* ParentTable) : Parent(ParentTable), Offsets(new OffsetNode(nullptr, 0, 0)) {
+SymTable::SymTable(SymTable* ParentTable) : Parent(ParentTable) {
 	DeclCount = Symbols.size();
-	Size = 0;
 }
 
 void SymTable::Add(Symbol* NewElem) {
 	Symbols.push_back(NewElem);
-	Size += NewElem->GetSize();
 }
 
 bool SymTable::Find(string Value) {
@@ -135,7 +133,7 @@ void SymTable::GenerateVariables(Asm_Code* Code) {
 	if (Parent == nullptr) {
 		for (int i = DeclCount; i < Symbols.size(); ++i) {
 			Symbols[i]->Generate(Code);
-			if (Symbols[i]->Section == DeclVar) {
+			if (Symbols[i]->Section == DeclVar || Symbols[i]->Section == DeclConst) {
 				((SymIdent*)Symbols[i])->isLocal = false;
 			}
 		}
@@ -178,7 +176,7 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 	for (int i = first_var; i < Symbols.size(); ++i) {
 		if (Symbols[i]->Section == DeclVar && ((SymIdent*)Symbols[i])->InitExp != nullptr) {
 			ExprAssign* Exp = new ExprAssign(new ExprIdent(Symbols[i], Position()), ((SymIdent*)Symbols[i])->InitExp);
-			Exp->Generate(Code, Offsets);
+			Exp->Generate(Code);
 		}
 	}
 	return make_pair(-size, offset - 8);

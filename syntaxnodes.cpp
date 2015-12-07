@@ -9,7 +9,7 @@
 #include "checktype.h"
 #include <map>
 
-OffsetNode::OffsetNode(OffsetNode* Pref, int depth, int size) : Pref(Pref), depth(depth), size(size) {};
+set<TokenType> RelOp = { TK_GREAT, TK_GREAT_EQUAL, TK_LESS, TK_LESS_EQUAL, TK_EQUAL, TK_NOT_EQUAL };
 
 Expr::Expr(TypeExpr TypeExp) : TypeExp(TypeExp){}
 
@@ -20,6 +20,7 @@ ExprUnarOp::ExprUnarOp(Token Op, Expr* Exp) : Op(Op), Exp(Exp), Expr(UnarExp){}
 ExprConst::ExprConst(Token Value, TypeExpr TypeExp) : Value(Value), Expr(TypeExp){}
 ExprBoolConst::ExprBoolConst(Token Value) : ExprConst(Value, ConstBoolExp){}
 ExprIntConst::ExprIntConst(Token Value) : ExprConst(Value, ConstIntExp){}
+ExprIntConst::ExprIntConst(string Value) : ExprConst(Token(Position(), Value, TK_INTEGER_VALUE), ConstIntExp) {}
 ExprDoubleConst::ExprDoubleConst(Token Value) : ExprConst(Value, ConstDoubleExp){}
 ExprStringConst::ExprStringConst(Token Value) : ExprConst(Value, ConstStringExp){}
 
@@ -145,47 +146,107 @@ map<TokenType, AsmOpType> BinOperations = {
 	make_pair(TK_PLUS, Add), make_pair(TK_MINUS, Sub), make_pair(TK_XOR, Xor), make_pair(TK_OR, Or), make_pair(TK_MUL, IMul), make_pair(TK_AND, And)
 };
 
-void ExprBinOp::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State){
-	Left->Generate(Code, Offsets);
-	if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
-		Code->Add(Pop, EAX);				      /* A - const only */
-		if (Right->TypeExp != ConstIntExp) {
-			throw ConstIntExpressionExpected(Op.Pos);
-		}
-		Code->Add(Op.Type == TK_SHL ? Shl : Shr, EAX, ((ExprIntConst*)Right)->Value.Source);
-		Code->Add(Push, EAX);
-		return;
-	}
-	Right->Generate(Code, Offsets);
+void ExprBinOp::Generate_Bool_Expr(Asm_Code* Code, ArgState State, AsmOpType Op) {
+	string LabelName_1 = Code->GetLocalLabelName();
+	string LabelName_2 = Code->GetLocalLabelName();
+	Left->Generate(Code, State);
+	Code->Add(Pop, EAX);
+	Code->Add(Test, EAX, EAX);
+	Code->Add(Op, LabelName_1);
+	Right->Generate(Code, State);
+	Code->Add(Jmp, LabelName_2);
+	Code->AddLabel(LabelName_1);
+	Code->Add(Push, EAX);
+	Code->AddLabel(LabelName_2);
+}
+
+void ExprBinOp::Generate_Relation_Expr(Asm_Code* Code, ArgState State) {
+	string LabelName_1 = Code->GetLocalLabelName();
+	string LabelName_2 = Code->GetLocalLabelName();
+	Left->Generate(Code, State);
+	Right->Generate(Code, State);
 	Code->Add(Pop, EBX);
 	Code->Add(Pop, EAX);
-	if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
-		Code->Add(Xor, EDX, EDX);
-		Code->Add(Div, EBX);
-		Op.Type == TK_DIV_INT ? Code->Add(Push, EAX) : Code->Add(Push, EDX);
-		return;
+	Code->Add(Cmp, EAX, EBX);
+	switch (Op.Type) {
+	case TK_GREAT:
+		Code->Add(Jg, LabelName_1);
+		break;
+	case TK_GREAT_EQUAL:
+		Code->Add(Jge, LabelName_1);
+		break;
+	case TK_LESS:
+		Code->Add(Jl, LabelName_1);
+		break;
+	case TK_LESS_EQUAL:
+		Code->Add(Jle, LabelName_1);
+		break;
+	case TK_EQUAL:
+		Code->Add(Je, LabelName_1);
+		break;
+	case TK_NOT_EQUAL:
+		Code->Add(Jne, LabelName_1);
+		break;
 	}
-	for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
-		if ((*it).first == Op.Type) {
-			Code->Add((*it).second, EAX, EBX);
+	Code->Add(Push, "0");
+	Code->Add(Jmp, LabelName_2);
+	Code->AddLabel(LabelName_1);
+	Code->Add(Push, "1");
+	Code->AddLabel(LabelName_2);
+}
+
+void ExprBinOp::Generate(Asm_Code* Code, ArgState State){
+	if (Op.Type == TK_AND && Left->TypeID == TypeID_Boolean) {
+		Generate_Bool_Expr(Code, State, Jz);
+	}
+	else if (Op.Type == TK_OR && Left->TypeID == TypeID_Boolean) {
+		Generate_Bool_Expr(Code, State, Jnz);
+	}
+	else if (RelOp.find(Op.Type) != RelOp.end()){
+		Generate_Relation_Expr(Code, State);
+	}
+	else {
+		Left->Generate(Code);
+		if (Op.Type == TK_SHL || Op.Type == TK_SHR) { /* shl/shr eax, A */
+			Code->Add(Pop, EAX);				      /* A - const only */
+			if (Right->TypeExp != ConstIntExp) {
+				throw ConstIntExpressionExpected(Op.Pos);
+			}
+			Code->Add(Op.Type == TK_SHL ? Shl : Shr, EAX, ((ExprIntConst*)Right)->Value.Source);
 			Code->Add(Push, EAX);
 			return;
+		}
+		Right->Generate(Code);
+		Code->Add(Pop, EBX);
+		Code->Add(Pop, EAX);
+		if (Op.Type == TK_DIV_INT || Op.Type == TK_MOD) {
+			Code->Add(Xor, EDX, EDX);
+			Code->Add(Div, EBX);
+			Op.Type == TK_DIV_INT ? Code->Add(Push, EAX) : Code->Add(Push, EDX);
+			return;
+		}
+		for (auto it = BinOperations.cbegin(); it != BinOperations.cend(); ++it) {
+			if ((*it).first == Op.Type) {
+				Code->Add((*it).second, EAX, EBX);
+				Code->Add(Push, EAX);
+				return;
+			}
 		}
 	}
 }
 
-void ExprUnarOp::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
+void ExprUnarOp::Generate(Asm_Code* Code, ArgState State) {
 	switch (Op.Type) {
 	case TK_PLUS: 
 		return;
 	case TK_MINUS:	
-		Exp->Generate(Code, Offsets);
+		Exp->Generate(Code);
 		Code->Add(Pop, EAX);
 		Code->Add(Neg, EAX);
 		Code->Add(Push, EAX);
 		return;
 	case TK_NOT: 
-		Exp->Generate(Code, Offsets);
+		Exp->Generate(Code);
 		Code->Add(Pop, EAX);
 		Code->Add(Not, EAX);
 		Code->Add(Push, EAX);
@@ -193,11 +254,15 @@ void ExprUnarOp::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
 	}
 }
 
-void ExprIntConst::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
+void ExprBoolConst::Generate(Asm_Code* Code, ArgState State) {
+	Code->Add(Push, _stricmp(Value.Source.c_str(), "true") == 0 ? "1" : "0");
+}
+
+void ExprIntConst::Generate(Asm_Code* Code, ArgState State) {
 	Code->Add(Push, Value.Source);
 }
 
-void ExprStringConst::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
+void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
 	int Size = Value.Source.size();
 	if (Size == 1) {
 		Code->Add(Push, '\'' + Value.Source + '\'');
@@ -219,18 +284,16 @@ static void PushRValue(Asm_Code* Code, int Size) {
 	}
 }
 
-void ExprIdent::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
+void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 	auto IdenSym = (SymIdent*)Sym;
 	if (IdenSym->isLocal) {
-		Code->Add(Mov, EAX, EBP);
-		int add_offset = 0;
-		int depth = IdenSym->depth;
-		OffsetNode* LocOffset = Offsets;
-		while (LocOffset->depth > depth) {
-			LocOffset = LocOffset->Pref;
-			add_offset += LocOffset->size + 8;
+		if (IdenSym->depth < Code->depth) {
+			Code->Add_RAddr(Mov, EAX, "depth", 4 * IdenSym->depth);
 		}
-		Code->Add(Add, EAX, to_string(IdenSym->offset + add_offset));
+		else {
+			Code->Add(Mov, EAX, EBP);
+		}
+		Code->Add(Add, EAX, to_string(IdenSym->offset));
 	}
 	else {
 		Code->Add(Mov, EAX, IdenSym->GenerateName());
@@ -245,9 +308,9 @@ void ExprIdent::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
 	Code->Add(Push, EAX);
 }
 
-void ExprAssign::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
-	Right->Generate(Code, Offsets);
-	Left->Generate(Code, Offsets, Var);
+void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
+	Right->Generate(Code);
+	Left->Generate(Code, Var);
 	Code->Add(Pop, EAX);
 	int Size = Left->GetSize();
 	for (int i = 0; i < Size; i += 4) {
@@ -256,9 +319,9 @@ void ExprAssign::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
 	}
 }
 
-void ExprArrayIndex::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
-	Left->Generate(Code, Offsets, Var);
-	Right->Generate(Code, Offsets);
+void ExprArrayIndex::Generate(Asm_Code* Code, ArgState State) {
+	Left->Generate(Code, Var);
+	Right->Generate(Code);
 	Code->Add(Pop, EBX);
 	int Size = GetSize();
 	int Low = GetBound(0).first;
@@ -280,8 +343,8 @@ void ExprArrayIndex::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState Stat
 	Code->Add(Push, EAX);
 }
 
-void ExprRecord::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
-	Left->Generate(Code, Offsets, Var);
+void ExprRecord::Generate(Asm_Code* Code, ArgState State) {
+	Left->Generate(Code, Var);
 	int offset = ((SymIdent*)Right)->offset;
 	if (Left->TypeExp == FunctionExp) {
 		Code->Add(Mov, EAX, ESP);
@@ -299,15 +362,17 @@ void ExprRecord::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
 	Code->Add(Push, EAX);
 }
 
-void ExprFunction::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
+void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	SymCall* LSym = (SymCall*)((ExprIdent*)Left)->Sym;
 	int argc = LSym->argc;
 	if (argc >= 0) {
 		if (LSym->Section == DeclFunction) {
-			Code->Add(Sub, ESP, to_string((LSym->Table->Symbols[argc - 1])->GetSize()));
+			Code->Add(Sub, ESP, to_string((LSym->Table->Symbols[argc - 1])->GetSize()));	
 		}
+		Code->Add(Mov, EAX, "depth");
+		Code->Add_LAddr(Mov, EAX, 4 * Code->depth, EBP);
 		for (int i = 0; i < Rights.size(); ++i) {
-			Rights[i]->Generate(Code, Offsets, ((SymIdent*)(LSym->Table->Symbols[argc - 1]))->State);
+			Rights[i]->Generate(Code, ((SymIdent*)(LSym->Table->Symbols[i]))->State);
 		}
 		Code->Add(Call, LSym->GenerateName());
 	}
@@ -315,7 +380,7 @@ void ExprFunction::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State)
 	if (argc == argc_write || argc == argc_writeln){
 		vector<MyTypeID> TypeIDexp;
 		for (int i = Rights.size() - 1; i >= 0; --i) {
-			Rights[i]->Generate(Code, Offsets);
+			Rights[i]->Generate(Code);
 			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(Rights[i]));
 		}
 		string format = "\'";
@@ -338,22 +403,27 @@ void ExprFunction::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State)
 
 		Code->Add(Push, FormatName); 
 		Code->Add(Call, "_printf");
-		Code->Add(Add, ESP, to_string(4 * Rights.size() + 4));
+		int Size = 0;
+		for (int i = 0; i < Rights.size(); ++i) {
+			Size += Rights[i]->GetSize();
+		}
+
+		Code->Add(Add, ESP, to_string(Size + 4));
 	}
 }
 
-void ExprInitList::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
+void ExprInitList::Generate(Asm_Code* Code, ArgState State) {
 	for (int i = List.size() - 1; i >= 0; --i) {
-		List[i]->Generate(Code, Offsets);
+		List[i]->Generate(Code);
 	}
 }
 
-void ExprPointer::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
-	Exp->Generate(Code, Offsets, RValue);
+void ExprPointer::Generate(Asm_Code* Code, ArgState State) {
+	Exp->Generate(Code, RValue);
 }
 
-void ExprDereference::Generate(Asm_Code* Code, OffsetNode* Offsets, ArgState State) {
-	Exp->Generate(Code, Offsets, RValue);
+void ExprDereference::Generate(Asm_Code* Code, ArgState State) {
+	Exp->Generate(Code, RValue);
 }
 
 string ExprConst::GenerateInitList() {
@@ -366,7 +436,7 @@ string ExprBoolConst::GenerateInitList() {
 
 string ExprInitList::GenerateInitList() {
 	string Ans = List[0]->GenerateInitList();
-	for (int i = 1; List.size(); ++i) {
+	for (int i = 1; i < List.size(); ++i) {
 		Ans += ", " + List[i]->GenerateInitList();
 	}
 	return Ans;
