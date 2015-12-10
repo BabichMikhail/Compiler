@@ -349,9 +349,9 @@ void Parser::ParseDeclSection(SymTable* Table){
 			throw UnexpectedSymbol("BEGIN", Lex.Get().Source, Lex.Get().Pos);
 		}
 	}
-	for (auto i = 0; i < DeclForwardCall.size(); ++i) {
-		if (((SymCall*)DeclForwardCall[i].Sym)->Stmt == nullptr) {
-			throw ForwardDeclNotSolved(DeclForwardCall[i].Sym->Name, DeclForwardCall[i].Pos);
+	for (auto it = DeclForwardCall.begin(); it < DeclForwardCall.end(); ++it) {
+		if (((SymCall*)(*it).Sym)->Stmt == nullptr) {
+			throw ForwardDeclNotSolved((*it).Sym->Name, (*it).Pos);
 		}
 	}
 }
@@ -488,10 +488,10 @@ void Parser::ParseCallDecl(SymTable* Table, DeclSection Section) {
 	}
 	auto Symbols = Table->GetAllSymbols(Name, Pos);
 	SymCall* FirstDeclSym = nullptr;
-	for (int i = 0; i < Symbols.size(); ++i) {
-		if (CmpArguments().Compare(NewSym, Symbols[i])) {
-			if (Symbols[i]->Section == Section && ((SymCall*)Symbols[i])->Stmt == nullptr) {
-				FirstDeclSym = (SymCall*)Symbols[i];
+	for (auto it = Symbols.begin(); it < Symbols.end(); ++it) {
+		if (CmpArguments().Compare(NewSym, *it)) {
+			if ((*it)->Section == Section && ((SymCall*)(*it))->Stmt == nullptr) {
+				FirstDeclSym = (SymCall*)(*it);
 				LocTable = FirstDeclSym->Table;
 			}
 			else {
@@ -687,8 +687,8 @@ void Parser::CheckConstExpr(SymTable* Table, Expr* Exp) {
 	if (List->Flag == false) {
 		throw ExpectedConstExp(Lex.Get().Pos);
 	}
-	for (int i = 0; i < List->Vec.size(); ++i) {
-		if (Table->Find(List->Vec[i]) != -1 && Table->GetSymbol(List->Vec[i], Lex.Get().Pos)->Section != DeclConst) {
+	for (auto it = List->Vec.begin(); it < List->Vec.end(); ++it) {
+		if (Table->Find(*it) != -1 && Table->GetSymbol(*it, Lex.Get().Pos)->Section != DeclConst) {
 			throw ExpectedConstExp(Lex.Get().Pos);
 		}
 	}

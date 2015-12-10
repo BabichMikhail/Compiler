@@ -33,8 +33,8 @@ void Stmt_Case::Add(Case_Selector Selector) {
 void Stmt_Compound::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "begin" << endl;
-	for (int i = 0; i < StmtList.size(); ++i) {
-		StmtList[i]->Print(Spaces + 1);
+	for (auto it = StmtList.begin(); it < StmtList.end(); ++it) {
+		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
 	cout << "end" << endl;
@@ -95,8 +95,8 @@ void Stmt_REPEAT::Print(int Spaces) {
 	Exp->Print(Spaces + 1);
 	print_indent(Spaces);
 	cout << "repeat" << endl;
-	for (int i = 0; i < StmtList.size(); ++i){
-		StmtList[i]->Print(Spaces + 1);
+	for (auto it = StmtList.begin(); it < StmtList.end(); ++it){
+		(*it)->Print(Spaces + 1);
 	}
 }
 
@@ -114,21 +114,21 @@ void Stmt_Case::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "case" << endl;
 	Exp->Print(Spaces);
-	for (int i = 0; i < SelectorList.size(); ++i) {
-		SelectorList[i].Stmt->Print(Spaces + 1);
+	for (auto it = SelectorList.begin(); it < SelectorList.end(); ++it) {
+		(*it).Stmt->Print(Spaces + 1);
 	}
 }
 
 void Stmt_Try_Except::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "try" << endl;
-	for (int i = 0; i < Stmt_List_Try.size(); ++i){
-		Stmt_List_Try[i]->Print(Spaces + 1);
+	for (auto it = Stmt_List_Try.begin(); it < Stmt_List_Try.end(); ++it){
+		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
 	cout << "except" << endl;
-	for (int i = 0; i < Stmt_List_Except.size(); ++i) {
-		Stmt_List_Except[i]->Print(Spaces + 1);
+	for (auto it = Stmt_List_Except.begin(); it < Stmt_List_Except.end(); ++it) {
+		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
 	cout << "end" << endl;
@@ -137,13 +137,13 @@ void Stmt_Try_Except::Print(int Spaces) {
 void Stmt_Try_Finally::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "try" << endl;
-	for (int i = 0; i < Stmt_List_Try.size(); ++i) {
-		Stmt_List_Try[i]->Print(Spaces + 1);
+	for (auto it = Stmt_List_Try.begin(); it < Stmt_List_Try.end(); ++it) {
+		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
 	cout << "finally" << endl;
-	for (int i = 0; i < Stmt_List_Finally.size(); ++i) {
-		Stmt_List_Finally[i]->Print(Spaces + 1);
+	for (auto it = Stmt_List_Finally.begin(); it < Stmt_List_Finally.end(); ++it) {
+		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
 	cout << "end" << endl;
@@ -174,8 +174,8 @@ void Stmt_GOTO_Label::Generate(Asm_Code* Code) {
 }
 
 void Stmt_Compound::Generate(Asm_Code* Code) {
-	for (int i = 0; i < StmtList.size(); ++i) {
-		StmtList[i]->Generate(Code);
+	for (auto it = StmtList.begin(); it < StmtList.end(); ++it) {
+		(*it)->Generate(Code);
 	}
 }
 
@@ -257,8 +257,8 @@ void Stmt_REPEAT::Generate(Asm_Code* Code) {
 	string LabelName_Cond = Code->GetLocalLabelName();
 	Code->SaveLabels(LabelName_Cond, LabelName_Exit);
 	Code->AddLabel(LabelName_Body);
-	for (int i = 0; i < StmtList.size(); ++i) {
-		StmtList[i]->Generate(Code);
+	for (auto it = StmtList.begin(); it < StmtList.end(); ++it) {
+		(*it)->Generate(Code);
 	}
 	Code->AddLabel(LabelName_Cond);
 	Generate_Condition(Code); 

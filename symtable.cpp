@@ -15,8 +15,8 @@ void SymTable::Add(Symbol* NewElem) {
 bool SymTable::Find(string Value) {
 	auto TableNow = this;
 	do {
-		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
-			if (TableNow->Symbols[i]->isSame(Value)) {
+		for (auto it = TableNow->Symbols.begin(); it < TableNow->Symbols.end(); ++it) {
+			if ((*it)->isSame(Value)) {
 				return true;
 			}
 		}
@@ -29,8 +29,8 @@ bool SymTable::FindAll(string Value) {
 	vector<int> Ans;
 	auto TableNow = this;
 	do {
-		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
-			if (TableNow->Symbols[i]->isSame(Value)) {
+		for (auto it = TableNow->Symbols.begin(); it < TableNow->Symbols.end(); ++it) {
+			if ((*it)->isSame(Value)) {
 				return true;
 			}
 		}
@@ -50,30 +50,30 @@ int SymTable::FindLocal(string Value) {
 
 Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 	auto Symbols = GetAllSymbols(((ExprIdent*)((ExprFunction*)Exp)->Left)->Sym->Name, Pos);
-	for (int i = 0; i < Symbols.size(); ++i) {
-		if (Symbols[i]->Section != DeclFunction && Symbols[i]->Section != DeclProcedure) {
+	for (auto it = Symbols.begin(); it < Symbols.end(); ++it) {
+		if ((*it)->Section != DeclFunction && (*it)->Section != DeclProcedure) {
 			continue;
 		}
-		if (Symbols[i]->Section == DeclFunction) {
-			if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)Symbols[i])->argc - 1) {
+		if ((*it)->Section == DeclFunction) {
+			if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)*it)->argc - 1) {
 				continue;
 			}
 		}
-		if (Symbols[i]->Section == DeclProcedure) {
-			if (((SymProcedure*)Symbols[i])->argc == argc_writeln || ((SymProcedure*)Symbols[i])->argc == argc_write) {
-				return Symbols[i];
+		if ((*it)->Section == DeclProcedure) {
+			if (((SymProcedure*)*it)->argc == argc_writeln || ((SymProcedure*)*it)->argc == argc_write) {
+				return *it;
 			}
-			if (((ExprFunction*)Exp)->Rights.size() != ((SymProcedure*)Symbols[i])->argc) {
+			if (((ExprFunction*)Exp)->Rights.size() != ((SymProcedure*)*it)->argc) {
 				continue;
 			}
 		}
 		bool flag = false;
-		for (int j = 0; j < ((ExprFunction*)Exp)->Rights.size(); ++j) {
-			auto Type = ((SymCall*)Symbols[i])->Table->Symbols[j]->GetType();
-			if (Type->Section == DeclRecord && CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) == TypeID_Record){
+		for (auto it_arg = ((ExprFunction*)Exp)->Rights.begin(); it_arg < ((ExprFunction*)Exp)->Rights.end(); ++it_arg) {
+			auto Type = ((SymCall*)*it)->Table->Symbols[it_arg - ((ExprFunction*)Exp)->Rights.begin()]->GetType();
+			if (Type->Section == DeclRecord && CheckType(this, Position()).GetTypeID(*it_arg) == TypeID_Record){
 				continue;
 			}
-			if (CheckType(this, Position()).GetTypeID(((ExprFunction*)Exp)->Rights[j]) != ((SymType*)Type)->TypeID) {
+			if (CheckType(this, Position()).GetTypeID(*it_arg) != ((SymType*)Type)->TypeID) {
 				flag = true;
 			}
 		}
@@ -81,7 +81,7 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 		if (flag) {
 			continue;
 		}
-		return Symbols[i];
+		return *it;
 	}
 	throw IllegalExpr(Pos);
 }
@@ -106,9 +106,9 @@ vector<Symbol*> SymTable::GetAllSymbols(string Name, const Position Pos) {
 	vector<Symbol*> Ans;
 	auto TableNow = this;
 	do {
-		for (int i = 0; i < TableNow->Symbols.size(); ++i) {
-			if (TableNow->Symbols[i]->isSame(Name)) {
-				Ans.push_back(TableNow->Symbols[i]);
+		for (auto it = TableNow->Symbols.begin(); it < TableNow->Symbols.end(); ++it) {
+			if ((*it)->isSame(Name)) {
+				Ans.push_back(*it);
 			}
 		}
 		TableNow = TableNow->Parent;
@@ -123,18 +123,18 @@ void SymTable::CheckSymbol(string Name, const Position Pos) {
 }
 
 void SymTable::Print(int Spaces){
-	for (int i = DeclCount; i < Symbols.size(); ++i){ /* No Print STD Type */
-		Symbols[i]->Print(Spaces);
+	for (auto it = Symbols.begin() + DeclCount; it < Symbols.end(); ++it) { /* No Print STD Type */
+		(*it)->Print(Spaces);
 		cout << endl;
 	}
 }
 
 void SymTable::GenerateVariables(Asm_Code* Code) {
 	if (Parent == nullptr) {
-		for (int i = DeclCount; i < Symbols.size(); ++i) {
-			Symbols[i]->Generate(Code);
-			if (Symbols[i]->Section == DeclVar || Symbols[i]->Section == DeclConst) {
-				((SymIdent*)Symbols[i])->isLocal = false;
+		for (auto it = Symbols.begin() + DeclCount; it < Symbols.end(); ++it) {
+			(*it)->Generate(Code);
+			if ((*it)->Section == DeclVar || (*it)->Section == DeclConst) {
+				((SymIdent*)(*it))->isLocal = false;
 			}
 		}
 	}
@@ -161,21 +161,21 @@ pair<int, int> SymTable::GenerateLocalVariables(Asm_Code* Code, int last_arg, in
 		((SymIdent*)Symbols[last_arg])->depth = depth;
 	}
 	int size = 0;
-	for (int i = first_var; i < Symbols.size(); ++i) {
-		if (Symbols[i]->Section == DeclVar) {
-			size -= Symbols[i]->GetType()->GetSize();
-			((SymIdent*)Symbols[i])->isLocal = true;
-			((SymIdent*)Symbols[i])->offset = size;
-			((SymIdent*)Symbols[i])->depth = depth;
+	for (auto it = Symbols.begin() + first_var; it < Symbols.end(); ++it) {
+		if ((*it)->Section == DeclVar) {
+			size -= (*it)->GetType()->GetSize();
+			((SymIdent*)*it)->isLocal = true;
+			((SymIdent*)*it)->offset = size;
+			((SymIdent*)*it)->depth = depth;
 		}
-		else if (Symbols[i]->Section == DeclProcedure || Symbols[i]->Section == DeclFunction) {
-			Symbols[i]->Generate(Code);
+		else if ((*it)->Section == DeclProcedure || (*it)->Section == DeclFunction) {
+			(*it)->Generate(Code);
 		}
 	}
 	Code->Add(Sub, ESP, to_string(-size));
-	for (int i = first_var; i < Symbols.size(); ++i) {
-		if (Symbols[i]->Section == DeclVar && ((SymIdent*)Symbols[i])->InitExp != nullptr) {
-			ExprAssign* Exp = new ExprAssign(new ExprIdent(Symbols[i], Position()), ((SymIdent*)Symbols[i])->InitExp);
+	for (auto it = Symbols.begin() + first_var; it < Symbols.end(); ++it) {
+		if ((*it)->Section == DeclVar && ((SymIdent*)*it)->InitExp != nullptr) {
+			ExprAssign* Exp = new ExprAssign(new ExprIdent(*it, Position()), ((SymIdent*)*it)->InitExp);
 			Exp->Generate(Code);
 		}
 	}

@@ -67,8 +67,8 @@ void ExprAssign::Print(int Spaces){
 }
 
 void ExprFunction::Print(int Spaces){
-	for (int i = 0; i < Rights.size(); ++i){
-		Rights[i]->Print(Spaces + 1);
+	for (auto it = Rights.begin(); it < Rights.end(); ++it) {
+		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
 	cout << "()" << endl;
@@ -91,8 +91,8 @@ void ExprArrayIndex::Print(int Spaces){
 }
 
 void ExprInitList::Print(const int Spaces) {
-	for (int i = 0; i < List.size(); ++i) {
-		List[i]->Print(Spaces);
+	for (auto it = List.begin(); it < List.end(); ++it) {
+		(*it)->Print(Spaces);
 	}
 }
 

@@ -203,21 +203,20 @@ void Asm_Code::Print() {
 	cout << "section .data" << endl;
 	cout << "    depth : times 1024 dd 0" << endl; 
 	cout << "    base_str : times 256 db 0" << endl;
-	cout << "    double : dq 0.0" << endl;
-	for (int i = 0; i < (*Fmts).size(); ++i) {
-		cout << "    " + (*Fmts)[i] << endl;
+	for (auto it = (*Fmts).begin(); it < (*Fmts).end(); ++it) {
+		cout << "    " + *it << endl;
 	}
-	for (int i = 0; i < Data.size(); ++i) {
-		cout << "    " + Data[i]->GetCode() << endl;
+	for (auto it = Data.begin(); it < Data.end(); ++it) {
+		cout << "    " + (*it)->GetCode() << endl;
 	}
 	cout << "section .text" << endl;
-	for (int i = 0; i < Functions.size(); ++i) {
-		cout << Functions[i]->GetCode() << endl;
+	for (auto it = Functions.begin(); it < Functions.end(); ++it) {
+		cout << (*it)->GetCode() << endl;
 	}
 	cout << "global _main" << endl;
 	cout << "_main:" << endl;
-	for (int i = 0; i < Cmds.size(); ++i) {
-		cout << "    " + Cmds[i]->GetCode() << endl;
+	for (auto it = Cmds.begin(); it < Cmds.end(); ++it) {
+		cout << "    " + (*it)->GetCode() << endl;
 	}
 	cout << "    ret";
 }

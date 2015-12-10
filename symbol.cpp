@@ -131,8 +131,8 @@ int SymStringType::GetSize() {
 
 int SymRecord::GetSize() {
 	int size = 0;
-	for (int i = 0; i < Table->Symbols.size(); ++i) {
-		size += ((SymIdent*)Table->Symbols[i])->GetSize();
+	for (auto it = Table->Symbols.begin(); it < Table->Symbols.end(); ++it) {
+		size += ((SymIdent*)*it)->GetSize();
 	}
 	return alignment(size);
 }
@@ -211,11 +211,11 @@ void SymCall::Generate(Asm_Code* Code) {
 	FuncCode->Add(Add, ESP, to_string(size.first));
 	FuncCode->Add(Pop, EBP);
 	FuncCode->Add(Ret, to_string(size.second));
-	for (int i = 0; i < FuncCode->Cmds.size(); ++i) {
-		Asm_Func->Cmds.push_back(FuncCode->Cmds[i]);
+	for (auto it = FuncCode->Cmds.begin(); it < FuncCode->Cmds.end(); ++it) {
+		Asm_Func->Cmds.push_back(*it);
 	}
-	for (int i = 0; i < FuncCode->Functions.size(); ++i) {
-		Asm_Func->Functions.push_back(FuncCode->Functions[i]);
+	for (auto it = FuncCode->Functions.begin(); it < FuncCode->Functions.end(); ++it) {
+		Asm_Func->Functions.push_back(*it);
 	}
 	Code->Add(Asm_Func);
 }
