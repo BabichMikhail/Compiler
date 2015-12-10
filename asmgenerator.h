@@ -123,8 +123,7 @@ public:
 class Asm_Code {
 private:
 	vector<Asm_Global_Data*> Data;
-	int Label_Count;
-	int Double_Count;
+	int Label_Count, Double_Count, Error_Count, Global_Label_Count;
 	vector<string> BreakLabelNames;
 	vector<string> ContinueLabelNames;
 public:
@@ -134,8 +133,11 @@ public:
 	vector<Asm_Function*> Functions;
 	string AddFormat(string new_format);
 	void AddLabel(string Name);
+	string GetNewErrorLabelName();
+	string ErrroLabelName;
 	string GetLocalLabelName();
 	string GetGlobalLabelName(string Name);
+	string GetGlobalLabelName();
 	string AddDoubleVar(string Value);
 	void Add(AsmOpType Op, AsmRegType Reg);
 	void Add(AsmOpType Op, string Val);

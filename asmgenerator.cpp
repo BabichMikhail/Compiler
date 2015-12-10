@@ -182,13 +182,20 @@ void Asm_Code::AddLabel(string Name) {
 	Cmds.push_back(new Asm_Label(Name));
 }
 
+string Asm_Code::GetNewErrorLabelName() {
+	return "E_" + to_string(++Error_Count);
+}
+
 string Asm_Code::GetGlobalLabelName(string Name) {
 	return "L_" + Name;
 }
 
+string Asm_Code::GetGlobalLabelName() {
+	return "G_" + to_string(Global_Label_Count);
+}
+
 string Asm_Code::GetLocalLabelName() {
-	++Label_Count;
-	return ".L_" + to_string(Label_Count);
+	return ".L_" + to_string(++Label_Count);
 }
 
 string Asm_Code::AddDoubleVar(string Value) {

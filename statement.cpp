@@ -276,6 +276,42 @@ void Stmt_Continue::Generate(Asm_Code* Code) {
 	Code->Add(Jmp, Code->GetLabelContinue());
 }
 
+void Stmt_Try_Except::Generate(Asm_Code* Code) {
+	string OldErrorLabelName = Code->ErrroLabelName;
+	string LabelAfterExcept = Code->GetGlobalLabelName();
+	Code->ErrroLabelName = Code->GetNewErrorLabelName();
+	for (auto it = Stmt_List_Try.begin(); it < Stmt_List_Try.end(); ++it) {
+		(*it)->Generate(Code);
+	}
+	Code->Add(Jmp, LabelAfterExcept);
+	Code->AddLabel(Code->ErrroLabelName);
+	for (auto it = Stmt_List_Except.begin(); it < Stmt_List_Except.end(); ++it) {
+		(*it)->Generate(Code);
+	}
+	Code->AddLabel(LabelAfterExcept);
+}
+
+void Stmt_Try_Finally::Generate(Asm_Code* Code) {
+	string OldErrorLabelName = Code->ErrroLabelName;
+	Code->ErrroLabelName = Code->GetNewErrorLabelName();
+	for (auto it = Stmt_List_Try.begin(); it < Stmt_List_Try.end(); ++it) {
+		(*it)->Generate(Code);
+	}
+	Code->AddLabel(Code->ErrroLabelName);
+	for (auto it = Stmt_List_Finally.begin(); it < Stmt_List_Finally.end(); ++it) {
+		(*it)->Generate(Code);
+	}
+}
+
+void Stmt_Raise::Generate(Asm_Code* Code) {
+	string FormatName = Code->AddFormat("\'%s\', 0xA, 0x0");
+	Exp->Generate(Code);
+	Code->Add(Push, FormatName);
+	Code->Add(Call, "_printf");
+	Code->Add(Add, ESP, to_string(8));
+	Code->Add(Jmp, Code->ErrroLabelName);
+}
+
 void Stmt_Assign::Generate(Asm_Code* Code) {
 	Exp->Generate(Code);
 }

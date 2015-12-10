@@ -62,6 +62,7 @@ public:
 	Statement* ParseRepeatStmt(SymTable* Table, int State);
 	Statement* ParseTryStmt(SymTable* Table, int State);
 	Statement* ParseIdentifier(SymTable* Table, int State);
+	Statement* ParseRaise(SymTable* Table, int State);
 
 	void ReservedCastFunction(SymTable* Table, string Type_1, string Type_2);
 	void ReservedFunctions(SymTable* Table);

@@ -132,8 +132,7 @@ Statement* Parser::ParseStatement(SymTable* Table, int State){
 		}
 		throw NotAllowedStmt("CONTINUE", Lex.Get().Pos);
 	case TK_RAISE:
-		Lex.Next();
-		return new Stmt_Raise(ParseExpr(Table));
+		return ParseRaise(Table, State);
 	case TK_ELSE:
 	case TK_END:
 	case TK_EXCEPT:
@@ -299,6 +298,14 @@ Statement* Parser::ParseIdentifier(SymTable* Table, int State) {
 		return new Stmt_Assign(Exp);
 	}
 	throw IllegalExpr(Pos);
+}
+
+Statement* Parser::ParseRaise(SymTable* Table, int State) {
+	Lex.Next();
+	auto Pos = Lex.Get().Pos;
+	auto Exp = ParseExpr(Table);
+	CheckType(Table, TypeID_String, Exp, Pos);
+	return new Stmt_Raise(Exp);
 }
 
 set<TokenType> end_block_tk = { TK_END, TK_EXCEPT, TK_FINALLY, TK_ELSE, TK_UNTIL, TK_POINT };

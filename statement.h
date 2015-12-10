@@ -115,6 +115,7 @@ public:
 	vector<Statement*> Stmt_List_Except;
 	Stmt_Try_Except(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Except);
 	void Print(int Spaces);
+	void Generate(Asm_Code* Code);
 };
 
 class Stmt_Try_Finally : public Statement{
@@ -123,6 +124,7 @@ public:
 	vector<Statement*> Stmt_List_Finally;
 	Stmt_Try_Finally(vector<Statement*> Stmt_Try, vector<Statement*> Stmt_Finally);
 	void Print(int Spaces);
+	void Generate(Asm_Code* Code);
 };
 
 class Stmt_Raise : public Statement {
@@ -130,6 +132,7 @@ public:
 	Expr* Exp;
 	Stmt_Raise(Expr* Exp);
 	void Print(int Spaces);
+	void Generate(Asm_Code* Code);
 };
 
 class Stmt_Assign : public Statement {
