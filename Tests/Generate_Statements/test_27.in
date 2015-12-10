@@ -1,0 +1,7 @@
+begin
+	try
+		writeln('Hello world');
+	except
+		writeln('Abc'); 
+	end;
+end.

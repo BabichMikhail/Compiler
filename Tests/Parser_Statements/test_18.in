@@ -2,6 +2,6 @@ begin
 	try                   
 		raise 'abc';
 	except
-		raise 123;
+		raise 'efg';
 	end;
 end.

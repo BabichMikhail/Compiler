@@ -1,0 +1,7 @@
+begin
+	try 
+		write('Hello ');
+	finally
+		writeln('world!');
+	end;
+end.

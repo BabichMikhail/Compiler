@@ -1,0 +1,7 @@
+begin
+	try 
+		raise 'Hello'
+	except
+		write('Hello World!')
+	end
+end.

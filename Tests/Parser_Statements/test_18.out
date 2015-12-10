@@ -4,6 +4,6 @@ begin
          abc
    except
       raise
-         123
+         efg
    end
 end
