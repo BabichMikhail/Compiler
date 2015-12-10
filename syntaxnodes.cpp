@@ -28,7 +28,7 @@ ExprIdent::ExprIdent(Symbol* Sym, Position Pos) : Sym(Sym), Expr(VarExp), Pos(Po
 
 ExprArrayIndex::ExprArrayIndex(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(ArrayExp){}
 ExprAssign::ExprAssign(Expr* Left, Expr* Right) : Left(Left), Right(Right), Expr(AssignExp){}
-ExprFunction::ExprFunction(Expr* Left, vector<Expr*> Rights) : Left(Left), Rights(Rights), Expr(FunctionExp){}
+ExprFunction::ExprFunction(Expr* Left, vector<Expr*> Args) : Left(Left), Args(Args), Expr(FunctionExp){}
 ExprRecord::ExprRecord(Expr* Left, Symbol* Right) : Left(Left), Right(Right), Expr(RecordExp){}
 
 ExprInitList::ExprInitList(vector<Expr*> List) : Expr(InitExp), List(List) {}
@@ -67,7 +67,7 @@ void ExprAssign::Print(int Spaces){
 }
 
 void ExprFunction::Print(int Spaces){
-	for (auto it = Rights.begin(); it < Rights.end(); ++it) {
+	for (auto it = Args.begin(); it < Args.end(); ++it) {
 		(*it)->Print(Spaces + 1);
 	}
 	print_indent(Spaces);
@@ -457,20 +457,20 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 		}
 		Code->Add(Mov, EAX, "depth");
 		Code->Add_LAddr(Mov, EAX, 4 * Code->depth, EBP);
-		for (int i = 0; i < Rights.size(); ++i) {
-			Rights[i]->Generate(Code, ((SymIdent*)(LSym->Table->Symbols[i]))->State);
+		for (int i = 0; i < Args.size(); ++i) {
+			Args[i]->Generate(Code, ((SymIdent*)(LSym->Table->Symbols[i]))->State);
 		}
 		Code->Add(Call, LSym->GenerateName());
 	}
 
 	if (argc == argc_write || argc == argc_writeln){
 		vector<MyTypeID> TypeIDexp;
-		for (int i = Rights.size() - 1; i >= 0; --i) {
-			Rights[i]->Generate(Code);
-			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(Rights[i]));
+		for (int i = Args.size() - 1; i >= 0; --i) {
+			Args[i]->Generate(Code);
+			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(Args[i]));
 		}
 		string format = "\'";
-		for (int i = 0; i < Rights.size(); ++i) {
+		for (int i = 0; i < Args.size(); ++i) {
 			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
 			case TypeID_Integer:
 			case TypeID_Pointer:
@@ -493,8 +493,8 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 		Code->Add(Push, FormatName); 
 		Code->Add(Call, "_printf");
 		int Size = 0;
-		for (int i = 0; i < Rights.size(); ++i) {
-			Size += Rights[i]->GetSize();
+		for (int i = 0; i < Args.size(); ++i) {
+			Size += Args[i]->GetSize();
 		}
 		Code->Add(Add, ESP, to_string(Size + 4));
 	}

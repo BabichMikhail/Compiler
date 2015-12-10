@@ -139,8 +139,8 @@ public:
 class ExprFunction : public Expr{
 public:
 	Expr* Left;
-	vector<Expr*> Rights;
-	ExprFunction(Expr* Left, vector<Expr*> Rights);
+	vector<Expr*> Args;
+	ExprFunction(Expr* Left, vector<Expr*> Args);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
 	void Generate(Asm_Code* Code, ArgState State = RValue);

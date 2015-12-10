@@ -55,7 +55,7 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 			continue;
 		}
 		if ((*it)->Section == DeclFunction) {
-			if (((ExprFunction*)Exp)->Rights.size() != ((SymFunction*)*it)->argc - 1) {
+			if (((ExprFunction*)Exp)->Args.size() != ((SymFunction*)*it)->argc - 1) {
 				continue;
 			}
 		}
@@ -63,13 +63,13 @@ Symbol* SymTable::FindRequiredSymbol(Expr* Exp, Position Pos) {
 			if (((SymProcedure*)*it)->argc == argc_writeln || ((SymProcedure*)*it)->argc == argc_write) {
 				return *it;
 			}
-			if (((ExprFunction*)Exp)->Rights.size() != ((SymProcedure*)*it)->argc) {
+			if (((ExprFunction*)Exp)->Args.size() != ((SymProcedure*)*it)->argc) {
 				continue;
 			}
 		}
 		bool flag = false;
-		for (auto it_arg = ((ExprFunction*)Exp)->Rights.begin(); it_arg < ((ExprFunction*)Exp)->Rights.end(); ++it_arg) {
-			auto Type = ((SymCall*)*it)->Table->Symbols[it_arg - ((ExprFunction*)Exp)->Rights.begin()]->GetType();
+		for (auto it_arg = ((ExprFunction*)Exp)->Args.begin(); it_arg < ((ExprFunction*)Exp)->Args.end(); ++it_arg) {
+			auto Type = ((SymCall*)*it)->Table->Symbols[it_arg - ((ExprFunction*)Exp)->Args.begin()]->GetType();
 			if (Type->Section == DeclRecord && CheckType(this, Position()).GetTypeID(*it_arg) == TypeID_Record){
 				continue;
 			}
