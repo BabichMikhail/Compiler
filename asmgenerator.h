@@ -128,7 +128,7 @@ private:
 	vector<string> BreakLabelNames;
 	vector<string> ContinueLabelNames;
 public:
-	int depth;
+	int depth, max_depth;
 	vector<Asm_Cmd*> Cmds; 
 	vector<string> *Fmts;
 	vector<Asm_Function*> Functions;

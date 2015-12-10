@@ -207,6 +207,7 @@ void SymCall::Generate(Asm_Code* Code) {
 	FuncCode->Add(Mov, EBP, ESP);
 	FuncCode->depth = Code->depth + 1;
 	auto size = Table->GenerateLocalVariables(FuncCode, Section == DeclFunction ? argc - 1 : argc, argc, FuncCode->depth);
+	Code->max_depth = max(FuncCode->depth, Code->depth);
 	Stmt->Generate(FuncCode);
 	FuncCode->Add(Add, ESP, to_string(size.first));
 	FuncCode->Add(Pop, EBP);

@@ -21,7 +21,7 @@ Asm_Address::Asm_Address(AsmRegType Reg, int offset) : Reg(Reg), offset(offset),
 Asm_Global_Data::Asm_Global_Data(string Name, string Type, string InitList) : Name(Name), Type(Type), InitList(InitList) {}
 Asm_Local_Data::Asm_Local_Data(int depth, int size, int arg_size) : depth(depth), size(size), arg_size(arg_size) {}
 Asm_Function::Asm_Function(string Name, vector<Asm_Cmd*> Cmds, int arg_size) : Name(Name), Cmds(Cmds), arg_size(arg_size){};
-Asm_Code::Asm_Code() : Fmts(new vector<string>), depth(0) {}
+Asm_Code::Asm_Code() : Fmts(new vector<string>), depth(0), max_depth(0) {}
 
 string Asm_Cmd::GetCode() {
 	return AsmOp_str[Op];
@@ -201,7 +201,7 @@ string Asm_Code::AddDoubleVar(string Value) {
 void Asm_Code::Print() {
 	cout << "extern _printf" << endl;
 	cout << "section .data" << endl;
-	cout << "    depth : times 1024 dd 0" << endl; 
+	cout << "    depth : times " + to_string(max_depth*4) + " dd 0" << endl; 
 	cout << "    base_str : times 256 db 0" << endl;
 	for (auto it = (*Fmts).begin(); it < (*Fmts).end(); ++it) {
 		cout << "    " + *it << endl;
