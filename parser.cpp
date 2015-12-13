@@ -121,7 +121,7 @@ Statement* Parser::ParseStatement(SymTable* Table, int State){
 		if (State & 2) {
 			Lex.Next();
 			CheckSemicolon();
-			return new Stmt_BREAK();
+			return new Stmt_Break();
 		}
 		throw NotAllowedStmt("BREAK", Lex.Get().Pos);
 	case TK_CONTINUE:
@@ -163,7 +163,7 @@ Statement* Parser::ParseGOTOStmt(SymTable* Table, int State){
 	auto Sym = Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 	Lex.Next();
 	CheckSemicolon();
-	return new Stmt_GOTO(Sym);
+	return new Stmt_Goto(Sym);
 }
 
 Statement* Parser::ParseIfStmt(SymTable* Table, int State){
@@ -178,7 +178,7 @@ Statement* Parser::ParseIfStmt(SymTable* Table, int State){
 		Lex.Next();
 		Stmt_2 = ParseStatement(Table, State);
 	}
-	return new Stmt_IF(Exp, Stmt_1, Stmt_2);
+	return new Stmt_If(Exp, Stmt_1, Stmt_2);
 }
 
 Statement* Parser::ParseCase(SymTable* Table, int State){
@@ -234,7 +234,7 @@ Statement* Parser::ParseForStmt(SymTable* Table, int State){
 	CheckType(Table, TypeID_Integer, Exp_2, Pos);
 	Lex.CheckAndNext(TK_DO);
 	auto Stmt = ParseStatement(Table, State | 2);
-	return new Stmt_FOR(Exp_1, Exp_2, isTO, Stmt);
+	return new Stmt_For(Exp_1, Exp_2, isTO, Stmt);
 }
 
 Statement* Parser::ParseWhileStmt(SymTable* Table, int State){
@@ -243,7 +243,7 @@ Statement* Parser::ParseWhileStmt(SymTable* Table, int State){
 	auto Cond = ParseExpr(Table);
 	CheckType(Table, TypeID_Boolean, Cond, Pos);
 	Lex.CheckAndNext(TK_DO);
-	return new Stmt_WHILE(Cond, ParseStatement(Table, State | 2));
+	return new Stmt_While(Cond, ParseStatement(Table, State | 2));
 }
 
 Statement* Parser::ParseRepeatStmt(SymTable* Table, int State) {
@@ -253,7 +253,7 @@ Statement* Parser::ParseRepeatStmt(SymTable* Table, int State) {
 	auto Pos = Lex.Get().Pos;
 	auto Exp = ParseExpr(Table);
 	CheckType(Table, TypeID_Boolean, Exp, Pos);
-	return new Stmt_REPEAT(Exp, Stmt_List);
+	return new Stmt_Repeat(Exp, Stmt_List);
 }
 
 Statement* Parser::ParseTryStmt(SymTable* Table, int State){
@@ -284,7 +284,7 @@ Statement* Parser::ParseIdentifier(SymTable* Table, int State) {
 	if (Sym->Section == DeclLabel) {
 		Lex.Next();
 		Lex.CheckAndNext(TK_COLON);
-		return new Stmt_GOTO_Label(Sym);
+		return new Stmt_Goto_Label(Sym);
 	}
 	Exp = ParseExpr(Table);
 	if (Exp->TypeExp == FunctionExp) {

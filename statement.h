@@ -12,18 +12,18 @@ public:
 	virtual void Generate(Asm_Code* Code) {};
 };
 
-class Stmt_GOTO : public Statement{
+class Stmt_Goto : public Statement{
 public:
 	Symbol* LabelSym;
-	Stmt_GOTO(Symbol* Sym);
+	Stmt_Goto(Symbol* Sym);
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);
 };
 
-class Stmt_GOTO_Label : public Statement {
+class Stmt_Goto_Label : public Statement {
 public:
 	Symbol* LabelSym;
-	Stmt_GOTO_Label(Symbol* Sym);
+	Stmt_Goto_Label(Symbol* Sym);
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);
 };
@@ -43,11 +43,11 @@ public:
 	void Generate_Condition(Asm_Code* Code);
 };
 
-class Stmt_IF : public Stmt_Conditional{
+class Stmt_If : public Stmt_Conditional{
 public:
 	Statement* Stmt;
 	Statement* StmtElse;
-	Stmt_IF(Expr* Exp, Statement* Stmt, Statement* Stmt_Else);
+	Stmt_If(Expr* Exp, Statement* Stmt, Statement* Stmt_Else);
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);
 };
@@ -70,34 +70,34 @@ public:
 	void Generate(Asm_Code* Code);
 };
 
-class Stmt_FOR : public Stmt_Conditional{
+class Stmt_For : public Stmt_Conditional{
 public:
 	Expr* Exp_1;
 	Expr* Exp_2;
 	bool isTO;
 	Statement* Stmt;
-	Stmt_FOR(Expr* Exp_1, Expr* Exp_2, bool isTO, Statement* Stmt);
+	Stmt_For(Expr* Exp_1, Expr* Exp_2, bool isTO, Statement* Stmt);
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);
 };
 
-class Stmt_WHILE : public Stmt_Conditional {
+class Stmt_While : public Stmt_Conditional {
 public:
 	Statement* Stmt;
-	Stmt_WHILE(Expr* Cond, Statement* Stmt);
+	Stmt_While(Expr* Cond, Statement* Stmt);
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);
 };
 
-class Stmt_REPEAT : public Stmt_Conditional {
+class Stmt_Repeat : public Stmt_Conditional {
 public:
 	vector<Statement*> StmtList;
-	Stmt_REPEAT(Expr* Cond, vector<Statement*> Stmt_List); 
+	Stmt_Repeat(Expr* Cond, vector<Statement*> Stmt_List); 
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);
 };
 
-class Stmt_BREAK : public Statement {
+class Stmt_Break : public Statement {
 public:
 	void Print(int Spaces);
 	void Generate(Asm_Code* Code);

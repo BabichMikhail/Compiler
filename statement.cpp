@@ -1,15 +1,15 @@
 #include "statement.h"
 #include "symtable.h"
 
-Stmt_GOTO::Stmt_GOTO(Symbol* Sym) : LabelSym(Sym){};
-Stmt_GOTO_Label::Stmt_GOTO_Label(Symbol* Sym) : LabelSym(Sym) {};
+Stmt_Goto::Stmt_Goto(Symbol* Sym) : LabelSym(Sym){};
+Stmt_Goto_Label::Stmt_Goto_Label(Symbol* Sym) : LabelSym(Sym) {};
 Stmt_Conditional::Stmt_Conditional(Expr* Exp) : Exp(Exp){};
-Stmt_IF::Stmt_IF(Expr* Exp, Statement* Stmt, Statement* StmtElse) : Stmt_Conditional(Exp), Stmt(Stmt), StmtElse(StmtElse){}
+Stmt_If::Stmt_If(Expr* Exp, Statement* Stmt, Statement* StmtElse) : Stmt_Conditional(Exp), Stmt(Stmt), StmtElse(StmtElse){}
 
-Stmt_FOR::Stmt_FOR(Expr* Exp_1, Expr* Exp_2, bool isTO, Statement* Stmt) : Exp_1(Exp_1), Exp_2(Exp_2), isTO(isTO), Stmt(Stmt),
+Stmt_For::Stmt_For(Expr* Exp_1, Expr* Exp_2, bool isTO, Statement* Stmt) : Exp_1(Exp_1), Exp_2(Exp_2), isTO(isTO), Stmt(Stmt),
 	Stmt_Conditional(new ExprBinOp(((ExprAssign*)Exp_1)->Left, Token(Position(), isTO ? ">" : "<", isTO ? TK_GREAT : TK_LESS), Exp_2)) {};
-Stmt_WHILE::Stmt_WHILE(Expr* Cond, Statement* Stmt) : Stmt_Conditional(Cond), Stmt(Stmt) {};
-Stmt_REPEAT::Stmt_REPEAT(Expr* Cond, vector<Statement*> StmtList) : Stmt_Conditional(Cond), StmtList(StmtList) {};
+Stmt_While::Stmt_While(Expr* Cond, Statement* Stmt) : Stmt_Conditional(Cond), Stmt(Stmt) {};
+Stmt_Repeat::Stmt_Repeat(Expr* Cond, vector<Statement*> StmtList) : Stmt_Conditional(Cond), StmtList(StmtList) {};
 
 Case_Selector::Case_Selector(Expr* Exp_1, Expr* Exp_2, Statement* Stmt) : Exp_1(Exp_1), Exp_2(Exp_2), Stmt(Stmt) {};
 Stmt_Case::Stmt_Case(Expr* Exp) : Stmt_Conditional(Exp), StmtElse(nullptr) {};
@@ -40,17 +40,17 @@ void Stmt_Compound::Print(int Spaces) {
 	cout << "end" << endl;
 }
 
-void Stmt_GOTO::Print(int Spaces) {
+void Stmt_Goto::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "goto" << indent << LabelSym->Name << endl;
 }
 
-void Stmt_GOTO_Label::Print(int Spaces) {
+void Stmt_Goto_Label::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "goto_label" << indent << LabelSym->Name << endl;
 }
 
-void Stmt_IF::Print(int Spaces){
+void Stmt_If::Print(int Spaces){
 	print_indent(Spaces);
 	cout << "if" << endl;
 	Exp->Print(Spaces + 1);
@@ -64,7 +64,7 @@ void Stmt_IF::Print(int Spaces){
 	}
 }
 
-void Stmt_FOR::Print(int Spaces){
+void Stmt_For::Print(int Spaces){
 	print_indent(Spaces);
 	cout << "for" << endl;
 	Exp_1->Print(Spaces + 1);
@@ -78,7 +78,7 @@ void Stmt_FOR::Print(int Spaces){
 	}
 }
 
-void Stmt_WHILE::Print(int Spaces) {
+void Stmt_While::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "while" << endl;
 	Exp->Print(Spaces + 1);
@@ -89,7 +89,7 @@ void Stmt_WHILE::Print(int Spaces) {
 	}
 }
 
-void Stmt_REPEAT::Print(int Spaces) {
+void Stmt_Repeat::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "until" << endl;
 	Exp->Print(Spaces + 1);
@@ -100,7 +100,7 @@ void Stmt_REPEAT::Print(int Spaces) {
 	}
 }
 
-void Stmt_BREAK::Print(int Spaces) {
+void Stmt_Break::Print(int Spaces) {
 	print_indent(Spaces);
 	cout << "break" << endl;
 }
@@ -165,11 +165,11 @@ void Stmt_Call::Print(int Spaces) {
 	Exp->Print(Spaces + 1);
 }
 
-void Stmt_GOTO::Generate(Asm_Code* Code) {
+void Stmt_Goto::Generate(Asm_Code* Code) {
 	Code->Add(Jmp, Code->GetGlobalLabelName(LabelSym->Name));
 }
 
-void Stmt_GOTO_Label::Generate(Asm_Code* Code) {
+void Stmt_Goto_Label::Generate(Asm_Code* Code) {
 	Code->AddLabel(Code->GetGlobalLabelName(LabelSym->Name));
 }
 
@@ -185,7 +185,7 @@ void Stmt_Conditional::Generate_Condition(Asm_Code* Code) {
 	Code->Add(Test, EAX, EAX);
 }
 
-void Stmt_IF::Generate(Asm_Code* Code) {
+void Stmt_If::Generate(Asm_Code* Code) {
 	string LabelName_Else = Code->GetLocalLabelName();
 	Generate_Condition(Code);
 	Code->Add(Jz, LabelName_Else);
@@ -197,7 +197,7 @@ void Stmt_IF::Generate(Asm_Code* Code) {
 }
 
 void Stmt_Case::Generate(Asm_Code* Code) {
-	string LabelName_Exit = Code->GetLocalLabelName();
+	string LabelName_Break = Code->GetLocalLabelName();
 	for (auto it = SelectorList.begin(); it < SelectorList.end(); ++it) {
 		if (it->Exp_2 == nullptr) {
 			ExprBinOp(Exp, Token(TK_EQUAL), it->Exp_1).Generate(Code);
@@ -214,48 +214,48 @@ void Stmt_Case::Generate(Asm_Code* Code) {
 		string LabelName_Else = Code->GetLocalLabelName();
 		Code->Add(Jz, LabelName_Else);
 		it->Stmt->Generate(Code);
-		Code->Add(Jmp, LabelName_Exit);
+		Code->Add(Jmp, LabelName_Break);
 		Code->AddLabel(LabelName_Else);
 	}
 	if (StmtElse != nullptr) {
 		StmtElse->Generate(Code);
 	}
-	Code->AddLabel(LabelName_Exit);
+	Code->AddLabel(LabelName_Break);
 }
 
-void Stmt_FOR::Generate(Asm_Code* Code) {
+void Stmt_For::Generate(Asm_Code* Code) {
 	Exp_1->Generate(Code);
 	string LabelName_Cond = Code->GetLocalLabelName();
-	string LabelName_Exit = Code->GetLocalLabelName();
-	Code->SaveLabels(LabelName_Cond, LabelName_Exit);
+	string LabelName_Break = Code->GetLocalLabelName();
+	Code->SaveLabels(LabelName_Cond, LabelName_Break);
 	Code->AddLabel(LabelName_Cond);
 	Generate_Condition(Code);
-	Code->Add(Jnz, LabelName_Exit);
+	Code->Add(Jnz, LabelName_Break);
 	Stmt->Generate(Code);
 	ExprAssign(((ExprAssign*)Exp_1)->Left, new ExprBinOp(((ExprAssign*)Exp_1)->Left, Token(isTO ? TK_PLUS : TK_MINUS), new ExprIntConst("1"))).Generate(Code);
 	Code->Add(Jmp, LabelName_Cond);
-	Code->AddLabel(LabelName_Exit);
+	Code->AddLabel(LabelName_Break);
 	Code->LoadLabels();
 }
 
-void Stmt_WHILE::Generate(Asm_Code* Code) {
+void Stmt_While::Generate(Asm_Code* Code) {
 	string LabelName_Cond = Code->GetLocalLabelName();
-	string LabelName_Exit = Code->GetLocalLabelName();
-	Code->SaveLabels(LabelName_Cond, LabelName_Exit);
+	string LabelName_Break = Code->GetLocalLabelName();
+	Code->SaveLabels(LabelName_Cond, LabelName_Break);
 	Code->AddLabel(LabelName_Cond);
 	Generate_Condition(Code);
-	Code->Add(Jz, LabelName_Exit);
+	Code->Add(Jz, LabelName_Break);
 	Stmt->Generate(Code);
 	Code->Add(Jmp, LabelName_Cond);
-	Code->AddLabel(LabelName_Exit);
+	Code->AddLabel(LabelName_Break);
 	Code->LoadLabels();
 }
 
-void Stmt_REPEAT::Generate(Asm_Code* Code) {
+void Stmt_Repeat::Generate(Asm_Code* Code) {
 	string LabelName_Body = Code->GetLocalLabelName();
-	string LabelName_Exit = Code->GetLocalLabelName();
+	string LabelName_Break = Code->GetLocalLabelName();
 	string LabelName_Cond = Code->GetLocalLabelName();
-	Code->SaveLabels(LabelName_Cond, LabelName_Exit);
+	Code->SaveLabels(LabelName_Cond, LabelName_Break);
 	Code->AddLabel(LabelName_Body);
 	for (auto it = StmtList.begin(); it < StmtList.end(); ++it) {
 		(*it)->Generate(Code);
@@ -263,12 +263,11 @@ void Stmt_REPEAT::Generate(Asm_Code* Code) {
 	Code->AddLabel(LabelName_Cond);
 	Generate_Condition(Code); 
 	Code->Add(Jz, LabelName_Body);
-	Code->Add(Jnz, LabelName_Exit);
-	Code->AddLabel(LabelName_Exit);
+	Code->AddLabel(LabelName_Break);
 	Code->LoadLabels();
 }
 
-void Stmt_BREAK::Generate(Asm_Code* Code) {
+void Stmt_Break::Generate(Asm_Code* Code) {
 	Code->Add(Jmp, Code->GetLabelBreak());
 }
 
