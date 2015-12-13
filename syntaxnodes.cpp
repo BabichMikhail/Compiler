@@ -168,13 +168,13 @@ void ExprBinOp::Generate_Relation_Expr(Asm_Code* Code, ArgState State) {
 	Left->Generate(Code, State);
 	if (Left->TypeID != TypeID_Double && Right->TypeID == TypeID_Double) {
 		Code->Add_Addr(Fild, dword, ESP);
-		Code->Add(Sub, ESP, to_string(4));
+		Code->Add(Sub, ESP, 4);
 		Code->Add_Addr(Fstp, qword, ESP);
 	}
 	Right->Generate(Code, State);
 	if (Left->TypeID == TypeID_Double && Right->TypeID != TypeID_Double) {
 		Code->Add_Addr(Fild, dword, ESP);
-		Code->Add(Sub, ESP, to_string(4));
+		Code->Add(Sub, ESP, 4);
 		Code->Add_Addr(Fstp, qword, ESP);
 	}
 
@@ -182,7 +182,7 @@ void ExprBinOp::Generate_Relation_Expr(Asm_Code* Code, ArgState State) {
 	if (TypeID == TypeID_Double) {
 		Code->Add_Addr(Fld, qword, ESP);
 		Code->Add_Addr(Fld, qword, ESP, 8);
-		Code->Add(Add, ESP, to_string(16));
+		Code->Add(Add, ESP, 16);
 	}
 
 	if (Left->TypeID == TypeID_Double || Right->TypeID == TypeID_Double) {
@@ -227,11 +227,11 @@ void ExprBinOp::Generate_Double_Expr(Asm_Code* Code, ArgState State) {
 	Left->Generate(Code, State);
 	if (Left->TypeID == TypeID_Double) {
 		Code->Add_Addr(Fld, qword, ESP);
-		Code->Add(Add, ESP, to_string(8));
+		Code->Add(Add, ESP, 8);
 	}
 	else {
 		Code->Add_Addr(Fild, dword, ESP);
-		Code->Add(Add, ESP, to_string(4));
+		Code->Add(Add, ESP, 4);
 	}
 
 	auto TypeID = Right->TypeID;
@@ -252,7 +252,7 @@ void ExprBinOp::Generate_Double_Expr(Asm_Code* Code, ArgState State) {
 	}
 
 	if (Right->TypeID != TypeID_Double) {
-		Code->Add(Sub, ESP, to_string(4));
+		Code->Add(Sub, ESP, 4);
 	}
 	Code->Add_Addr(Fstp, qword, ESP);
 }
@@ -333,7 +333,7 @@ void ExprIntConst::Generate(Asm_Code* Code, ArgState State) {
 
 void ExprIntConst::ConvertToDouble(Asm_Code* Code, ArgState State) {
 	Code->Add_Addr(Fild, dword, ESP);
-	Code->Add(Sub, ESP, to_string(4));
+	Code->Add(Sub, ESP, 4);
 	Code->Add_Addr(Fstp, qword, ESP);
 }
 
@@ -355,7 +355,7 @@ void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
 		Code->Add(Mov, EAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
 		Code->Add_LAddr(Mov, "base_str", i, EAX);
 	}
-	Code->Add(Mov, EAX, "0x0");
+	Code->Add(Mov, EAX, "0");
 	Code->Add_LAddr(Mov, "base_str", Size, EAX);
 	Code->Add(Push, "base_str");
 }
@@ -376,7 +376,7 @@ void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 		else {
 			Code->Add(Mov, EAX, EBP);
 		}
-		Code->Add(Add, EAX, to_string(IdenSym->offset));
+		Code->Add(Add, EAX, IdenSym->offset);
 	}
 	else {
 		Code->Add(Mov, EAX, IdenSym->GenerateName());
@@ -411,12 +411,12 @@ void ExprArrayIndex::Generate(Asm_Code* Code, ArgState State) {
 	Code->Add(Pop, EBX);
 	int Size = GetSize();
 	int Low = GetBound(0).first;
-	Code->Add(Sub, EBX, to_string(Low));
-	Code->Add(IMul, EBX, to_string(Size));
+	Code->Add(Sub, EBX, Low);
+	Code->Add(IMul, EBX, Size);
 	if (Left->TypeExp == FunctionExp) {
 		Code->Add(Mov, EAX, ESP);
 		Code->Add(Add, EAX, EBX);
-		Code->Add(Add, ESP, to_string(Left->GetSize()));
+		Code->Add(Add, ESP, Left->GetSize());
 	}
 	else {
 		Code->Add(Pop, EAX);
@@ -434,12 +434,12 @@ void ExprRecord::Generate(Asm_Code* Code, ArgState State) {
 	int offset = ((SymIdent*)Right)->offset;
 	if (Left->TypeExp == FunctionExp) {
 		Code->Add(Mov, EAX, ESP);
-		Code->Add(Add, EAX, to_string(offset));
-		Code->Add(Add, ESP, to_string(Left->GetSize()));
+		Code->Add(Add, EAX, offset);
+		Code->Add(Add, ESP, Left->GetSize());
 	}
 	else {
 		Code->Add(Pop, EAX);
-		Code->Add(Add, EAX, to_string(offset));
+		Code->Add(Add, EAX, offset);
 	}
 	if (State == RValue) {
 		PushRValue(Code, Right->GetSize());
@@ -453,7 +453,7 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	int argc = LSym->argc;
 	if (argc >= 0) {
 		if (LSym->Section == DeclFunction) {
-			Code->Add(Sub, ESP, to_string((LSym->Table->Symbols[argc - 1])->GetSize()));	
+			Code->Add(Sub, ESP, LSym->Table->Symbols[argc - 1]->GetSize());	
 		}
 		Code->Add(Mov, EAX, "depth");
 		Code->Add_LAddr(Mov, EAX, 4 * Code->depth, EBP);
@@ -465,9 +465,9 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 
 	if (argc == argc_write || argc == argc_writeln){
 		vector<MyTypeID> TypeIDexp;
-		for (int i = Args.size() - 1; i >= 0; --i) {
-			Args[i]->Generate(Code);
-			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(Args[i]));
+		for (auto it = Args.rbegin(); it != Args.rend(); ++it) {
+			(*it)->Generate(Code);
+			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(*it));
 		}
 		string format = "\'";
 		for (int i = 0; i < Args.size(); ++i) {
@@ -496,7 +496,7 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 		for (int i = 0; i < Args.size(); ++i) {
 			Size += Args[i]->GetSize();
 		}
-		Code->Add(Add, ESP, to_string(Size + 4));
+		Code->Add(Add, ESP, Size + 4);
 	}
 }
 

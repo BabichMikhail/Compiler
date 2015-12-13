@@ -144,6 +144,7 @@ public:
 	void Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
 	void Add(AsmOpType Op, AsmRegType Reg, string Val);
 	void Add(AsmOpType Op, string Val, AsmRegType Reg);
+	void Add(AsmOpType Op, AsmRegType Reg, int Value);
 	void Add(string Name, string Type, string InitList); 
 	void Add(Asm_Function* Func);
 	void Add(AsmOpType Op, AsmSize Size, string Val);

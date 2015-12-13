@@ -307,7 +307,7 @@ void Stmt_Raise::Generate(Asm_Code* Code) {
 	Exp->Generate(Code);
 	Code->Add(Push, FormatName);
 	Code->Add(Call, "_printf");
-	Code->Add(Add, ESP, to_string(8));
+	Code->Add(Add, ESP, 8);
 	Code->Add(Jmp, Code->ErrroLabelName);
 }
 
@@ -319,7 +319,7 @@ void Stmt_Call::Generate(Asm_Code* Code) {
 	if (((ExprIdent*)((ExprFunction*)Exp)->Left)->Sym->Section == DeclFunction) {
 		Exp->Generate(Code);
 		SymFunction* Sym = (SymFunction*)((ExprIdent*)((ExprFunction*)Exp)->Left)->Sym;
-		Code->Add(Add, ESP, to_string(((SymIdent*)Sym->Table->Symbols[Sym->argc - 1])->Type->GetSize()));
+		Code->Add(Add, ESP, ((SymIdent*)Sym->Table->Symbols[Sym->argc - 1])->Type->GetSize());
 	}
 	else {
 		Exp->Generate(Code);

@@ -142,6 +142,10 @@ void Asm_Code::Add(AsmOpType Op, AsmSize Size, string Val) {
 	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_IntConst(Val)));
 }
 
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, int Value) {
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_IntConst(to_string(Value))));
+}
+
 void Asm_Code::Add(AsmOpType Op) {
 	Cmds.push_back(new Asm_Cmd(Op));
 }
