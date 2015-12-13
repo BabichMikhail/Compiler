@@ -143,6 +143,7 @@ public:
 	ExprFunction(Expr* Left, vector<Expr*> Args);
 	void GetIdentStr(ExpArgList* List);
 	void Print(const int Spaces);
+	void GenerateWrite(Asm_Code* Code, int argc);
 	void Generate(Asm_Code* Code, ArgState State = RValue);
 	int GetSize();
 	pair<int, int> GetBound(int depth);

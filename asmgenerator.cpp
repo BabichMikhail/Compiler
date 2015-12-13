@@ -21,7 +21,7 @@ Asm_Address::Asm_Address(AsmRegType Reg, int offset) : Reg(Reg), offset(offset),
 Asm_Global_Data::Asm_Global_Data(string Name, string Type, string InitList) : Name(Name), Type(Type), InitList(InitList) {}
 Asm_Local_Data::Asm_Local_Data(int depth, int size, int arg_size) : depth(depth), size(size), arg_size(arg_size) {}
 Asm_Function::Asm_Function(string Name, vector<Asm_Cmd*> Cmds, int arg_size) : Name(Name), Cmds(Cmds), arg_size(arg_size){};
-Asm_Code::Asm_Code() : Fmts(new vector<string>), depth(0), max_depth(0) {}
+Asm_Code::Asm_Code() : Fmts(new vector<string>), ConstStrings(new vector<string>), depth(0), max_depth(0) {}
 
 string Asm_Cmd::GetCode() {
 	return AsmOp_str[Op];
@@ -67,6 +67,12 @@ string Asm_Code::AddFormat(string new_format) {
 	string num = to_string((*Fmts).size());
 	(*Fmts).push_back("fmt_" + num + " : db " + new_format);
 	return "fmt_" + num;
+}
+
+string Asm_Code::AddConstString(string new_string) {
+	string num = to_string((*ConstStrings).size());
+	(*ConstStrings).push_back("str_" + num + " : db \'" + new_string + "\', 0");
+	return "str_" + num;
 }
 
 string Asm_Global_Data::GetCode() {
@@ -142,6 +148,10 @@ void Asm_Code::Add(AsmOpType Op, AsmSize Size, string Val) {
 	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_IntConst(Val)));
 }
 
+void Asm_Code::Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, string Val, int offset) {
+	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Val, offset)));
+}
+
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, int Value) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_IntConst(to_string(Value))));
 }
@@ -215,6 +225,9 @@ void Asm_Code::Print() {
 	cout << "    depth : times " + to_string(max_depth*4) + " dd 0" << endl; 
 	cout << "    base_str : times 256 db 0" << endl;
 	for (auto it = (*Fmts).begin(); it < (*Fmts).end(); ++it) {
+		cout << "    " + *it << endl;
+	}
+	for (auto it = (*ConstStrings).begin(); it < (*ConstStrings).end(); ++it) {
 		cout << "    " + *it << endl;
 	}
 	for (auto it = Data.begin(); it < Data.end(); ++it) {

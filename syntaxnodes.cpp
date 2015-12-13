@@ -346,18 +346,11 @@ void ExprDoubleConst::Generate(Asm_Code* Code, ArgState State) {
 }
 
 void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
-	int Size = Value.Source.size();
-	if (Size == 1) {
+	if (Value.Source.size() == 1) {
 		Code->Add(Push, '\'' + Value.Source + '\'');
 		return;
 	}
-	for (int i = 0; i < Size; i += 4) {
-		Code->Add(Mov, EAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
-		Code->Add(Mov, addr, "base_str", i, EAX);
-	}
-	Code->Add(Mov, EAX, "0");
-	Code->Add(Mov, addr, "base_str", Size, EAX);
-	Code->Add(Push, "base_str");
+	Code->Add(Push, Code->AddConstString(Value.Source));
 }
 
 static void PushRValue(Asm_Code* Code, int Size) {
@@ -448,6 +441,39 @@ void ExprRecord::Generate(Asm_Code* Code, ArgState State) {
 	Code->Add(Push, EAX);
 }
 
+void ExprFunction::GenerateWrite(Asm_Code* Code, int argc) {
+	vector<MyTypeID> TypeIDexp;
+	for (auto it = Args.rbegin(); it != Args.rend(); ++it) {
+		(*it)->Generate(Code);
+		TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(*it));
+	}
+	string format = "\'";
+	for (auto it = TypeIDexp.rbegin(); it != TypeIDexp.rend(); ++it) {
+		switch (*it) {
+		case TypeID_Integer:
+		case TypeID_Pointer:
+			format += "%d";
+			break;
+		case TypeID_Char:
+			format += "%c";
+			break;
+		case TypeID_String:
+			format += "%s";
+			break;
+		case TypeID_Double:
+			format += "%f";
+			break;
+		}
+	}
+	Code->Add(Push, Code->AddFormat(format += argc == argc_writeln ? "\', 0xA, 0x0" : "\', 0x0"));
+	Code->Add(Call, "_printf");
+	int Size = 0;
+	for (auto it = Args.begin(); it < Args.end(); ++it) {
+		Size += (*it)->GetSize();
+	}
+	Code->Add(Add, ESP, Size + 4);
+}
+
 void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	SymCall* LSym = (SymCall*)((ExprIdent*)Left)->Sym;
 	int argc = LSym->argc;
@@ -464,39 +490,7 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 	}
 
 	if (argc == argc_write || argc == argc_writeln){
-		vector<MyTypeID> TypeIDexp;
-		for (auto it = Args.rbegin(); it != Args.rend(); ++it) {
-			(*it)->Generate(Code);
-			TypeIDexp.push_back(CheckType(((SymProcedure*)((ExprIdent*)Left)->Sym)->Table, Position()).GetTypeID(*it));
-		}
-		string format = "\'";
-		for (int i = 0; i < Args.size(); ++i) {
-			switch (TypeIDexp[TypeIDexp.size() - 1 - i]) {
-			case TypeID_Integer:
-			case TypeID_Pointer:
-				format += "%d";
-				break;
-			case TypeID_Char:
-				format += "%c";
-				break;
-			case TypeID_String:
-				format += "%s";
-				break;
-			case TypeID_Double:
-				format += "%f";
-				break;
-			}
-		}
-		format += argc == argc_writeln ? "\', 0xA, 0x0" : "\', 0x0";
-		string FormatName = Code->AddFormat(format);
-
-		Code->Add(Push, FormatName); 
-		Code->Add(Call, "_printf");
-		int Size = 0;
-		for (int i = 0; i < Args.size(); ++i) {
-			Size += Args[i]->GetSize();
-		}
-		Code->Add(Add, ESP, Size + 4);
+		this->GenerateWrite(Code, argc);
 	}
 }
 

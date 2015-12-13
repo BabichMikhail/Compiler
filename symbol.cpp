@@ -203,6 +203,7 @@ void SymCall::Generate(Asm_Code* Code) {
 	Asm_Function* Asm_Func = new Asm_Function(GenerateName(), vector<Asm_Cmd*>(), 0);
 	Asm_Code* FuncCode = new Asm_Code();
 	FuncCode->Fmts = Code->Fmts;
+	FuncCode->ConstStrings = Code->ConstStrings;
 	FuncCode->Add(Push, EBP);
 	FuncCode->Add(Mov, EBP, ESP);
 	FuncCode->depth = Code->depth + 1;

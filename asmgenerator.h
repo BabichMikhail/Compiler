@@ -130,9 +130,10 @@ private:
 public:
 	int depth, max_depth;
 	vector<Asm_Cmd*> Cmds; 
-	vector<string> *Fmts;
+	vector<string> *Fmts, *ConstStrings;
 	vector<Asm_Function*> Functions;
 	string AddFormat(string new_format);
+	string AddConstString(string new_string);
 	void AddLabel(string Name);
 	string GetNewErrorLabelName();
 	string ErrroLabelName;
@@ -149,6 +150,7 @@ public:
 	void Add(string Name, string Type, string InitList); 
 	void Add(Asm_Function* Func);
 	void Add(AsmOpType Op, AsmSize Size, string Val);
+	void Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, string Val, int offset = 0);
 	void Add(AsmOpType Op);
 	void Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, AsmRegType Reg, int offset = 0);
 	void Add(AsmOpType Op, AsmAddr Addr, string Var, int offset);
