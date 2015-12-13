@@ -1,0 +1,48 @@
+const 
+	max = 20;
+	min = 1;
+type
+	list = array[min .. max] of integer;
+
+procedure quicksort(var a: array of integer; Left: integer; Right: integer);
+	procedure sort(L: integer; R: integer);
+	var
+		i, j, x, y: integer;
+	begin
+		i := L; 
+		j := R; 
+		x := a[(L + R) div 2]; 
+    	repeat
+      		while a[i] < x do 
+				i := i + 1; 
+      		while x < a[j] do 
+				j := j - 1; 
+      		if i <= j then begin
+        		if a[i] > a[j] then begin
+					y := a[i]; 
+					a[i] := a[j]; 
+					a[j] := y;
+        		end;
+				i := i + 1; 
+				j := j - 1;
+			end;
+		until i >= j;
+		if L < j then 
+			sort(L, j);
+		if i < R then 
+			sort(i, R);
+  	end;
+
+begin
+  sort(Left, Right)
+end;
+
+var 
+    a : list = (20, 10, 11, 12, 13, 19, 18, 17, 16, 15, 14, 1, 2, 3, 6, 4, 5, 7, 9, 8);
+    i : integer;
+
+begin
+    quicksort(a, 0, 19);
+    for i := min to max do 
+        writeln(a[i]);
+end. 
