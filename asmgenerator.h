@@ -12,6 +12,7 @@ enum AsmOpType { Null = 0, Push, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xo
 	Fld, Fild, Fstp, Fadd, Fsub, Fdiv, Fmul, Fiadd, Fisub, Fidiv, Fimul, Ja, Jb, Jae, Jbe, Fcom, Fcomi, Fcomip };
 enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP, ST0, ST1 };
 enum AsmSize { qword, dword };
+enum AsmAddr { addr };
 
 class Asm_Operand {
 public:
@@ -149,14 +150,14 @@ public:
 	void Add(Asm_Function* Func);
 	void Add(AsmOpType Op, AsmSize Size, string Val);
 	void Add(AsmOpType Op);
-	void Add_Addr(AsmOpType Op, AsmSize Size, AsmRegType Reg, int offset = 0);
-	void Add_Addr(AsmOpType Op, string Var, int offset);
-	void Add_RAddr(AsmOpType Op, AsmRegType Reg, string Var, int offset);
-	void Add_LAddr(AsmOpType Op, string Val, int offset, AsmRegType Reg);
-	void Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2, int offset);
-	void Add_LAddr(AsmOpType Op, AsmRegType Reg1, int offset, AsmRegType Reg2);
-	void Add_LAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
-	void Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2);
+	void Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, AsmRegType Reg, int offset = 0);
+	void Add(AsmOpType Op, AsmAddr Addr, string Var, int offset);
+	void Add(AsmOpType Op, AsmRegType Reg, AsmAddr Addr, string Var, int offset);
+	void Add(AsmOpType Op, AsmAddr Addr, string Val, int offset, AsmRegType Reg);
+	void Add(AsmOpType Op, AsmRegType Reg1, AsmAddr Addr, AsmRegType Reg2, int offset);
+	void Add(AsmOpType Op, AsmAddr Addr, AsmRegType Reg1, int offset, AsmRegType Reg2);
+	void Add(AsmOpType Op, AsmAddr Addr, AsmRegType Reg1, AsmRegType Reg2);
+	void Add(AsmOpType Op, AsmRegType Reg1, AsmAddr Addr, AsmRegType Reg2);
 	void Print();
 	Asm_Code();
 	void SaveLabels(string LabelContinue, string LabelBreak);

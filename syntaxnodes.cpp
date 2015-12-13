@@ -167,21 +167,21 @@ void ExprBinOp::Generate_Relation_Expr(Asm_Code* Code, ArgState State) {
 	string LabelName_2 = Code->GetLocalLabelName();
 	Left->Generate(Code, State);
 	if (Left->TypeID != TypeID_Double && Right->TypeID == TypeID_Double) {
-		Code->Add_Addr(Fild, dword, ESP);
+		Code->Add(Fild, dword, addr, ESP);
 		Code->Add(Sub, ESP, 4);
-		Code->Add_Addr(Fstp, qword, ESP);
+		Code->Add(Fstp, qword, addr, ESP);
 	}
 	Right->Generate(Code, State);
 	if (Left->TypeID == TypeID_Double && Right->TypeID != TypeID_Double) {
-		Code->Add_Addr(Fild, dword, ESP);
+		Code->Add(Fild, dword, addr, ESP);
 		Code->Add(Sub, ESP, 4);
-		Code->Add_Addr(Fstp, qword, ESP);
+		Code->Add(Fstp, qword, addr, ESP);
 	}
 
 	auto TypeID = Left->TypeID == TypeID_Double || Right->TypeID == TypeID_Double ? TypeID_Double : TypeID_Integer;
 	if (TypeID == TypeID_Double) {
-		Code->Add_Addr(Fld, qword, ESP);
-		Code->Add_Addr(Fld, qword, ESP, 8);
+		Code->Add(Fld, qword, addr, ESP);
+		Code->Add(Fld, qword, addr, ESP, 8);
 		Code->Add(Add, ESP, 16);
 	}
 
@@ -226,11 +226,11 @@ void ExprBinOp::Generate_Double_Expr(Asm_Code* Code, ArgState State) {
 	Right->Generate(Code, State);
 	Left->Generate(Code, State);
 	if (Left->TypeID == TypeID_Double) {
-		Code->Add_Addr(Fld, qword, ESP);
+		Code->Add(Fld, qword, addr, ESP);
 		Code->Add(Add, ESP, 8);
 	}
 	else {
-		Code->Add_Addr(Fild, dword, ESP);
+		Code->Add(Fild, dword, addr, ESP);
 		Code->Add(Add, ESP, 4);
 	}
 
@@ -238,23 +238,23 @@ void ExprBinOp::Generate_Double_Expr(Asm_Code* Code, ArgState State) {
 	auto Size = TypeID == TypeID_Double ? qword : dword;	
 	switch (Op.Type) {
 	case TK_PLUS:
-		Code->Add_Addr(GetCmd(TypeID, Fadd, Fiadd), Size, ESP);
+		Code->Add(GetCmd(TypeID, Fadd, Fiadd), Size, addr, ESP);
 		break;
 	case TK_MINUS:
-		Code->Add_Addr(GetCmd(TypeID, Fsub, Fisub), Size, ESP);
+		Code->Add(GetCmd(TypeID, Fsub, Fisub), Size, addr, ESP);
 		break;
 	case TK_MUL:
-		Code->Add_Addr(GetCmd(TypeID, Fmul, Fimul), Size, ESP);
+		Code->Add(GetCmd(TypeID, Fmul, Fimul), Size, addr, ESP);
 		break;
 	case TK_DIV:
-		Code->Add_Addr(GetCmd(TypeID, Fdiv, Fidiv), Size, ESP);
+		Code->Add(GetCmd(TypeID, Fdiv, Fidiv), Size, addr, ESP);
 		break;
 	}
 
 	if (Right->TypeID != TypeID_Double) {
 		Code->Add(Sub, ESP, 4);
 	}
-	Code->Add_Addr(Fstp, qword, ESP);
+	Code->Add(Fstp, qword, addr, ESP);
 }
 
 void ExprBinOp::Generate(Asm_Code* Code, ArgState State) {
@@ -332,16 +332,16 @@ void ExprIntConst::Generate(Asm_Code* Code, ArgState State) {
 }
 
 void ExprIntConst::ConvertToDouble(Asm_Code* Code, ArgState State) {
-	Code->Add_Addr(Fild, dword, ESP);
+	Code->Add(Fild, dword, addr, ESP);
 	Code->Add(Sub, ESP, 4);
-	Code->Add_Addr(Fstp, qword, ESP);
+	Code->Add(Fstp, qword, addr, ESP);
 }
 
 void ExprDoubleConst::Generate(Asm_Code* Code, ArgState State) {
 	string Name = Code->AddDoubleVar(Value.Source);
-	Code->Add_RAddr(Mov, EAX, Name, 4);
+	Code->Add(Mov, EAX, addr, Name, 4);
 	Code->Add(Push, EAX);
-	Code->Add_RAddr(Mov, EAX, Name, 0);
+	Code->Add(Mov, EAX, addr, Name, 0);
 	Code->Add(Push, EAX);
 }
 
@@ -353,16 +353,16 @@ void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
 	}
 	for (int i = 0; i < Size; i += 4) {
 		Code->Add(Mov, EAX, '\'' + Value.Source.substr(i, min(4, Size - i)) + '\'');
-		Code->Add_LAddr(Mov, "base_str", i, EAX);
+		Code->Add(Mov, addr, "base_str", i, EAX);
 	}
 	Code->Add(Mov, EAX, "0");
-	Code->Add_LAddr(Mov, "base_str", Size, EAX);
+	Code->Add(Mov, addr, "base_str", Size, EAX);
 	Code->Add(Push, "base_str");
 }
 
 static void PushRValue(Asm_Code* Code, int Size) {
 	for (int i = Size - 4; i >= 0; i -= 4) {
-		Code->Add_RAddr(Mov, EBX, EAX, i);
+		Code->Add(Mov, EBX, addr, EAX, i);
 		Code->Add(Push, EBX);
 	}
 }
@@ -371,7 +371,7 @@ void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 	auto IdenSym = (SymIdent*)Sym;
 	if (IdenSym->isLocal) {
 		if (IdenSym->depth < Code->depth) {
-			Code->Add_RAddr(Mov, EAX, "depth", 4 * IdenSym->depth);
+			Code->Add(Mov, EAX, addr, "depth", 4 * IdenSym->depth);
 		}
 		else {
 			Code->Add(Mov, EAX, EBP);
@@ -382,7 +382,7 @@ void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 		Code->Add(Mov, EAX, IdenSym->GenerateName());
 	}
 	if ((IdenSym->State == Var || IdenSym->State == Const)) {
-		Code->Add_RAddr(Mov, EAX, EAX);
+		Code->Add(Mov, EAX, addr, EAX);
 	}
 	if (State == RValue) {
 		PushRValue(Code, IdenSym->GetSize());
@@ -401,7 +401,7 @@ void ExprAssign::Generate(Asm_Code* Code, ArgState State) {
 	int Size = max(Left->GetSize(), Right->GetSize());
 	for (int i = 0; i < Size; i += 4) {
 		Code->Add(Pop, EBX);
-		Code->Add_LAddr(Mov, EAX, i, EBX);
+		Code->Add(Mov, addr, EAX, i, EBX);
 	}
 }
 
@@ -456,7 +456,7 @@ void ExprFunction::Generate(Asm_Code* Code, ArgState State) {
 			Code->Add(Sub, ESP, LSym->Table->Symbols[argc - 1]->GetSize());	
 		}
 		Code->Add(Mov, EAX, "depth");
-		Code->Add_LAddr(Mov, EAX, 4 * Code->depth, EBP);
+		Code->Add(Mov, addr, EAX, 4 * Code->depth, EBP);
 		for (int i = 0; i < Args.size(); ++i) {
 			Args[i]->Generate(Code, ((SymIdent*)(LSym->Table->Symbols[i]))->State);
 		}

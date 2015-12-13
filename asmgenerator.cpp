@@ -150,35 +150,35 @@ void Asm_Code::Add(AsmOpType Op) {
 	Cmds.push_back(new Asm_Cmd(Op));
 }
 
-void Asm_Code::Add_Addr(AsmOpType Op, AsmSize Size, AsmRegType Reg, int offset) {
+void Asm_Code::Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, AsmRegType Reg, int offset) {
 	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Reg, offset)));
 }
 
-void Asm_Code::Add_Addr(AsmOpType Op, string Var, int offset) {
+void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, string Var, int offset) {
 	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(Var, offset)));
 }
 
-void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg, string Var, int offset) {
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, AsmAddr Addr, string Var, int offset) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_Address(Var, offset)));
 }
 
-void Asm_Code::Add_LAddr(AsmOpType Op, string Var, int offset, AsmRegType Reg) {
+void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, string Var, int offset, AsmRegType Reg) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Var, offset), new Asm_Registr(Reg)));
 }
 
-void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2, int offset) {
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmAddr Addr, AsmRegType Reg2, int offset) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, offset)));
 }
 
-void Asm_Code::Add_LAddr(AsmOpType Op, AsmRegType Reg1, int offset, AsmRegType Reg2) {
+void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, AsmRegType Reg1, int offset, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, offset), new Asm_Registr(Reg2)));
 }
 
-void Asm_Code::Add_LAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
+void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, AsmRegType Reg1, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, 0), new Asm_Registr(Reg2)));
 }
 
-void Asm_Code::Add_RAddr(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
+void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmAddr Addr, AsmRegType Reg2) {
 	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, 0)));
 }
 
