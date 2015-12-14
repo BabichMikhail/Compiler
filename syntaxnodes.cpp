@@ -339,10 +339,8 @@ void ExprIntConst::ConvertToDouble(Asm_Code* Code, ArgState State) {
 
 void ExprDoubleConst::Generate(Asm_Code* Code, ArgState State) {
 	string Name = Code->AddDoubleVar(Value.Source);
-	Code->Add(Mov, EAX, addr, Name, 4);
-	Code->Add(Push, EAX);
-	Code->Add(Mov, EAX, addr, Name, 0);
-	Code->Add(Push, EAX);
+	Code->Add(Push, dword, addr, Name, 4);
+	Code->Add(Push, dword, addr, Name, 0);
 }
 
 void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
@@ -355,8 +353,7 @@ void ExprStringConst::Generate(Asm_Code* Code, ArgState State) {
 
 static void PushRValue(Asm_Code* Code, int Size) {
 	for (int i = Size - 4; i >= 0; i -= 4) {
-		Code->Add(Mov, EBX, addr, EAX, i);
-		Code->Add(Push, EBX);
+		Code->Add(Push, dword, addr, EAX, i);
 	}
 }
 
@@ -374,6 +371,7 @@ void ExprIdent::Generate(Asm_Code* Code, ArgState State) {
 	else {
 		Code->Add(Mov, EAX, IdenSym->GenerateName());
 	}
+
 	if ((IdenSym->State == Var || IdenSym->State == Const)) {
 		Code->Add(Mov, EAX, addr, EAX);
 	}
