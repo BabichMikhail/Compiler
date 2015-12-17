@@ -181,9 +181,18 @@ Statement* Parser::ParseIfStmt(SymTable* Table, int State){
 	return new Stmt_If(Exp, Stmt_1, Stmt_2);
 }
 
-Statement* Parser::ParseCase(SymTable* Table, int State){
+set<MyTypeID> OrdinalOrStringTypes = {
+	TypeID_String, TypeID_Char, TypeID_Integer, TypeID_Boolean 
+};
+
+Statement* Parser::ParseCase(SymTable* Table, int State) {
 	Lex.Next();
+	auto Pos = Lex.Get().Pos;
 	auto Exp = ParseExpr(Table);
+	auto TypeID = Exp->TypeID;
+	if (OrdinalOrStringTypes.find(TypeID) == OrdinalOrStringTypes.end()) {
+		throw OrdinalOrStringExpression(Pos);
+	}
 	auto Stmt_CASE = new Stmt_Case(Exp);
 	Lex.CheckAndNext(TK_OF);
 	if (Lex.Get().Type == TK_ELSE || Lex.Get().Type == TK_END) {

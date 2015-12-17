@@ -128,7 +128,12 @@ public:
 
 class VariableIdentifierExpected : public Error {
 public:
-	VariableIdentifierExpected(const Position Pos) : Error("Variable identifier expectid. " + StrPos(Pos), Pos) {};
+	VariableIdentifierExpected(const Position Pos) : Error("Variable Identifier expected. " + StrPos(Pos), Pos) {};
+};
+
+class OrdinalOrStringExpression : public Error {
+public:
+	OrdinalOrStringExpression(const Position Pos) : Error("Ordinal or String Expression expected. " + StrPos(Pos), Pos) {};
 };
 
 #endif 
