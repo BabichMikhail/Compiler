@@ -709,32 +709,16 @@ Expr* Parser::ParseExpr(SymTable* Table){
 	if (State != Test_Exp) {
 		Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
 	}
-	if (Lex.Get().Type == TK_CAP) {
-		auto Pos = Lex.Get().Pos;
-		Left = new ExprDereference(Left);
-		if (State != Test_Exp) {
-			Left->TypeID = CheckType(Table, Pos).GetTypeID(Left);
-		}
-		Lex.Next();
-	}
 	auto TK = Lex.Get();
 	if (TK.Type == TK_ASSIGNED){
+		if (Left_Op_Assign.find(Left->TypeExp) == Left_Op_Assign.cend()) {
+			throw ExpectedVariable(Lex.Get().Pos);
+		}
 		Lex.Next();
 		auto Pos = Lex.Get().Pos;
 		auto Right = ParseLevel(Table, 0);
 		if (State != Test_Exp) {
 			Right->TypeID = CheckType(Table, Pos).GetTypeID(Right);
-		}
-		if (Left_Op_Assign.find(Left->TypeExp) == Left_Op_Assign.cend()){
-			throw ExpectedVariable(Lex.Get().Pos);
-		}
-		if (Lex.Get().Type == TK_CAP) {
-			auto Pos = Lex.Get().Pos;
-			Right = new ExprDereference(Right);
-			if (State != Test_Exp) {
-				Right->TypeID = CheckType(Table, Pos).GetTypeID(Right);
-			}
-			Lex.Next();
 		}
 		return new ExprAssign(Left, Right);
 	}
@@ -866,12 +850,7 @@ Expr* Parser::ParseDesignator(SymTable* Table){
 				Right = new SymVar(Lex.Get().Source, nullptr, nullptr, RValue);
 			}
 			else {
-				if (Sym->Section == DeclFunction) {
-					Right = ((SymRecord*)Sym->GetType())->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
-				}
-				else {
-					Right = ((SymRecord*)Sym->GetType())->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
-				}
+				Right = ((SymRecord*)Sym->GetType())->Table->GetSymbol(Lex.Get().Source, Lex.Get().Pos);
 			}
 			Lex.Next();
 			Sym = Right;
