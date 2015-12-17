@@ -13,17 +13,22 @@ enum AsmOpType { Null = 0, Push, Pop, IMul, Div, Add, Sub, Neg, Not, Or, And, Xo
 enum AsmRegType { EAX = 0, EBX, ECX, EDX, EBP, ESP, ST0, ST1 };
 enum AsmSize { qword, dword };
 enum AsmAddr { addr };
+enum AsmCmdIndex { 
+	Label, Cmd_Register, Cmd_Size_Addr_Register_Offset, Cmd_String, Cmd_Register_Int, Cmd_Register_Ident, Cmd_Addr_Register_Register, Cmd_Int, Cmd_Ident, Cmd_Label, 
+	Cmd_Register_Register, Cmd_Register_Addr_Ident_Offset, Cmd_Register_String, Cmd_String_Register, Cmd_Int_Register, Cmd_Ident_Register, Cmd_Size_Addr_Ident_Offset, 
+	Cmd, Cmd_Addr_Ident_Offset, Cmd_Addr_Ident_Offset_Register, Cmd_Register_Addr_Register_Offset, Cmd_Addr_Register_Offset_Register, Cmd_Size_Int, Cmd_Size_Addr_Register_Register
+};
 
 class Asm_Operand {
 public:
 	virtual string GetCode() = 0;
 };
 
-class Asm_Registr : public Asm_Operand{
+class Asm_Register : public Asm_Operand{
 public:
 	AsmRegType Reg;
 	string GetCode();
-	Asm_Registr(AsmRegType Reg);
+	Asm_Register(AsmRegType Reg);
 };
 
 class Asm_StringConst : public Asm_Operand {
@@ -49,8 +54,7 @@ public:
 
 class Asm_Address : public Asm_Operand {
 public:
-	string Val;
-	AsmRegType Reg;
+	Asm_Operand* Oper;
 	int offset;
 	string GetCode();
 	Asm_Address(string Val, int offset);
@@ -60,8 +64,9 @@ public:
 class Asm_Cmd {
 public:
 	AsmOpType Op;
+	int CmdIndex;
 	virtual string GetCode();
-	Asm_Cmd(AsmOpType Cmd);
+	Asm_Cmd(AsmOpType Cmd, int CmdIndex);
 };
 
 class Asm_Label : public Asm_Cmd {
@@ -76,14 +81,21 @@ public:
 	Asm_Operand* Oper1;
 	Asm_Operand* Oper2;
 	string GetCode();
-	Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2);
+	Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2, int CmdIndex);
+};
+
+class Asm_Bin_Left_Size_Cmd : public Asm_Bin_Cmd{
+public:
+	AsmSize Size;
+	string GetCode();
+	Asm_Bin_Left_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1, Asm_Operand* Oper2, int CmdIndex);
 };
 
 class Asm_Unar_Cmd : public Asm_Cmd {
 public:
 	Asm_Operand* Oper1;
 	string GetCode();
-	Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1);
+	Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1, int CmdIndex);
 };
 
 class Asm_Unar_Size_Cmd : public Asm_Cmd {
@@ -91,7 +103,7 @@ public:
 	Asm_Operand* Oper1;
 	AsmSize Size;
 	string GetCode();
-	Asm_Unar_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1);
+	Asm_Unar_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1, int CmdIndex);
 };
 
 class Asm_Global_Data {

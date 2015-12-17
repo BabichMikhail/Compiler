@@ -4,20 +4,21 @@ static const string AsmOp_str[] = { "", "push", "pop", "imul", "div", "add", "su
 	"jnz", "jmp", "jg", "jge", "jl", "jle", "je", "jne", "fld", "fild", "fstp", "fadd", "fsub", "fdiv", "fmul", "fiadd", "fisub", "fidiv", "fimul", "ja", "jb", "jae", "jbe",
 	"fcom", "fcomi", "fcomip"
 };
-static const string AsmRegistr_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp","ST0", "ST1" };
+static const string AsmRegister_str[] =  { "eax", "ebx", "ecx", "edx", "ebp", "esp","ST0", "ST1" };
 static const string AsmSize_str[] = { "qword", "dword" };
 
-Asm_Cmd::Asm_Cmd(AsmOpType Op) : Op(Op) {}
-Asm_Label::Asm_Label(string Name) : Name(Name), Asm_Cmd(Null) {};
-Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2) : Asm_Cmd(Op), Oper1(Oper1), Oper2(Oper2) {}
-Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1) : Asm_Cmd(Op), Oper1(Oper1) {}
-Asm_Unar_Size_Cmd::Asm_Unar_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1) : Asm_Cmd(Op), Size(Size), Oper1(Oper1) {}
-Asm_Registr::Asm_Registr(AsmRegType Reg) : Reg(Reg) {}
+Asm_Cmd::Asm_Cmd(AsmOpType Op, int CmdIndex) : Op(Op), CmdIndex(CmdIndex) {}
+Asm_Label::Asm_Label(string Name) : Name(Name), Asm_Cmd(Null, 0) {};
+Asm_Bin_Cmd::Asm_Bin_Cmd(AsmOpType Op, Asm_Operand* Oper1, Asm_Operand* Oper2, int CmdIndex) : Asm_Cmd(Op, CmdIndex), Oper1(Oper1), Oper2(Oper2) {}
+Asm_Bin_Left_Size_Cmd::Asm_Bin_Left_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1, Asm_Operand* Oper2, int CmdIndex) : Asm_Bin_Cmd(Op, Oper1, Oper2, CmdIndex), Size(Size) {}
+Asm_Unar_Cmd::Asm_Unar_Cmd(AsmOpType Op, Asm_Operand* Oper1, int CmdIndex) : Asm_Cmd(Op, CmdIndex), Oper1(Oper1) {}
+Asm_Unar_Size_Cmd::Asm_Unar_Size_Cmd(AsmOpType Op, AsmSize Size, Asm_Operand* Oper1, int CmdIndex) : Asm_Cmd(Op, CmdIndex), Size(Size), Oper1(Oper1) {}
+Asm_Register::Asm_Register(AsmRegType Reg) : Reg(Reg) {}
 Asm_StringConst::Asm_StringConst(string Str) : Str(Str) {}
 Asm_IntConst::Asm_IntConst(string Val) : Val(Val) {}
 Asm_Variable::Asm_Variable(string Val) : Val(Val) {}
-Asm_Address::Asm_Address(string Val, int offset) : Val(Val), offset(offset) {}
-Asm_Address::Asm_Address(AsmRegType Reg, int offset) : Reg(Reg), offset(offset), Val("") {}
+Asm_Address::Asm_Address(string Val, int offset) : Oper(new Asm_Variable(Val)), offset(offset) {}
+Asm_Address::Asm_Address(AsmRegType Reg, int offset) : Oper(new Asm_Register(Reg)), offset(offset) {}
 Asm_Global_Data::Asm_Global_Data(string Name, string Type, string InitList) : Name(Name), Type(Type), InitList(InitList) {}
 Asm_Local_Data::Asm_Local_Data(int depth, int size, int arg_size) : depth(depth), size(size), arg_size(arg_size) {}
 Asm_Function::Asm_Function(string Name, vector<Asm_Cmd*> Cmds, int arg_size) : Name(Name), Cmds(Cmds), arg_size(arg_size){};
@@ -43,8 +44,12 @@ string Asm_Bin_Cmd::GetCode() {
 	return AsmOp_str[Op] + " " + Oper1->GetCode() + ", " + Oper2->GetCode();
 }
 
-string Asm_Registr::GetCode() {
-	return AsmRegistr_str[Reg];
+string Asm_Bin_Left_Size_Cmd::GetCode() {
+	return AsmOp_str[Op] + " " + AsmSize_str[Size]  + " " + Oper1->GetCode() + ", " + Oper2->GetCode();
+}
+
+string Asm_Register::GetCode() {
+	return AsmRegister_str[Reg];
 }
 
 string Asm_StringConst::GetCode() {
@@ -60,7 +65,7 @@ string Asm_Variable::GetCode() {
 }
 
 string Asm_Address::GetCode() {
-	return "[" + (Val == "" ? AsmRegistr_str[Reg] : Val) + (offset == 0 ? "" : " + " + to_string(offset)) + "]";
+	return "[" + Oper->GetCode() + (offset == 0 ? "" : " + " + to_string(offset)) + "]";
 }
 
 string Asm_Code::AddFormat(string new_format) {
@@ -93,46 +98,46 @@ string Asm_Function::GetCode() {
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg) {
-	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Registr(Reg)));
+	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Register(Reg), Cmd_Register));
 }
 
 void Asm_Code::Add(AsmOpType Op, string Val) {
 	if (Val[0] == '\'') {
-		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_StringConst(Val)));
+		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_StringConst(Val), Cmd_String));
 	}
 	else if (Val[0] >= '0' && Val[0] <= '9') {
-		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_IntConst(Val)));
+		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_IntConst(Val), Cmd_Int));
 	}
 	else {
-		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Variable(Val)));
+		Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Variable(Val), Cmd_Ident));
 	}
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmRegType Reg2) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Registr(Reg2)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg1), new Asm_Register(Reg2), Cmd_Register_Register));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, string Val) {
 	if (Val[0] == '\'') {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_StringConst(Val)));
+		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg), new Asm_StringConst(Val), Cmd_Register_String));
 	}
 	else if (Val[0] >= '0' && Val[0] <= '9'){
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_IntConst(Val)));
+		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg), new Asm_IntConst(Val), Cmd_Register_Int));
 	}
 	else {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_Variable(Val)));
+		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg), new Asm_Variable(Val), Cmd_Register_Ident));
 	}
 }
 
 void Asm_Code::Add(AsmOpType Op, string Val, AsmRegType Reg) {
 	if (Val[0] == '\'') {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_StringConst(Val), new Asm_Registr(Reg)));
+		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_StringConst(Val), new Asm_Register(Reg), Cmd_String_Register));
 	}
 	else if (Val[0] >= '0' && Val[0] <= '9') {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_IntConst(Val), new Asm_Registr(Reg)));
+		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_IntConst(Val), new Asm_Register(Reg), Cmd_Int_Register));
 	}
 	else {
-		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Variable(Val), new Asm_Registr(Reg)));
+		Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Variable(Val), new Asm_Register(Reg), Cmd_Ident_Register));
 	}
 }
 
@@ -145,51 +150,51 @@ void Asm_Code::Add(Asm_Function* Func) {
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmSize Size, string Val) {
-	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_IntConst(Val)));
+	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_IntConst(Val), Cmd_Size_Int));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, string Val, int offset) {
-	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Val, offset)));
+	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Val, offset), Cmd_Size_Addr_Ident_Offset));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, int Value) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_IntConst(to_string(Value))));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg), new Asm_IntConst(to_string(Value)), Cmd_Register_Int));
 }
 
 void Asm_Code::Add(AsmOpType Op) {
-	Cmds.push_back(new Asm_Cmd(Op));
+	Cmds.push_back(new Asm_Cmd(Op, Cmd));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmSize Size, AsmAddr Addr, AsmRegType Reg, int offset) {
-	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Reg, offset)));
+	Cmds.push_back(new Asm_Unar_Size_Cmd(Op, Size, new Asm_Address(Reg, offset), Cmd_Size_Addr_Register_Offset));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, string Var, int offset) {
-	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(Var, offset)));
+	Cmds.push_back(new Asm_Unar_Cmd(Op, new Asm_Address(Var, offset), Cmd_Addr_Ident_Offset));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg, AsmAddr Addr, string Var, int offset) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg), new Asm_Address(Var, offset)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg), new Asm_Address(Var, offset), Cmd_Register_Addr_Ident_Offset));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, string Var, int offset, AsmRegType Reg) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Var, offset), new Asm_Registr(Reg)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Var, offset), new Asm_Register(Reg), Cmd_Addr_Ident_Offset_Register));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmAddr Addr, AsmRegType Reg2, int offset) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, offset)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg1), new Asm_Address(Reg2, offset), Cmd_Register_Addr_Register_Offset));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, AsmRegType Reg1, int offset, AsmRegType Reg2) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, offset), new Asm_Registr(Reg2)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, offset), new Asm_Register(Reg2), Cmd_Addr_Register_Offset_Register));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmAddr Addr, AsmRegType Reg1, AsmRegType Reg2) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, 0), new Asm_Registr(Reg2)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Address(Reg1, 0), new Asm_Register(Reg2), Cmd_Addr_Register_Offset_Register));
 }
 
 void Asm_Code::Add(AsmOpType Op, AsmRegType Reg1, AsmAddr Addr, AsmRegType Reg2) {
-	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Registr(Reg1), new Asm_Address(Reg2, 0)));
+	Cmds.push_back(new Asm_Bin_Cmd(Op, new Asm_Register(Reg1), new Asm_Address(Reg2, 0), Cmd_Register_Addr_Register_Offset));
 }
 
 void Asm_Code::AddLabel(string Name) {

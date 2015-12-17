@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "errors.h"
 #include "AsmGenerator.h"
+#include "optimizer.h"
 
 using namespace std;
 
@@ -72,8 +73,10 @@ int main(int argc, char **argv){
 			if (strcmp(argv[1], "-g") == 0) {
 				Parser P(argv[2], Test_Statement);
 				Asm_Code *Code = new Asm_Code();
+				auto Opt = new Optimizer(Code);
 				P.Table->GenerateVariables(Code);
 				P.Stmt->Generate(Code);
+				Opt->Optimize();
 				Code->Print();
 			}
 		}
